@@ -1,0 +1,17 @@
+{
+  "name": "data-analytics-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:frontend": "cd frontend && npm install",
+    "install:all": "npm run install:frontend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && /home/ayyan/jupyter/jupyter/bin/python run.py",
+    "frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
