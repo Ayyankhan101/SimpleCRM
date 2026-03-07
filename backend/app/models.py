@@ -1,12 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -15,10 +16,10 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     categories = db.relationship('Category', backref='user', lazy=True, cascade='all, delete-orphan')
     data_entries = db.relationship('DataEntry', backref='user', lazy=True, cascade='all, delete-orphan')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -26,16 +27,12 @@ class User(UserMixin, db.Model):
             'username': self.username,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
-    
+
     def set_password(self, password):
-        from flask_bcrypt import Bcrypt
-        bcrypt = Bcrypt()
-        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-    
+        self.password_hash = generate_password_hash(password)
+
     def check_password(self, password):
-        from flask_bcrypt import Bcrypt
-        bcrypt = Bcrypt()
-        return bcrypt.check_password_hash(self.password_hash, password)
+        return check_password_hash(self.password_hash, password)
 
 
 class Category(db.Model):
