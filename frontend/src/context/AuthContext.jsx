@@ -12,50 +12,40 @@ export function AuthProvider({ children }) {
   }, [])
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      setLoading(false)
-      return
-    }
-    
     try {
-      const response = await api.get('/api/auth/me')
+      const response = await api.get('/auth/me')
       setUser(response.data.user)
     } catch (error) {
-      localStorage.removeItem('token')
+      setUser(null)
     } finally {
       setLoading(false)
     }
   }
 
   const login = async (email, password) => {
-    const response = await api.post('/api/auth/login', { email, password })
-    localStorage.setItem('token', 'logged_in')
+    const response = await api.post('/auth/login', { email, password })
     setUser(response.data.user)
     return response.data
   }
 
   const register = async (email, password, username) => {
-    const response = await api.post('/api/auth/register', { email, password, username })
-    localStorage.setItem('token', 'logged_in')
+    const response = await api.post('/auth/register', { email, password, username })
     setUser(response.data.user)
     return response.data
   }
 
   const logout = async () => {
     try {
-      await api.post('/api/auth/logout')
+      await api.post('/auth/logout')
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      localStorage.removeItem('token')
       setUser(null)
     }
   }
 
   const googleLogin = async (idToken) => {
-    const response = await api.post('/api/auth/google/mobile', { id_token: idToken })
-    localStorage.setItem('token', 'logged_in')
+    const response = await api.post('/auth/google/mobile', { id_token: idToken })
     setUser(response.data.user)
     return response.data
   }

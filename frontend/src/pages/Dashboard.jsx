@@ -23,9 +23,9 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       const [summaryRes, trendsRes, breakdownRes] = await Promise.all([
-        api.get('/api/analytics/summary'),
-        api.get('/api/analytics/trends?days=90'),
-        api.get('/api/analytics/category-breakdown')
+        api.get('/analytics/summary'),
+        api.get('/analytics/trends?days=90'),
+        api.get('/analytics/category-breakdown')
       ])
       setSummary(summaryRes.data)
       setTrends(trendsRes.data.trends)

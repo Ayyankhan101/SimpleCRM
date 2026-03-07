@@ -9,6 +9,14 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
+        secure: false,
+        ws: true,
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            // Preserve cookies in proxy requests
+            proxyReq.setHeader('cookie', req.headers.cookie || '')
+          })
+        }
       }
     }
   }

@@ -33,12 +33,12 @@ export default function DataEntries() {
       const params = new URLSearchParams({ page, per_page: 20 })
       if (search) params.append('search', search)
       if (filterCategory) params.append('category_id', filterCategory)
-      
+
       const [entriesRes, categoriesRes] = await Promise.all([
-        api.get(`/api/data?${params}`),
-        api.get('/api/categories')
+        api.get(`/data?${params}`),
+        api.get('/categories')
       ])
-      
+
       setEntries(entriesRes.data.entries)
       setTotalPages(entriesRes.data.pages)
       setCategories(categoriesRes.data)
@@ -53,9 +53,9 @@ export default function DataEntries() {
     e.preventDefault()
     try {
       if (editingEntry) {
-        await api.put(`/api/data/${editingEntry.id}`, formData)
+        await api.put(`/data/${editingEntry.id}`, formData)
       } else {
-        await api.post('/api/data', formData)
+        await api.post('/data', formData)
       }
       setShowModal(false)
       setEditingEntry(null)
@@ -86,7 +86,7 @@ export default function DataEntries() {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this entry?')) return
     try {
-      await api.delete(`/api/data/${id}`)
+      await api.delete(`/data/${id}`)
       fetchData()
     } catch (error) {
       console.error('Error deleting entry:', error)
@@ -110,7 +110,7 @@ export default function DataEntries() {
 
   const handleExport = async () => {
     try {
-      const response = await api.get('/api/data/export', { responseType: 'blob' })
+      const response = await api.get('/data/export', { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
@@ -126,12 +126,12 @@ export default function DataEntries() {
   const handleImport = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    
+
     const formData = new FormData()
     formData.append('file', file)
-    
+
     try {
-      await api.post('/api/data/import', formData, {
+      await api.post('/data/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       fetchData()

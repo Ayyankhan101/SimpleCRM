@@ -20,32 +20,34 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    CORS(app, 
-         origins=["http://localhost:5173", "http://localhost:3000"], 
+    CORS(app,
+         origins=["http://localhost:5173", "http://localhost:3000"],
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         expose_headers=["Content-Type"],
+         max_age=600)
     
     login_manager.login_view = 'auth.login'
-    
+
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-    
+
     from app.routes import auth, data, categories, analytics
     app.register_blueprint(auth.bp)
     app.register_blueprint(data.bp)
     app.register_blueprint(categories.bp)
     app.register_blueprint(analytics.bp)
-    
+
     @app.route('/api/health')
     def health():
         return {'status': 'ok', 'timestamp': datetime.utcnow().isoformat()}
-    
+
     with app.app_context():
         db.create_all()
         seed_demo_data()
-    
+
     return app
 
 

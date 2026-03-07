@@ -19,7 +19,9 @@ export default function Login() {
       await login(email, password)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed')
+      console.error('Login error:', err)
+      const errorMsg = err.response?.data?.error || err.message || 'Login failed. Check console for details.'
+      setError(errorMsg)
     } finally {
       setLoading(false)
     }
@@ -27,7 +29,9 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
-      const response = await fetch('/api/auth/google')
+      const response = await fetch('/api/auth/google', {
+        credentials: 'include'
+      })
       const data = await response.json()
       if (data.auth_url) {
         window.location.href = data.auth_url

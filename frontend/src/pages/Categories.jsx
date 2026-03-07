@@ -24,7 +24,7 @@ export default function Categories() {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/api/categories')
+      const response = await api.get('/categories')
       setCategories(response.data)
     } catch (error) {
       console.error('Error fetching categories:', error)
@@ -37,9 +37,9 @@ export default function Categories() {
     e.preventDefault()
     try {
       if (editingCategory) {
-        await api.put(`/api/categories/${editingCategory.id}`, formData)
+        await api.put(`/categories/${editingCategory.id}`, formData)
       } else {
-        await api.post('/api/categories', formData)
+        await api.post('/categories', formData)
       }
       setShowModal(false)
       setEditingCategory(null)
@@ -65,7 +65,7 @@ export default function Categories() {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this category? All associated data entries will lose their category.')) return
     try {
-      await api.delete(`/api/categories/${id}`)
+      await api.delete(`/categories/${id}`)
       fetchCategories()
     } catch (error) {
       console.error('Error deleting category:', error)
