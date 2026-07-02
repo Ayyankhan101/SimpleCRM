@@ -1,16 +1,19 @@
 import os
 import json
 import pandas as pd
-from datetime import datetime
-from flask import Flask
+from datetime import datetime, timezone
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_login import LoginManager
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from config import Config
 from app.models import db, User, Category, DataEntry
 
 migrate = Migrate()
 login_manager = LoginManager()
+limiter = Limiter(get_remote_address)
 
 
 def create_app(config_class=Config):
@@ -20,6 +23,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    limiter.init_app(app)
     CORS(app,
          origins=["http://localhost:5173", "http://localhost:3000"],
          supports_credentials=True,
@@ -40,14 +44,26 @@ def create_app(config_class=Config):
     app.register_blueprint(categories.bp)
     app.register_blueprint(analytics.bp)
 
+    @app.errorhandler(404)
+    def not_found(e):
+        return jsonify({'error': 'Not found'}), 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(e):
+        return jsonify({'error': 'Method not allowed'}), 405
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        return jsonify({'error': 'Internal server error'}), 500
+
     @app.route('/api/health')
     def health():
-        return {'status': 'ok', 'timestamp': datetime.utcnow().isoformat()}
+        return {'status': 'ok', 'timestamp': datetime.now(timezone.utc).isoformat()}
 
     with app.app_context():
         db.create_all()
-        seed_demo_data()
-
+        if os.environ.get('FLASK_ENV') != 'production':
+            seed_demo_data()
     return app
 
 

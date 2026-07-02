@@ -5,6 +5,7 @@ export default function DataEntries() {
   const [entries, setEntries] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState('')
@@ -44,6 +45,7 @@ export default function DataEntries() {
       setCategories(categoriesRes.data)
     } catch (error) {
       console.error('Error fetching data:', error)
+      setError('Failed to load data entries')
     } finally {
       setLoading(false)
     }
@@ -143,6 +145,15 @@ export default function DataEntries() {
 
   if (loading) {
     return <div className="loading">Loading data entries...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="error-state">
+        <p>{error}</p>
+        <button onClick={fetchData}>Retry</button>
+      </div>
+    )
   }
 
   return (

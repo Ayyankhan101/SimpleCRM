@@ -48,8 +48,9 @@ export default function Login() {
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email</label>
+            <label htmlFor="login-email" className="form-label">Email</label>
             <input
+              id="login-email"
               type="email"
               className="form-input"
               value={email}
@@ -59,8 +60,9 @@ export default function Login() {
           </div>
           
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label htmlFor="login-password" className="form-label">Password</label>
             <input
+              id="login-password"
               type="password"
               className="form-input"
               value={password}

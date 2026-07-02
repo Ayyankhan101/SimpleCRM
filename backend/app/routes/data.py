@@ -1,6 +1,7 @@
 import json
 import io
 import csv
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DataEntry, Category
@@ -12,9 +13,10 @@ bp = Blueprint('data', __name__, url_prefix='/api/data')
 @login_required
 def get_entries():
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
+    per_page = min(request.args.get('per_page', 50, type=int), 100)
     category_id = request.args.get('category_id', type=int)
     country = request.args.get('country')
+    region = request.args.get('region')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     search = request.args.get('search')
@@ -27,13 +29,20 @@ def get_entries():
     if country:
         query = query.filter_by(country=country)
     
+    if region:
+        query = query.filter_by(region=region)
+    
     if start_date:
-        from datetime import datetime
-        query = query.filter(DataEntry.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+        try:
+            query = query.filter(DataEntry.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+        except ValueError:
+            return jsonify({'error': 'Invalid start_date format'}), 400
     
     if end_date:
-        from datetime import datetime
-        query = query.filter(DataEntry.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+        try:
+            query = query.filter(DataEntry.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+        except ValueError:
+            return jsonify({'error': 'Invalid end_date format'}), 400
     
     if search:
         query = query.filter(DataEntry.title.ilike(f'%{search}%'))
@@ -69,25 +78,37 @@ def create_entry():
     if not data or not data.get('title') or not data.get('date'):
         return jsonify({'error': 'Title and date are required'}), 400
     
-    entry = DataEntry(
-        title=data['title'],
-        date=data['date'],
-        country=data.get('country'),
-        region=data.get('region'),
-        confirmed_cases=data.get('confirmed_cases', 0),
-        deaths=data.get('deaths', 0),
-        recovered=data.get('recovered', 0),
-        active_cases=data.get('active_cases', 0),
-        population=data.get('population', 0),
-        values_json=json.dumps(data.get('values', {})) if data.get('values') else None,
-        category_id=data.get('category_id'),
-        user_id=current_user.id
-    )
+    try:
+        entry_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
     
-    db.session.add(entry)
-    db.session.commit()
+    if data.get('confirmed_cases', 0) < 0 or data.get('deaths', 0) < 0 or data.get('recovered', 0) < 0:
+        return jsonify({'error': 'Cases cannot be negative'}), 400
     
-    return jsonify(entry.to_dict()), 201
+    try:
+        entry = DataEntry(
+            title=data['title'],
+            date=entry_date,
+            country=data.get('country'),
+            region=data.get('region'),
+            confirmed_cases=data.get('confirmed_cases', 0),
+            deaths=data.get('deaths', 0),
+            recovered=data.get('recovered', 0),
+            active_cases=data.get('active_cases', 0),
+            population=data.get('population', 0),
+            values_json=json.dumps(data.get('values', {})) if data.get('values') else None,
+            category_id=data.get('category_id'),
+            user_id=current_user.id
+        )
+        
+        db.session.add(entry)
+        db.session.commit()
+        
+        return jsonify(entry.to_dict()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create entry'}), 500
 
 
 @bp.route('/<int:id>', methods=['PUT'])
@@ -100,32 +121,46 @@ def update_entry(id):
     
     data = request.get_json()
     
-    if data.get('title'):
-        entry.title = data['title']
     if data.get('date'):
-        entry.date = data['date']
-    if 'country' in data:
-        entry.country = data['country']
-    if 'region' in data:
-        entry.region = data['region']
-    if 'confirmed_cases' in data:
-        entry.confirmed_cases = data['confirmed_cases']
-    if 'deaths' in data:
-        entry.deaths = data['deaths']
-    if 'recovered' in data:
-        entry.recovered = data['recovered']
-    if 'active_cases' in data:
-        entry.active_cases = data['active_cases']
-    if 'population' in data:
-        entry.population = data['population']
-    if 'values' in data:
-        entry.values_json = json.dumps(data['values'])
-    if 'category_id' in data:
-        entry.category_id = data['category_id']
+        try:
+            entry.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
     
-    db.session.commit()
-    
-    return jsonify(entry.to_dict())
+    try:
+        if data.get('title'):
+            entry.title = data['title']
+        if 'country' in data:
+            entry.country = data['country']
+        if 'region' in data:
+            entry.region = data['region']
+        if 'confirmed_cases' in data:
+            if data['confirmed_cases'] < 0:
+                return jsonify({'error': 'Cases cannot be negative'}), 400
+            entry.confirmed_cases = data['confirmed_cases']
+        if 'deaths' in data:
+            if data['deaths'] < 0:
+                return jsonify({'error': 'Deaths cannot be negative'}), 400
+            entry.deaths = data['deaths']
+        if 'recovered' in data:
+            if data['recovered'] < 0:
+                return jsonify({'error': 'Recovered cannot be negative'}), 400
+            entry.recovered = data['recovered']
+        if 'active_cases' in data:
+            entry.active_cases = data['active_cases']
+        if 'population' in data:
+            entry.population = data['population']
+        if 'values' in data:
+            entry.values_json = json.dumps(data['values'])
+        if 'category_id' in data:
+            entry.category_id = data['category_id']
+        
+        db.session.commit()
+        
+        return jsonify(entry.to_dict())
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update entry'}), 500
 
 
 @bp.route('/<int:id>', methods=['DELETE'])
@@ -136,10 +171,13 @@ def delete_entry(id):
     if not entry:
         return jsonify({'error': 'Entry not found'}), 404
     
-    db.session.delete(entry)
-    db.session.commit()
-    
-    return jsonify({'message': 'Entry deleted successfully'})
+    try:
+        db.session.delete(entry)
+        db.session.commit()
+        return jsonify({'message': 'Entry deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to delete entry'}), 500
 
 
 @bp.route('/bulk', methods=['DELETE'])
@@ -169,6 +207,11 @@ def import_csv():
     
     file = request.files['file']
     
+    file.seek(0, 2)
+    if file.tell() > 5 * 1024 * 1024:
+        return jsonify({'error': 'File too large (max 5MB)'}), 413
+    file.seek(0)
+    
     if not file.filename.endswith('.csv'):
         return jsonify({'error': 'Only CSV files are supported'}), 400
     
@@ -178,8 +221,6 @@ def import_csv():
         
         entries = []
         for row in csv_reader:
-            from datetime import datetime
-            
             entry = DataEntry(
                 title=row.get('title', f"Data - {row.get('date', '')}"),
                 date=datetime.strptime(row.get('date', '2020-01-01'), '%Y-%m-%d').date() if row.get('date') else datetime.now().date(),
@@ -204,7 +245,7 @@ def import_csv():
         }), 201
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': 'Failed to import CSV. Check format and try again.'}), 400
 
 
 @bp.route('/export', methods=['GET'])

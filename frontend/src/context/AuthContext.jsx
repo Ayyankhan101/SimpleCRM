@@ -23,13 +23,13 @@ export function AuthProvider({ children }) {
   }
 
   const login = async (email, password) => {
-    const response = await api.post('/auth/login', { email, password })
+    const response = await api.post('/api/auth/login', { email, password })
     setUser(response.data.user)
     return response.data
   }
 
   const register = async (email, password, username) => {
-    const response = await api.post('/auth/register', { email, password, username })
+    const response = await api.post('/api/auth/register', { email, password, username })
     setUser(response.data.user)
     return response.data
   }
@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
   }
 
   const googleLogin = async (idToken) => {
-    const response = await api.post('/auth/google/mobile', { id_token: idToken })
+    const response = await api.post('/api/auth/google/mobile', { id_token: idToken })
     setUser(response.data.user)
     return response.data
   }

@@ -388,11 +388,29 @@ FRONTEND_URL=https://your-domain.com
 
 ### Running Tests
 
-*(Add your test commands here when tests are implemented)*
+**Backend tests:**
+```bash
+cd backend
+SECRET_KEY=test-secret pytest tests/ -v
+
+# With coverage
+SECRET_KEY=test-secret pytest tests/ -v --cov=app --cov-report=html
+```
+
+**Frontend tests:**
+```bash
+cd frontend
+npm test
+```
 
 ### Code Style
 
-*(Add linting configuration info when available)*
+**Backend linting:**
+```bash
+pip install ruff
+ruff check backend/
+ruff format backend/
+```
 
 ### Database Migrations
 
@@ -406,6 +424,29 @@ flask db upgrade
 
 # Rollback migrations
 flask db downgrade
+```
+
+### Docker
+
+```bash
+# Build and run all services
+docker-compose up --build
+
+# Run in background
+docker-compose up -d
+
+# Stop services
+docker-compose down
+```
+
+### Environment Variables
+
+Required for production:
+```bash
+SECRET_KEY=<strong-random-key>
+DATABASE_URL=postgresql://user:password@host:port/database
+FLASK_ENV=production
+FRONTEND_URL=https://your-domain.com
 ```
 
 ---

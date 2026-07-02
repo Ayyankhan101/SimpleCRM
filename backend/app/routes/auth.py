@@ -1,19 +1,24 @@
 import os
+import secrets
 import requests
-from flask import Blueprint, request, jsonify, current_app, url_for
+from flask import Blueprint, request, jsonify, current_app, session
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+from app import limiter
 from app.models import db, User
 
 bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 
 @bp.route('/register', methods=['POST'])
+@limiter.limit("5/minute")
 def register():
     data = request.get_json()
     
     if not data or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Email and password required'}), 400
+    
+    if len(data['password']) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters'}), 400
     
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already registered'}), 400
@@ -39,6 +44,7 @@ def register():
 
 
 @bp.route('/login', methods=['POST'])
+@limiter.limit("10/minute")
 def login():
     data = request.get_json()
     
@@ -81,6 +87,7 @@ def google_oauth():
     
     import secrets
     state = secrets.token_urlsafe(16)
+    session['oauth_state'] = state
     
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={google_client_id}&redirect_uri={google_redirect_uri}&response_type=code&scope=openid email profile&state={state}"
     
@@ -94,6 +101,9 @@ def google_callback():
     
     if error:
         return jsonify({'error': error}), 400
+    
+    if request.args.get('state') != session.get('oauth_state'):
+        return jsonify({'error': 'Invalid state parameter'}), 400
     
     if not code:
         return jsonify({'error': 'No code provided'}), 400
@@ -146,7 +156,7 @@ def google_callback():
     login_user(user)
     
     frontend_url = os.environ.get('FRONTEND_URL') or 'http://localhost:5173'
-    return f"<script>window.location.href='{frontend_url}/auth/callback?token={access_token}';</script>"
+    return f"<script>window.location.href='{frontend_url}/auth/callback';</script>"
 
 
 @bp.route('/google/mobile', methods=['POST'])
@@ -192,3 +202,43 @@ def google_mobile():
         'message': 'Google login successful',
         'user': user.to_dict()
     })
+
+
+@bp.route('/profile', methods=['PUT'])
+@login_required
+def update_profile():
+    data = request.get_json()
+    
+    if data.get('username'):
+        existing = User.query.filter_by(username=data['username']).first()
+        if existing and existing.id != current_user.id:
+            return jsonify({'error': 'Username already taken'}), 400
+        current_user.username = data['username']
+    
+    if data.get('email'):
+        existing = User.query.filter_by(email=data['email']).first()
+        if existing and existing.id != current_user.id:
+            return jsonify({'error': 'Email already registered'}), 400
+        current_user.email = data['email']
+    
+    db.session.commit()
+    return jsonify({'user': current_user.to_dict()})
+
+
+@bp.route('/password', methods=['PUT'])
+@login_required
+def change_password():
+    data = request.get_json()
+    
+    if not data.get('current_password') or not data.get('new_password'):
+        return jsonify({'error': 'Current and new password required'}), 400
+    
+    if not current_user.check_password(data['current_password']):
+        return jsonify({'error': 'Current password is incorrect'}), 400
+    
+    if len(data['new_password']) < 8:
+        return jsonify({'error': 'New password must be at least 8 characters'}), 400
+    
+    current_user.set_password(data['new_password'])
+    db.session.commit()
+    return jsonify({'message': 'Password updated successfully'})

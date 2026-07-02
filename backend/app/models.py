@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -14,8 +14,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256))
     google_id = db.Column(db.String(120), unique=True, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     categories = db.relationship('Category', backref='user', lazy=True, cascade='all, delete-orphan')
     data_entries = db.relationship('DataEntry', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -44,8 +44,8 @@ class Category(db.Model):
     color = db.Column(db.String(7), default='#3B82F6')
     icon = db.Column(db.String(50), default='folder')
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     data_entries = db.relationship('DataEntry', backref='category', lazy=True)
     
@@ -63,6 +63,12 @@ class Category(db.Model):
 
 class DataEntry(db.Model):
     __tablename__ = 'data_entries'
+    __table_args__ = (
+        db.Index('idx_user_id', 'user_id'),
+        db.Index('idx_date', 'date'),
+        db.Index('idx_country', 'country'),
+        db.Index('idx_category_id', 'category_id'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -77,8 +83,8 @@ class DataEntry(db.Model):
     values_json = db.Column(db.Text)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     def get_values(self):
         if self.values_json:

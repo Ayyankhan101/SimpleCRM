@@ -15,8 +15,28 @@ class Config:
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or SECRET_KEY
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
 
+
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID') or ''
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET') or ''
     GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI') or 'http://localhost:5000/api/auth/google/callback'
 
     CORS_HEADERS = 'Content-Type'
+
+
+class ProductionConfig(Config):
+    DEBUG = False
+    TESTING = False
+    
+    @classmethod
+    def init_app(cls, app):
+        if not os.environ.get('DATABASE_URL'):
+            raise ValueError("DATABASE_URL environment variable is required in production")
+
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'

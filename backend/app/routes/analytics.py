@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime
 from app.models import db, DataEntry, Category
 
 bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
@@ -15,27 +15,39 @@ def get_summary():
     end_date = request.args.get('end_date')
     country = request.args.get('country')
     
-    query = DataEntry.query.filter_by(user_id=current_user.id)
+    query = db.session.query(
+        func.count(DataEntry.id),
+        func.coalesce(func.sum(DataEntry.confirmed_cases), 0),
+        func.coalesce(func.sum(DataEntry.deaths), 0),
+        func.coalesce(func.sum(DataEntry.recovered), 0),
+        func.coalesce(func.sum(DataEntry.active_cases), 0),
+        func.coalesce(func.sum(DataEntry.population), 0)
+    ).filter(DataEntry.user_id == current_user.id)
     
     if category_id:
-        query = query.filter_by(category_id=category_id)
-    
+        query = query.filter(DataEntry.category_id == category_id)
     if country:
-        query = query.filter_by(country=country)
-    
+        query = query.filter(DataEntry.country == country)
     if start_date:
-        query = query.filter(DataEntry.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
-    
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+        query = query.filter(DataEntry.date >= start_date)
     if end_date:
-        query = query.filter(DataEntry.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+        query = query.filter(DataEntry.date <= end_date)
     
-    entries = query.all()
-    
-    total_confirmed = sum(e.confirmed_cases for e in entries)
-    total_deaths = sum(e.deaths for e in entries)
-    total_recovered = sum(e.recovered for e in entries)
-    total_active = sum(e.active_cases for e in entries)
-    total_population = sum(e.population for e in entries)
+    result = query.first()
+    total_entries = result[0] or 0
+    total_confirmed = int(result[1] or 0)
+    total_deaths = int(result[2] or 0)
+    total_recovered = int(result[3] or 0)
+    total_active = int(result[4] or 0)
+    total_population = int(result[5] or 0)
     
     countries = db.session.query(
         DataEntry.country,
@@ -46,9 +58,9 @@ def get_summary():
     if category_id:
         countries = countries.filter(DataEntry.category_id == category_id)
     if start_date:
-        countries = countries.filter(DataEntry.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+        countries = countries.filter(DataEntry.date >= start_date)
     if end_date:
-        countries = countries.filter(DataEntry.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+        countries = countries.filter(DataEntry.date <= end_date)
     if country:
         countries = countries.filter(DataEntry.country == country)
     
@@ -67,7 +79,7 @@ def get_summary():
     top_countries = country_data[:10]
     
     return jsonify({
-        'total_entries': len(entries),
+        'total_entries': total_entries,
         'total_confirmed': total_confirmed,
         'total_deaths': total_deaths,
         'total_recovered': total_recovered,
@@ -87,38 +99,30 @@ def get_trends():
     category_id = request.args.get('category_id', type=int)
     country = request.args.get('country')
     
-    query = DataEntry.query.filter_by(user_id=current_user.id)
+    query = db.session.query(
+        DataEntry.date,
+        func.sum(DataEntry.confirmed_cases).label('confirmed'),
+        func.sum(DataEntry.deaths).label('deaths'),
+        func.sum(DataEntry.recovered).label('recovered'),
+        func.sum(DataEntry.active_cases).label('active')
+    ).filter(DataEntry.user_id == current_user.id)
     
     if category_id:
-        query = query.filter_by(category_id=category_id)
+        query = query.filter(DataEntry.category_id == category_id)
     if country:
-        query = query.filter_by(country=country)
+        query = query.filter(DataEntry.country == country)
     
-    entries = query.order_by(DataEntry.date).all()
-    
-    if not entries:
-        return jsonify({'trends': []})
-    
-    from collections import defaultdict
-    by_date = defaultdict(lambda: {'confirmed': 0, 'deaths': 0, 'recovered': 0, 'active': 0})
-    
-    for entry in entries:
-        date_str = entry.date.isoformat() if entry.date else None
-        if date_str:
-            by_date[date_str]['confirmed'] += entry.confirmed_cases
-            by_date[date_str]['deaths'] += entry.deaths
-            by_date[date_str]['recovered'] += entry.recovered
-            by_date[date_str]['active'] += entry.active_cases
+    query = query.group_by(DataEntry.date).order_by(DataEntry.date)
     
     trends = [
         {
-            'date': date,
-            'confirmed': data['confirmed'],
-            'deaths': data['deaths'],
-            'recovered': data['recovered'],
-            'active': data['active']
+            'date': r.date.isoformat() if r.date else None,
+            'confirmed': int(r.confirmed) if r.confirmed else 0,
+            'deaths': int(r.deaths) if r.deaths else 0,
+            'recovered': int(r.recovered) if r.recovered else 0,
+            'active': int(r.active) if r.active else 0
         }
-        for date, data in sorted(by_date.items())
+        for r in query.all()
     ]
     
     return jsonify({'trends': trends})
@@ -127,27 +131,23 @@ def get_trends():
 @bp.route('/category-breakdown', methods=['GET'])
 @login_required
 def get_category_breakdown():
-    categories = Category.query.filter_by(user_id=current_user.id).all()
+    breakdown = db.session.query(
+        Category.id,
+        Category.name,
+        Category.color,
+        func.coalesce(func.sum(DataEntry.confirmed_cases), 0).label('total'),
+        func.count(DataEntry.id).label('count')
+    ).outerjoin(DataEntry, (Category.id == DataEntry.category_id) & (DataEntry.user_id == current_user.id)
+    ).filter(Category.user_id == current_user.id
+    ).group_by(Category.id).all()
     
-    breakdown = []
-    for cat in categories:
-        entries = DataEntry.query.filter_by(
-            user_id=current_user.id,
-            category_id=cat.id
-        ).all()
-        
-        total = sum(e.confirmed_cases for e in entries)
-        breakdown.append({
-            'category_id': cat.id,
-            'category_name': cat.name,
-            'color': cat.color,
-            'total': total,
-            'count': len(entries)
-        })
-    
-    breakdown.sort(key=lambda x: x['total'], reverse=True)
-    
-    return jsonify(breakdown)
+    return jsonify([{
+        'category_id': b[0],
+        'category_name': b[1],
+        'color': b[2],
+        'total': int(b[3]) if b[3] else 0,
+        'count': b[4]
+    } for b in breakdown])
 
 
 @bp.route('/date-range', methods=['GET'])

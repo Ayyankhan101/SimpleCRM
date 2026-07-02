@@ -33,8 +33,9 @@ export default function Register() {
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email</label>
+            <label htmlFor="register-email" className="form-label">Email</label>
             <input
+              id="register-email"
               type="email"
               className="form-input"
               value={email}
@@ -44,8 +45,9 @@ export default function Register() {
           </div>
           
           <div className="form-group">
-            <label className="form-label">Username</label>
+            <label htmlFor="register-username" className="form-label">Username</label>
             <input
+              id="register-username"
               type="text"
               className="form-input"
               value={username}
@@ -55,8 +57,9 @@ export default function Register() {
           </div>
           
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label htmlFor="register-password" className="form-label">Password</label>
             <input
+              id="register-password"
               type="password"
               className="form-input"
               value={password}

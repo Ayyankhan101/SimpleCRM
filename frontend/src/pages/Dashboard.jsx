@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react'
-import * as d3 from 'd3'
+import { select } from 'd3-selection'
+import { scaleTime, scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale'
+import { line as d3Line, arc as d3Arc, pie as d3Pie } from 'd3-shape'
+import { axisBottom, axisLeft } from 'd3-axis'
+import { timeParse } from 'd3-time-format'
+import { format as d3Format } from 'd3-format'
+import { extent, max } from 'd3-array'
+import { curveMonotoneX } from 'd3-shape'
 import api from '../utils/api'
 
 export default function Dashboard() {
@@ -7,6 +14,7 @@ export default function Dashboard() {
   const [trends, setTrends] = useState([])
   const [breakdown, setBreakdown] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchData()
@@ -14,9 +22,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (summary) {
-      drawTrendsChart()
-      drawBreakdownChart()
-      drawCountryChart()
+      try {
+        drawTrendsChart()
+        drawBreakdownChart()
+        drawCountryChart()
+      } catch (err) {
+        console.error('Error drawing charts:', err)
+      }
     }
   }, [summary, trends, breakdown])
 
@@ -32,13 +44,14 @@ export default function Dashboard() {
       setBreakdown(breakdownRes.data)
     } catch (error) {
       console.error('Error fetching data:', error)
+      setError('Failed to load dashboard data')
     } finally {
       setLoading(false)
     }
   }
 
   const drawTrendsChart = () => {
-    const container = d3.select('#trends-chart')
+    const container = select('#trends-chart')
     container.selectAll('*').remove()
     
     if (!trends.length) return
@@ -53,55 +66,55 @@ export default function Dashboard() {
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
 
-    const parseDate = d3.timeParse('%Y-%m-%d')
+    const parseDate = timeParse('%Y-%m-%d')
     const data = trends.map(d => ({
       date: parseDate(d.date),
       confirmed: d.confirmed,
       deaths: d.deaths
     })).filter(d => d.date)
 
-    const x = d3.scaleTime()
-      .domain(d3.extent(data, d => d.date))
+    const x = scaleTime()
+      .domain(extent(data, d => d.date))
       .range([0, width])
 
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.confirmed)])
+    const y = scaleLinear()
+      .domain([0, max(data, d => d.confirmed)])
       .range([height, 0])
 
     svg.append('g')
       .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(x).ticks(5))
+      .call(axisBottom(x).ticks(5))
 
     svg.append('g')
-      .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.2s')))
+      .call(axisLeft(y).ticks(5).tickFormat(d3Format('.2s')))
 
-    const line = d3.line()
+    const lineGen = d3Line()
       .x(d => x(d.date))
       .y(d => y(d.confirmed))
-      .curve(d3.curveMonotoneX)
+      .curve(curveMonotoneX)
 
     svg.append('path')
       .datum(data)
       .attr('fill', 'none')
       .attr('stroke', '#3B82F6')
       .attr('stroke-width', 2)
-      .attr('d', line)
+      .attr('d', lineGen)
 
-    const deathsLine = d3.line()
+    const deathsLineGen = d3Line()
       .x(d => x(d.date))
       .y(d => y(d.deaths))
-      .curve(d3.curveMonotoneX)
+      .curve(curveMonotoneX)
 
     svg.append('path')
       .datum(data)
       .attr('fill', 'none')
       .attr('stroke', '#EF4444')
       .attr('stroke-width', 2)
-      .attr('d', deathsLine)
+      .attr('d', deathsLineGen)
   }
 
   const drawBreakdownChart = () => {
-    const container = d3.select('#breakdown-chart')
+    const container = select('#breakdown-chart')
     container.selectAll('*').remove()
     
     if (!breakdown.length) return
@@ -116,15 +129,15 @@ export default function Dashboard() {
       .append('g')
       .attr('transform', `translate(${width / 2},${height / 2})`)
 
-    const color = d3.scaleOrdinal()
+    const color = scaleOrdinal()
       .domain(breakdown.map(d => d.category_name))
       .range(['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'])
 
-    const pie = d3.pie()
+    const pie = d3Pie()
       .value(d => d.total)
       .sort(null)
 
-    const arc = d3.arc()
+    const arc = d3Arc()
       .innerRadius(radius * 0.5)
       .outerRadius(radius)
 
@@ -148,7 +161,7 @@ export default function Dashboard() {
   }
 
   const drawCountryChart = () => {
-    const container = d3.select('#country-chart')
+    const container = select('#country-chart')
     container.selectAll('*').remove()
     
     if (!summary?.top_countries?.length) return
@@ -165,24 +178,24 @@ export default function Dashboard() {
 
     const data = summary.top_countries.slice(0, 8)
 
-    const x = d3.scaleBand()
+    const x = scaleBand()
       .domain(data.map(d => d.country))
       .range([0, width])
       .padding(0.3)
 
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.confirmed)])
+    const y = scaleLinear()
+      .domain([0, max(data, d => d.confirmed)])
       .range([height, 0])
 
     svg.append('g')
       .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(x))
+      .call(axisBottom(x))
       .selectAll('text')
       .attr('transform', 'rotate(-45)')
       .style('text-anchor', 'end')
 
     svg.append('g')
-      .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.2s')))
+      .call(axisLeft(y).ticks(5).tickFormat(d3Format('.2s')))
 
     svg.selectAll('rect')
       .data(data)
@@ -198,6 +211,15 @@ export default function Dashboard() {
 
   if (loading) {
     return <div className="loading">Loading dashboard...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="error-state">
+        <p>{error}</p>
+        <button onClick={fetchData}>Retry</button>
+      </div>
+    )
   }
 
   const formatNumber = (num) => {

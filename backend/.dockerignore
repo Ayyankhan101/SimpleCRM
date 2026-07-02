@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+instance/
+*.db
+node_modules/
+.git/
+.github/
+.vscode/
+.idea/
+graphify-out/
