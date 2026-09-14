@@ -1,7 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
 from datetime import datetime, timezone
-from werkzeug.security import generate_password_hash, check_password_hash
+
+from flask_login import UserMixin
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
 
@@ -19,6 +20,8 @@ class User(UserMixin, db.Model):
 
     categories = db.relationship('Category', backref='user', lazy=True, cascade='all, delete-orphan')
     data_entries = db.relationship('DataEntry', backref='user', lazy=True, cascade='all, delete-orphan')
+    data_sources = db.relationship('DataSource', backref='user', lazy=True, cascade='all, delete-orphan')
+    notifications = db.relationship('NotificationConfig', backref='user', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self):
         return {
@@ -43,11 +46,19 @@ class Category(db.Model):
     description = db.Column(db.Text)
     color = db.Column(db.String(7), default='#3B82F6')
     icon = db.Column(db.String(50), default='folder')
+    template = db.Column(db.String(50), default='custom')
+    field_schema = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    data_entries = db.relationship('DataEntry', backref='category', lazy=True)
+    data_entries = db.relationship('DataEntry', backref=db.backref('category', lazy='joined'), lazy=True)
+    
+    def get_field_schema(self):
+        if self.field_schema:
+            import json
+            return json.loads(self.field_schema)
+        return []
     
     def to_dict(self):
         return {
@@ -56,6 +67,8 @@ class Category(db.Model):
             'description': self.description,
             'color': self.color,
             'icon': self.icon,
+            'template': self.template,
+            'field_schema': self.get_field_schema(),
             'user_id': self.user_id,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
@@ -81,6 +94,9 @@ class DataEntry(db.Model):
     active_cases = db.Column(db.Integer, default=0)
     population = db.Column(db.Integer, default=0)
     values_json = db.Column(db.Text)
+    metrics_json = db.Column(db.Text)
+    source_id = db.Column(db.Integer, db.ForeignKey('data_sources.id'), nullable=True)
+    source_type = db.Column(db.String(20), default='manual')
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -91,6 +107,16 @@ class DataEntry(db.Model):
             import json
             return json.loads(self.values_json)
         return {}
+    
+    def get_metrics(self):
+        if self.metrics_json:
+            import json
+            return json.loads(self.metrics_json)
+        return {}
+    
+    def set_metrics(self, metrics: dict):
+        import json
+        self.metrics_json = json.dumps(metrics)
     
     def to_dict(self):
         return {
@@ -105,8 +131,78 @@ class DataEntry(db.Model):
             'active_cases': self.active_cases,
             'population': self.population,
             'values': self.get_values(),
+            'metrics': self.get_metrics(),
+            'source_id': self.source_id,
+            'source_type': self.source_type,
             'category_id': self.category_id,
             'user_id': self.user_id,
             'category': self.category.to_dict() if self.category else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class DataSource(db.Model):
+    __tablename__ = 'data_sources'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    source_type = db.Column(db.String(20), nullable=False)
+    config_json = db.Column(db.Text)
+    status = db.Column(db.String(20), default='active')
+    last_sync_at = db.Column(db.DateTime)
+    sync_error = db.Column(db.Text)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    entries = db.relationship('DataEntry', backref='source', lazy=True)
+    
+    def get_config(self):
+        if self.config_json:
+            import json
+            return json.loads(self.config_json)
+        return {}
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'source_type': self.source_type,
+            'config': self.get_config(),
+            'status': self.status,
+            'last_sync_at': self.last_sync_at.isoformat() if self.last_sync_at else None,
+            'sync_error': self.sync_error,
+            'user_id': self.user_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class NotificationConfig(db.Model):
+    __tablename__ = 'notification_configs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    notify_type = db.Column(db.String(20), nullable=False)
+    config_json = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    last_sent_at = db.Column(db.DateTime)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    def get_config(self):
+        if self.config_json:
+            import json
+            return json.loads(self.config_json)
+        return {}
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'notify_type': self.notify_type,
+            'config': self.get_config(),
+            'is_active': self.is_active,
+            'last_sent_at': self.last_sent_at.isoformat() if self.last_sent_at else None,
+            'user_id': self.user_id,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

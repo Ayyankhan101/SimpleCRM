@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
-import { select } from 'd3-selection'
-import { scaleTime, scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale'
-import { line as d3Line, arc as d3Arc, pie as d3Pie } from 'd3-shape'
-import { axisBottom, axisLeft } from 'd3-axis'
-import { timeParse } from 'd3-time-format'
-import { format as d3Format } from 'd3-format'
-import { extent, max } from 'd3-array'
-import { curveMonotoneX } from 'd3-shape'
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  Legend, ResponsiveContainer
+} from 'recharts'
 import api from '../utils/api'
+
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16']
 
 export default function Dashboard() {
   const [summary, setSummary] = useState(null)
@@ -15,28 +14,17 @@ export default function Dashboard() {
   const [breakdown, setBreakdown] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [dateRange, setDateRange] = useState(90)
 
   useEffect(() => {
     fetchData()
-  }, [])
-
-  useEffect(() => {
-    if (summary) {
-      try {
-        drawTrendsChart()
-        drawBreakdownChart()
-        drawCountryChart()
-      } catch (err) {
-        console.error('Error drawing charts:', err)
-      }
-    }
-  }, [summary, trends, breakdown])
+  }, [dateRange])
 
   const fetchData = async () => {
     try {
       const [summaryRes, trendsRes, breakdownRes] = await Promise.all([
         api.get('/analytics/summary'),
-        api.get('/analytics/trends?days=90'),
+        api.get(`/analytics/trends?days=${dateRange}`),
         api.get('/analytics/category-breakdown')
       ])
       setSummary(summaryRes.data)
@@ -48,165 +36,6 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const drawTrendsChart = () => {
-    const container = select('#trends-chart')
-    container.selectAll('*').remove()
-    
-    if (!trends.length) return
-
-    const margin = { top: 20, right: 30, bottom: 30, left: 60 }
-    const width = container.node().getBoundingClientRect().width - margin.left - margin.right
-    const height = 260 - margin.top - margin.bottom
-
-    const svg = container.append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`)
-
-    const parseDate = timeParse('%Y-%m-%d')
-    const data = trends.map(d => ({
-      date: parseDate(d.date),
-      confirmed: d.confirmed,
-      deaths: d.deaths
-    })).filter(d => d.date)
-
-    const x = scaleTime()
-      .domain(extent(data, d => d.date))
-      .range([0, width])
-
-    const y = scaleLinear()
-      .domain([0, max(data, d => d.confirmed)])
-      .range([height, 0])
-
-    svg.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(axisBottom(x).ticks(5))
-
-    svg.append('g')
-      .call(axisLeft(y).ticks(5).tickFormat(d3Format('.2s')))
-
-    const lineGen = d3Line()
-      .x(d => x(d.date))
-      .y(d => y(d.confirmed))
-      .curve(curveMonotoneX)
-
-    svg.append('path')
-      .datum(data)
-      .attr('fill', 'none')
-      .attr('stroke', '#3B82F6')
-      .attr('stroke-width', 2)
-      .attr('d', lineGen)
-
-    const deathsLineGen = d3Line()
-      .x(d => x(d.date))
-      .y(d => y(d.deaths))
-      .curve(curveMonotoneX)
-
-    svg.append('path')
-      .datum(data)
-      .attr('fill', 'none')
-      .attr('stroke', '#EF4444')
-      .attr('stroke-width', 2)
-      .attr('d', deathsLineGen)
-  }
-
-  const drawBreakdownChart = () => {
-    const container = select('#breakdown-chart')
-    container.selectAll('*').remove()
-    
-    if (!breakdown.length) return
-
-    const width = container.node().getBoundingClientRect().width
-    const height = 260
-    const radius = Math.min(width, height) / 2 - 20
-
-    const svg = container.append('svg')
-      .attr('width', width)
-      .attr('height', height)
-      .append('g')
-      .attr('transform', `translate(${width / 2},${height / 2})`)
-
-    const color = scaleOrdinal()
-      .domain(breakdown.map(d => d.category_name))
-      .range(['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'])
-
-    const pie = d3Pie()
-      .value(d => d.total)
-      .sort(null)
-
-    const arc = d3Arc()
-      .innerRadius(radius * 0.5)
-      .outerRadius(radius)
-
-    const arcs = svg.selectAll('arc')
-      .data(pie(breakdown))
-      .enter()
-      .append('g')
-
-    arcs.append('path')
-      .attr('d', arc)
-      .attr('fill', d => color(d.data.category_name))
-      .attr('stroke', 'white')
-      .style('stroke-width', 2)
-
-    arcs.append('text')
-      .attr('transform', d => `translate(${arc.centroid(d)})`)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '10px')
-      .attr('fill', 'white')
-      .text(d => d.data.category_name.substring(0, 8))
-  }
-
-  const drawCountryChart = () => {
-    const container = select('#country-chart')
-    container.selectAll('*').remove()
-    
-    if (!summary?.top_countries?.length) return
-
-    const margin = { top: 20, right: 30, bottom: 60, left: 80 }
-    const width = container.node().getBoundingClientRect().width - margin.left - margin.right
-    const height = 260 - margin.top - margin.bottom
-
-    const svg = container.append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`)
-
-    const data = summary.top_countries.slice(0, 8)
-
-    const x = scaleBand()
-      .domain(data.map(d => d.country))
-      .range([0, width])
-      .padding(0.3)
-
-    const y = scaleLinear()
-      .domain([0, max(data, d => d.confirmed)])
-      .range([height, 0])
-
-    svg.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(axisBottom(x))
-      .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end')
-
-    svg.append('g')
-      .call(axisLeft(y).ticks(5).tickFormat(d3Format('.2s')))
-
-    svg.selectAll('rect')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('x', d => x(d.country))
-      .attr('y', d => y(d.confirmed))
-      .attr('width', x.bandwidth())
-      .attr('height', d => height - y(d.confirmed))
-      .attr('fill', '#3B82F6')
-      .attr('rx', 4)
   }
 
   if (loading) {
@@ -229,11 +58,30 @@ export default function Dashboard() {
     return num.toString()
   }
 
+  const calcTrend = (field) => {
+    if (trends.length < 2) return null
+    const recent = trends[trends.length - 1]?.[field] || 0
+    const previous = trends[trends.length - 2]?.[field] || 0
+    if (previous === 0) return null
+    return ((recent - previous) / previous * 100).toFixed(1)
+  }
+
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Dashboard</h1>
         <p className="page-subtitle">Overview of your data analytics</p>
+        <div className="date-range-selector">
+          {[7, 30, 90, 180].map(days => (
+            <button
+              key={days}
+              className={`btn ${dateRange === days ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setDateRange(days)}
+            >
+              {days}d
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="stats-grid">
@@ -244,6 +92,11 @@ export default function Dashboard() {
         <div className="stat-card">
           <div className="stat-label">Confirmed Cases</div>
           <div className="stat-value danger">{formatNumber(summary?.total_confirmed)}</div>
+          {calcTrend('confirmed') && (
+            <div className={`stat-trend ${parseFloat(calcTrend('confirmed')) > 0 ? 'up' : 'down'}`}>
+              {parseFloat(calcTrend('confirmed')) > 0 ? '↑' : '↓'} {Math.abs(calcTrend('confirmed'))}%
+            </div>
+          )}
         </div>
         <div className="stat-card">
           <div className="stat-label">Deaths</div>
@@ -266,15 +119,55 @@ export default function Dashboard() {
       <div className="charts-grid">
         <div className="chart-card">
           <h3 className="chart-title">Trends Over Time</h3>
-          <div id="trends-chart" className="chart-container"></div>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={trends}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis tickFormatter={formatNumber} />
+              <Tooltip formatter={(value) => formatNumber(value)} />
+              <Legend />
+              <Area type="monotone" dataKey="confirmed" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} name="Confirmed" />
+              <Area type="monotone" dataKey="deaths" stackId="2" stroke="#EF4444" fill="#EF4444" fillOpacity={0.3} name="Deaths" />
+              <Area type="monotone" dataKey="recovered" stackId="3" stroke="#10B981" fill="#10B981" fillOpacity={0.3} name="Recovered" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
+
         <div className="chart-card">
           <h3 className="chart-title">Category Breakdown</h3>
-          <div id="breakdown-chart" className="chart-container"></div>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={breakdown}
+                dataKey="total"
+                nameKey="category_name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label={({ category_name, percent }) => `${category_name} ${(percent * 100).toFixed(0)}%`}
+              >
+                {breakdown.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => formatNumber(value)} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
+
         <div className="chart-card">
           <h3 className="chart-title">Top Countries by Cases</h3>
-          <div id="country-chart" className="chart-container"></div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={summary?.top_countries?.slice(0, 8) || []} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" tickFormatter={formatNumber} />
+              <YAxis type="category" dataKey="country" width={80} />
+              <Tooltip formatter={(value) => formatNumber(value)} />
+              <Legend />
+              <Bar dataKey="confirmed" fill="#3B82F6" name="Confirmed" />
+              <Bar dataKey="deaths" fill="#EF4444" name="Deaths" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

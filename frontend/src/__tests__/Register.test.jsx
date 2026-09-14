@@ -30,7 +30,8 @@ describe('Register', () => {
     })
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^password/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument()
   })
 
   it('renders login link', async () => {
@@ -70,11 +71,13 @@ describe('Register', () => {
 
     await user.type(screen.getByLabelText(/email/i), 'new@test.com')
     await user.type(screen.getByLabelText(/username/i), 'newuser')
-    await user.type(screen.getByLabelText(/password/i), 'password123')
+    await user.type(screen.getByLabelText(/^password/i), 'Password123')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123')
 
     expect(screen.getByLabelText(/email/i)).toHaveValue('new@test.com')
     expect(screen.getByLabelText(/username/i)).toHaveValue('newuser')
-    expect(screen.getByLabelText(/password/i)).toHaveValue('password123')
+    expect(screen.getByLabelText(/^password/i)).toHaveValue('Password123')
+    expect(screen.getByLabelText(/confirm password/i)).toHaveValue('Password123')
   })
 
   it('calls register on form submit', async () => {
@@ -98,15 +101,16 @@ describe('Register', () => {
 
     await user.type(screen.getByLabelText(/email/i), 'new@test.com')
     await user.type(screen.getByLabelText(/username/i), 'newuser')
-    await user.type(screen.getByLabelText(/password/i), 'password123')
+    await user.type(screen.getByLabelText(/^password/i), 'Password123')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123')
 
     await act(async () => {
       await user.click(screen.getByRole('button', { name: /sign up/i }))
     })
 
-    expect(api.post).toHaveBeenCalledWith('/api/auth/register', {
+    expect(api.post).toHaveBeenCalledWith('/auth/register', {
       email: 'new@test.com',
-      password: 'password123',
+      password: 'Password123',
       username: 'newuser'
     })
   })
@@ -131,7 +135,8 @@ describe('Register', () => {
 
     await user.type(screen.getByLabelText(/email/i), 'existing@test.com')
     await user.type(screen.getByLabelText(/username/i), 'newuser')
-    await user.type(screen.getByLabelText(/password/i), 'password123')
+    await user.type(screen.getByLabelText(/^password/i), 'Password123')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123')
 
     await act(async () => {
       await user.click(screen.getByRole('button', { name: /sign up/i }))

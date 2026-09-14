@@ -1,11 +1,16 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
-import DataEntries from './pages/DataEntries'
-import Categories from './pages/Categories'
 import Layout from './components/Layout'
+
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const DataEntries = lazy(() => import('./pages/DataEntries'))
+const Categories = lazy(() => import('./pages/Categories'))
+const Sources = lazy(() => import('./pages/Sources'))
+const Compare = lazy(() => import('./pages/Compare'))
+const Notifications = lazy(() => import('./pages/Notifications'))
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -19,20 +24,25 @@ function PrivateRoute({ children }) {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/auth/callback" element={<Login />} />
-      <Route path="/" element={
-        <PrivateRoute>
-          <Layout />
-        </PrivateRoute>
-      }>
-        <Route index element={<Dashboard />} />
-        <Route path="data" element={<DataEntries />} />
-        <Route path="categories" element={<Categories />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<div className="loading">Loading...</div>}>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/auth/callback" element={<Login />} />
+        <Route path="/" element={
+          <PrivateRoute>
+            <Layout />
+          </PrivateRoute>
+        }>
+          <Route index element={<Dashboard />} />
+          <Route path="data" element={<DataEntries />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="sources" element={<Sources />} />
+          <Route path="compare" element={<Compare />} />
+          <Route path="notifications" element={<Notifications />} />
+        </Route>
+      </Routes>
+    </Suspense>
   )
 }
 

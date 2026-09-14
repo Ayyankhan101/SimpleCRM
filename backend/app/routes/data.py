@@ -1,10 +1,15 @@
-import json
-import io
 import csv
-from datetime import datetime
-from flask import Blueprint, request, jsonify
-from flask_login import login_required, current_user
-from app.models import db, DataEntry, Category
+import io
+import json
+import logging
+from datetime import date, datetime, timezone
+
+from app import cache
+from app.models import Category, DataEntry, db
+from flask import Blueprint, jsonify, request
+from flask_login import current_user, login_required
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('data', __name__, url_prefix='/api/data')
 
@@ -34,13 +39,13 @@ def get_entries():
     
     if start_date:
         try:
-            query = query.filter(DataEntry.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+            query = query.filter(DataEntry.date >= date.fromisoformat(start_date))
         except ValueError:
             return jsonify({'error': 'Invalid start_date format'}), 400
     
     if end_date:
         try:
-            query = query.filter(DataEntry.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+            query = query.filter(DataEntry.date <= date.fromisoformat(end_date))
         except ValueError:
             return jsonify({'error': 'Invalid end_date format'}), 400
     
@@ -79,12 +84,17 @@ def create_entry():
         return jsonify({'error': 'Title and date are required'}), 400
     
     try:
-        entry_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        entry_date = date.fromisoformat(data['date'])
     except ValueError:
         return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
     
     if data.get('confirmed_cases', 0) < 0 or data.get('deaths', 0) < 0 or data.get('recovered', 0) < 0:
         return jsonify({'error': 'Cases cannot be negative'}), 400
+    
+    if data.get('category_id'):
+        category = Category.query.filter_by(id=data['category_id'], user_id=current_user.id).first()
+        if not category:
+            return jsonify({'error': 'Category not found'}), 400
     
     try:
         entry = DataEntry(
@@ -98,6 +108,9 @@ def create_entry():
             active_cases=data.get('active_cases', 0),
             population=data.get('population', 0),
             values_json=json.dumps(data.get('values', {})) if data.get('values') else None,
+            metrics_json=json.dumps(data.get('metrics', {})) if data.get('metrics') else None,
+            source_id=data.get('source_id'),
+            source_type=data.get('source_type', 'manual'),
             category_id=data.get('category_id'),
             user_id=current_user.id
         )
@@ -106,8 +119,9 @@ def create_entry():
         db.session.commit()
         
         return jsonify(entry.to_dict()), 201
-    except Exception as e:
+    except Exception:
         db.session.rollback()
+        logger.exception("Failed to create entry")
         return jsonify({'error': 'Failed to create entry'}), 500
 
 
@@ -120,10 +134,12 @@ def update_entry(id):
         return jsonify({'error': 'Entry not found'}), 404
     
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
     
     if data.get('date'):
         try:
-            entry.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            entry.date = date.fromisoformat(data['date'])
         except ValueError:
             return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
     
@@ -152,14 +168,17 @@ def update_entry(id):
             entry.population = data['population']
         if 'values' in data:
             entry.values_json = json.dumps(data['values'])
+        if 'metrics' in data:
+            entry.metrics_json = json.dumps(data['metrics'])
         if 'category_id' in data:
             entry.category_id = data['category_id']
         
         db.session.commit()
         
         return jsonify(entry.to_dict())
-    except Exception as e:
+    except Exception:
         db.session.rollback()
+        logger.exception("Failed to update entry")
         return jsonify({'error': 'Failed to update entry'}), 500
 
 
@@ -175,8 +194,9 @@ def delete_entry(id):
         db.session.delete(entry)
         db.session.commit()
         return jsonify({'message': 'Entry deleted successfully'})
-    except Exception as e:
+    except Exception:
         db.session.rollback()
+        logger.exception("Failed to delete entry")
         return jsonify({'error': 'Failed to delete entry'}), 500
 
 
@@ -184,19 +204,27 @@ def delete_entry(id):
 @login_required
 def bulk_delete():
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
     ids = data.get('ids', [])
     
     if not ids:
         return jsonify({'error': 'No IDs provided'}), 400
     
-    deleted = DataEntry.query.filter(
-        DataEntry.id.in_(ids),
-        DataEntry.user_id == current_user.id
-    ).delete(synchronize_session=False)
-    
-    db.session.commit()
-    
-    return jsonify({'message': f'{deleted} entries deleted', 'deleted': deleted})
+    try:
+        deleted = DataEntry.query.filter(
+            DataEntry.id.in_(ids),
+            DataEntry.user_id == current_user.id
+        ).delete(synchronize_session=False)
+        
+        db.session.commit()
+        
+        return jsonify({'message': f'{deleted} entries deleted', 'deleted': deleted})
+    except Exception:
+        db.session.rollback()
+        logger.exception("Failed to delete entries")
+        return jsonify({'error': 'Failed to delete entries'}), 500
 
 
 @bp.route('/import', methods=['POST'])
@@ -220,62 +248,97 @@ def import_csv():
         csv_reader = csv.DictReader(stream)
         
         entries = []
+        errors = []
+        row_num = 1
         for row in csv_reader:
-            entry = DataEntry(
-                title=row.get('title', f"Data - {row.get('date', '')}"),
-                date=datetime.strptime(row.get('date', '2020-01-01'), '%Y-%m-%d').date() if row.get('date') else datetime.now().date(),
-                country=row.get('country'),
-                region=row.get('region'),
-                confirmed_cases=int(row.get('confirmed_cases', 0)) if row.get('confirmed_cases') else 0,
-                deaths=int(row.get('deaths', 0)) if row.get('deaths') else 0,
-                recovered=int(row.get('recovered', 0)) if row.get('recovered') else 0,
-                active_cases=int(row.get('active_cases', 0)) if row.get('active_cases') else 0,
-                population=int(row.get('population', 0)) if row.get('population') else 0,
-                category_id=int(row.get('category_id')) if row.get('category_id') else None,
-                user_id=current_user.id
-            )
-            entries.append(entry)
+            row_num += 1
+            try:
+                entry = DataEntry(
+                    title=row.get('title', f"Data - {row.get('date', '')}"),
+                    date=date.fromisoformat(row.get('date', '2020-01-01')) if row.get('date') else datetime.now(timezone.utc).date(),
+                    country=row.get('country'),
+                    region=row.get('region'),
+                    confirmed_cases=int(row.get('confirmed_cases', 0)) if row.get('confirmed_cases') else 0,
+                    deaths=int(row.get('deaths', 0)) if row.get('deaths') else 0,
+                    recovered=int(row.get('recovered', 0)) if row.get('recovered') else 0,
+                    active_cases=int(row.get('active_cases', 0)) if row.get('active_cases') else 0,
+                    population=int(row.get('population', 0)) if row.get('population') else 0,
+                    category_id=int(row.get('category_id')) if row.get('category_id') else None,
+                    user_id=current_user.id
+                )
+                entries.append(entry)
+            except (ValueError, TypeError) as e:
+                errors.append(f"Row {row_num}: {e!s}")
         
-        db.session.add_all(entries)
-        db.session.commit()
+        if entries:
+            db.session.add_all(entries)
+            db.session.commit()
         
-        return jsonify({
-            'message': f'Successfully imported {len(entries)} entries',
+        result = {
+            'message': f'Imported {len(entries)} entries',
             'count': len(entries)
-        }), 201
+        }
+        if errors:
+            result['errors'] = errors
+            result['error_count'] = len(errors)
         
-    except Exception as e:
-        return jsonify({'error': 'Failed to import CSV. Check format and try again.'}), 400
+        status = 201 if entries else 400
+        return jsonify(result), status
+        
+    except (ValueError, TypeError, csv.Error, UnicodeDecodeError) as e:
+        return jsonify({'error': f'Failed to import CSV: {e}'}), 400
+
+
+@bp.route('/import/preview', methods=['POST'])
+@login_required
+def preview_csv():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    
+    file.seek(0, 2)
+    if file.tell() > 5 * 1024 * 1024:
+        return jsonify({'error': 'File too large (max 5MB)'}), 413
+    file.seek(0)
+    
+    if not file.filename.endswith('.csv'):
+        return jsonify({'error': 'Only CSV files are supported'}), 400
+    
+    try:
+        content = file.stream.read().decode('UTF-8')
+        from app.services.validation import validate_csv_import
+        result = validate_csv_import(content)
+        return jsonify(result)
+    except UnicodeDecodeError as e:
+        return jsonify({'error': f'Failed to read file: {e}'}), 400
 
 
 @bp.route('/export', methods=['GET'])
 @login_required
 def export_csv():
-    entries = DataEntry.query.filter_by(user_id=current_user.id).order_by(DataEntry.date.desc()).all()
+    def generate():
+        yield 'id,title,date,country,region,confirmed_cases,deaths,recovered,active_cases,population,category_id\n'
+        
+        entries = DataEntry.query.filter_by(user_id=current_user.id).order_by(DataEntry.date.desc()).yield_per(1000)
+        
+        for entry in entries:
+            row = [
+                str(entry.id),
+                entry.title,
+                entry.date.isoformat() if entry.date else '',
+                entry.country or '',
+                entry.region or '',
+                str(entry.confirmed_cases),
+                str(entry.deaths),
+                str(entry.recovered),
+                str(entry.active_cases),
+                str(entry.population),
+                str(entry.category_id) if entry.category_id else ''
+            ]
+            yield ','.join(row) + '\n'
     
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=[
-        'id', 'title', 'date', 'country', 'region', 'confirmed_cases',
-        'deaths', 'recovered', 'active_cases', 'population', 'category_id'
-    ])
-    writer.writeheader()
-    
-    for entry in entries:
-        writer.writerow({
-            'id': entry.id,
-            'title': entry.title,
-            'date': entry.date.isoformat() if entry.date else '',
-            'country': entry.country or '',
-            'region': entry.region or '',
-            'confirmed_cases': entry.confirmed_cases,
-            'deaths': entry.deaths,
-            'recovered': entry.recovered,
-            'active_cases': entry.active_cases,
-            'population': entry.population,
-            'category_id': entry.category_id or ''
-        })
-    
-    return output.getvalue(), 200, {
+    return generate(), 200, {
         'Content-Type': 'text/csv',
         'Content-Disposition': 'attachment; filename=data_export.csv'
     }
@@ -283,6 +346,7 @@ def export_csv():
 
 @bp.route('/countries', methods=['GET'])
 @login_required
+@cache.memoize(timeout=60)
 def get_countries():
     countries = db.session.query(DataEntry.country).filter(
         DataEntry.user_id == current_user.id,

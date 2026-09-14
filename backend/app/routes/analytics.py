@@ -1,8 +1,10 @@
+from datetime import date, datetime, timedelta, timezone
+
+from app import cache
+from app.models import Category, DataEntry, db
 from flask import Blueprint, jsonify, request
-from flask_login import login_required, current_user
+from flask_login import current_user, login_required
 from sqlalchemy import func
-from datetime import datetime
-from app.models import db, DataEntry, Category
 
 bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 
@@ -30,13 +32,13 @@ def get_summary():
         query = query.filter(DataEntry.country == country)
     if start_date:
         try:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            start_date = date.fromisoformat(start_date)
         except ValueError:
             return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
         query = query.filter(DataEntry.date >= start_date)
     if end_date:
         try:
-            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            end_date = date.fromisoformat(end_date)
         except ValueError:
             return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
         query = query.filter(DataEntry.date <= end_date)
@@ -112,6 +114,9 @@ def get_trends():
     if country:
         query = query.filter(DataEntry.country == country)
     
+    cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
+    query = query.filter(DataEntry.date >= cutoff_date)
+    
     query = query.group_by(DataEntry.date).order_by(DataEntry.date)
     
     trends = [
@@ -130,6 +135,7 @@ def get_trends():
 
 @bp.route('/category-breakdown', methods=['GET'])
 @login_required
+@cache.memoize(timeout=60)
 def get_category_breakdown():
     breakdown = db.session.query(
         Category.id,
@@ -165,3 +171,101 @@ def get_date_range():
         'earliest': earliest.isoformat() if earliest else None,
         'latest': latest.isoformat() if latest else None
     })
+
+
+@bp.route('/growth-rate', methods=['GET'])
+@login_required
+def get_growth_rate():
+    days = request.args.get('days', 30, type=int)
+    country = request.args.get('country')
+    field = request.args.get('field', 'confirmed_cases')
+    
+    query = DataEntry.query.filter_by(user_id=current_user.id)
+    
+    if country:
+        query = query.filter_by(country=country)
+    
+    cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
+    query = query.filter(DataEntry.date >= cutoff_date)
+    query = query.order_by(DataEntry.date)
+    
+    entries = query.all()
+    
+    from app.services.analytics import calc_growth_rate
+    growth = calc_growth_rate(entries, field)
+    
+    return jsonify({'growth_rate': growth})
+
+
+@bp.route('/forecast', methods=['GET'])
+@login_required
+def get_forecast():
+    days = request.args.get('days', 30, type=int)
+    forecast_days = request.args.get('forecast_days', 7, type=int)
+    country = request.args.get('country')
+    field = request.args.get('field', 'confirmed_cases')
+    
+    query = DataEntry.query.filter_by(user_id=current_user.id)
+    
+    if country:
+        query = query.filter_by(country=country)
+    
+    cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
+    query = query.filter(DataEntry.date >= cutoff_date)
+    query = query.order_by(DataEntry.date)
+    
+    entries = query.all()
+    
+    from app.services.analytics import forecast_trend
+    forecast = forecast_trend(entries, field, forecast_days)
+    
+    return jsonify({'forecast': forecast})
+
+
+@bp.route('/moving-average', methods=['GET'])
+@login_required
+def get_moving_average():
+    days = request.args.get('days', 30, type=int)
+    window = request.args.get('window', 7, type=int)
+    country = request.args.get('country')
+    field = request.args.get('field', 'confirmed_cases')
+    
+    query = DataEntry.query.filter_by(user_id=current_user.id)
+    
+    if country:
+        query = query.filter_by(country=country)
+    
+    cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
+    query = query.filter(DataEntry.date >= cutoff_date)
+    query = query.order_by(DataEntry.date)
+    
+    entries = query.all()
+    
+    from app.services.analytics import calc_moving_average
+    ma = calc_moving_average(entries, field, window)
+    
+    return jsonify({'moving_average': ma})
+
+
+@bp.route('/anomalies', methods=['GET'])
+@login_required
+def get_anomalies():
+    days = request.args.get('days', 90, type=int)
+    threshold = request.args.get('threshold', 3, type=float)
+    country = request.args.get('country')
+    
+    query = DataEntry.query.filter_by(user_id=current_user.id)
+    
+    if country:
+        query = query.filter_by(country=country)
+    
+    cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
+    query = query.filter(DataEntry.date >= cutoff_date)
+    query = query.order_by(DataEntry.date)
+    
+    entries = query.all()
+    
+    from app.services.analytics import detect_anomalies
+    anomalies = detect_anomalies(entries, 'confirmed_cases', threshold)
+    
+    return jsonify({'anomalies': anomalies})

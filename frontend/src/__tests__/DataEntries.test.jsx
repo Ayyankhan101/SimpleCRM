@@ -27,8 +27,8 @@ describe('DataEntries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.get.mockImplementation((url) => {
-      if (url.includes('/api/data')) return Promise.resolve({ data: mockEntries })
-      if (url.includes('/api/categories')) return Promise.resolve({ data: mockCategories })
+      if (url.includes('/data')) return Promise.resolve({ data: mockEntries })
+      if (url.includes('/categories')) return Promise.resolve({ data: mockCategories })
       return Promise.reject(new Error('Unknown URL'))
     })
   })

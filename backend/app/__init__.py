@@ -1,19 +1,31 @@
-import os
 import json
-import pandas as pd
+import os
 from datetime import datetime, timezone
+
+import pandas as pd
+from config import Config
 from flask import Flask, jsonify
+from flask_caching import Cache
 from flask_cors import CORS
-from flask_migrate import Migrate
-from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from config import Config
-from app.models import db, User, Category, DataEntry
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
+
+from app.models import Category, DataEntry, User, db
+from app.models import DataSource as DataSource
+from app.models import NotificationConfig as NotificationConfig
 
 migrate = Migrate()
 login_manager = LoginManager()
-limiter = Limiter(get_remote_address)
+limiter = Limiter(
+    get_remote_address,
+    default_limits=["200 per minute", "50 per second"],
+    storage_uri="memory://"
+)
+csrf = CSRFProtect()
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 30})
 
 
 def create_app(config_class=Config):
@@ -24,6 +36,8 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login_manager.init_app(app)
     limiter.init_app(app)
+    csrf.init_app(app)
+    cache.init_app(app)
     CORS(app,
          origins=["http://localhost:5173", "http://localhost:3000"],
          supports_credentials=True,
@@ -38,11 +52,22 @@ def create_app(config_class=Config):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    from app.routes import auth, data, categories, analytics
+    from app.routes import (
+        analytics,
+        auth,
+        categories,
+        data,
+        notifications,
+        sources,
+        webhooks,
+    )
     app.register_blueprint(auth.bp)
     app.register_blueprint(data.bp)
     app.register_blueprint(categories.bp)
     app.register_blueprint(analytics.bp)
+    app.register_blueprint(sources.bp)
+    app.register_blueprint(webhooks.bp)
+    app.register_blueprint(notifications.bp)
 
     @app.errorhandler(404)
     def not_found(e):
@@ -119,7 +144,7 @@ def seed_demo_data():
     import random
     random.seed(42)
     
-    base_date = datetime(2020, 1, 1)
+    base_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
     entries = []
     
     for i in range(500):

@@ -25,28 +25,38 @@ A full-stack web application for data analytics and visualization, built with Fl
 ## ✨ Features
 
 ### Backend Features
-- **User Authentication**: Secure user registration and login system with Flask-Login
+- **User Authentication**: Secure user registration and login with Flask-Login, session cookies, CSRF protection
 - **RESTful API**: Well-structured API endpoints for data operations
-- **Database Management**: SQLAlchemy ORM with PostgreSQL/SQLite support
-- **Data Analytics**: Pandas-powered data processing and analysis
-- **Data Visualization**: Matplotlib integration for chart generation
+- **Database Management**: SQLAlchemy ORM with SQLite/PostgreSQL support
+- **Data Analytics**: Pandas-powered analysis with growth rates, moving averages, forecasts
+- **Data Validation**: CSV import validation with row-level error reporting
+- **Webhook Integration**: Receive data via HMAC-signed webhooks
+- **Notifications**: Email (SendGrid) and webhook notifications on data updates
+- **Data Sources**: Manage API, CSV, and webhook data sources with sync status
 - **Database Migrations**: Flask-Migrate for schema version control
 - **CORS Support**: Cross-origin resource sharing for frontend integration
+- **Rate Limiting**: Flask-Limiter for API abuse prevention
+- **Caching**: Flask-Caching for performance optimization
 
 ### Frontend Features
 - **Modern UI**: React 18 with Vite for fast development and builds
 - **Routing**: React Router for seamless navigation
-- **HTTP Client**: Axios for API communication
-- **Data Visualization**: D3.js for interactive charts and graphs
+- **Data Visualization**: Recharts for interactive charts (area, bar, pie, line)
+- **Dashboard**: KPI cards, date range selector, trend analysis
+- **Data Sources**: Manage API, CSV, and webhook sources
+- **Country Comparison**: Compare up to 4 countries with line chart overlay
+- **Notifications**: Configure email and webhook alerts
+- **CSV Import**: Preview validation before importing
 - **Responsive Design**: Mobile-friendly interface
 - **Component Architecture**: Modular and reusable components
 
 ### Core Functionality
-- **Dashboard**: Overview of analytics and key metrics
-- **Data Management**: CRUD operations for data entries
+- **Dashboard**: Interactive charts with date range filtering (7/30/90/180 days)
+- **Data Management**: CRUD operations with pagination, search, bulk delete
 - **Categories**: Organize data into customizable categories
-- **Analytics**: Advanced data analysis and reporting
+- **Analytics**: Growth rates, moving averages, trend forecasts, anomaly detection
 - **Multi-region Support**: Track data by country and region
+- **Data Sources**: API, CSV, webhook sources with sync and status tracking
 
 ---
 
@@ -63,8 +73,10 @@ A full-stack web application for data analytics and visualization, built with Fl
 | Flask-Cors | 4.0.0 | CORS support |
 | Flask-Login | 0.6.3 | User session management |
 | Flask-Bcrypt | 1.0.1 | Password hashing |
+| Flask-Limiter | 3.5.0 | Rate limiting |
+| Flask-Caching | 2.1.0 | Response caching |
+| Flask-WTF | 1.2.1 | CSRF protection |
 | Pandas | 2.1.4 | Data analysis |
-| Matplotlib | 3.8.2 | Data visualization |
 | Gunicorn | 21.2.0 | Production WSGI server |
 | psycopg2-binary | 2.9.9 | PostgreSQL adapter |
 
@@ -75,7 +87,7 @@ A full-stack web application for data analytics and visualization, built with Fl
 | Vite | 5.0.8 | Build tool |
 | React Router | 6.21.0 | Routing |
 | Axios | 1.6.2 | HTTP client |
-| D3.js | 7.8.5 | Data visualization |
+| Recharts | 2.10.0 | Data visualization |
 
 ---
 
@@ -141,8 +153,11 @@ cp .env.example .env
 Edit `.env` with your configuration:
 
 ```bash
-# Application secret key (change in production)
+# Application secret key (required, change in production)
 SECRET_KEY=your-secret-key-change-in-production
+
+# JWT secret key (required, separate from SECRET_KEY)
+JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
 
 # Database configuration
 DATABASE_URL=sqlite:///data_analytics.db
@@ -224,11 +239,15 @@ http://localhost:5000/api
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/data` | Get all data entries |
+| GET | `/api/data` | Get all data entries (paginated) |
 | GET | `/api/data/<id>` | Get specific entry |
 | POST | `/api/data` | Create new entry |
 | PUT | `/api/data/<id>` | Update entry |
 | DELETE | `/api/data/<id>` | Delete entry |
+| POST | `/api/data/bulk-delete` | Bulk delete entries |
+| POST | `/api/data/import` | Import CSV |
+| POST | `/api/data/import/preview` | Preview CSV import (validation) |
+| GET | `/api/data/export` | Export CSV |
 
 #### Categories
 
@@ -246,7 +265,39 @@ http://localhost:5000/api
 |--------|----------|-------------|
 | GET | `/api/analytics/summary` | Get analytics summary |
 | GET | `/api/analytics/trends` | Get trend data |
-| GET | `/api/analytics/comparison` | Compare data sets |
+| GET | `/api/analytics/category-breakdown` | Category breakdown |
+| GET | `/api/analytics/date-range` | Data date range |
+| GET | `/api/analytics/growth-rate` | Growth rate calculation |
+| GET | `/api/analytics/forecast` | Trend forecast (linear regression) |
+| GET | `/api/analytics/moving-average` | Moving average |
+| GET | `/api/analytics/anomalies` | Anomaly detection |
+
+#### Data Sources
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/sources` | List data sources |
+| POST | `/api/sources` | Create data source |
+| PUT | `/api/sources/<id>` | Update data source |
+| DELETE | `/api/sources/<id>` | Delete data source |
+| POST | `/api/sources/<id>/sync` | Sync data source |
+
+#### Notifications
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/notifications` | List notifications |
+| POST | `/api/notifications` | Create notification |
+| PUT | `/api/notifications/<id>` | Update notification |
+| DELETE | `/api/notifications/<id>` | Delete notification |
+| POST | `/api/notifications/<id>/test` | Test notification |
+
+#### Webhooks
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/webhooks/<source_id>` | Receive webhook data |
+| GET | `/api/webhooks/<source_id>/recent` | Recent webhook entries |
 
 ### Response Format
 
@@ -276,15 +327,28 @@ Data-Analysis-App/
 ├── backend/                    # Flask backend application
 │   ├── app/
 │   │   ├── __init__.py        # App factory & initialization
-│   │   ├── models.py          # Database models
+│   │   ├── models.py          # Database models (User, Category, DataEntry, DataSource, NotificationConfig)
 │   │   ├── routes/
 │   │   │   ├── auth.py        # Authentication routes
-│   │   │   ├── data.py        # Data entry routes
+│   │   │   ├── data.py        # Data entry routes (CRUD, import, export)
 │   │   │   ├── categories.py  # Category routes
-│   │   │   └── analytics.py   # Analytics routes
-│   │   ├── models/            # Additional models
-│   │   ├── services/          # Business logic services
-│   │   └── utils/             # Utility functions
+│   │   │   ├── analytics.py   # Analytics routes (summary, trends, growth, forecast)
+│   │   │   ├── sources.py     # Data source routes (CRUD, sync)
+│   │   │   ├── webhooks.py    # Webhook receive routes
+│   │   │   └── notifications.py # Notification routes (CRUD, test)
+│   │   ├── services/
+│   │   │   ├── analytics.py   # Growth rate, forecast, moving average, anomaly detection
+│   │   │   ├── validation.py  # CSV validation, duplicate detection
+│   │   │   └── notifications.py # Email (SendGrid) + webhook notifications
+│   │   └── tests/
+│   │       ├── test_auth.py
+│   │       ├── test_data.py
+│   │       ├── test_categories.py
+│   │       ├── test_analytics.py
+│   │       ├── test_sources.py
+│   │       ├── test_webhooks.py
+│   │       ├── test_notifications.py
+│   │       └── test_validation.py
 │   ├── config.py              # Configuration classes
 │   ├── run.py                 # Application entry point
 │   ├── requirements.txt       # Python dependencies
@@ -293,20 +357,25 @@ Data-Analysis-App/
 │
 ├── frontend/                   # React frontend application
 │   ├── src/
-│   │   ├── App.jsx            # Main application component
+│   │   ├── App.jsx            # Main application component with routes
 │   │   ├── main.jsx           # Entry point
 │   │   ├── index.css          # Global styles
 │   │   ├── components/
-│   │   │   └── Layout.jsx     # Layout component
+│   │   │   ├── Layout.jsx     # Sidebar layout with navigation
+│   │   │   └── ImportPreview.jsx # CSV import preview
 │   │   ├── pages/
-│   │   │   ├── Dashboard.jsx  # Dashboard page
-│   │   │   ├── DataEntries.jsx # Data management page
-│   │   │   ├── Categories.jsx # Categories page
+│   │   │   ├── Dashboard.jsx  # Dashboard with Recharts (area, bar, pie)
+│   │   │   ├── DataEntries.jsx # Data management with pagination
+│   │   │   ├── Categories.jsx # Categories management
+│   │   │   ├── Sources.jsx    # Data source management
+│   │   │   ├── Compare.jsx    # Country comparison charts
+│   │   │   ├── Notifications.jsx # Notification configuration
 │   │   │   ├── Login.jsx      # Login page
 │   │   │   └── Register.jsx   # Registration page
 │   │   ├── context/           # React context providers
 │   │   ├── hooks/             # Custom React hooks
-│   │   └── utils/             # Utility functions
+│   │   └── utils/
+│   │       └── api.js         # Axios instance
 │   ├── public/                # Static assets
 │   ├── index.html             # HTML template
 │   ├── vite.config.js         # Vite configuration
@@ -333,6 +402,45 @@ The application automatically seeds demo data on first run:
 - 20 countries across all regions
 - Date range: January 2020 - December 2021
 - Metrics: confirmed cases, deaths, recoveries, active cases
+
+---
+
+## 🧪 Testing
+
+### Backend Tests (64 tests)
+
+```bash
+cd backend
+SECRET_KEY=test JWT_SECRET_KEY=test pytest tests/ -v
+```
+
+Tests cover:
+- Authentication (register, login, logout, password complexity)
+- Data CRUD, bulk delete, CSV import/export
+- Categories CRUD with cascade
+- Analytics (summary, trends, growth rate, forecast, anomalies)
+- Data sources CRUD, sync, webhook receive
+- Notifications CRUD, email/webhook send
+- CSV validation, duplicate detection
+
+### Frontend Tests (59 tests)
+
+```bash
+cd frontend
+npm test
+```
+
+Tests cover:
+- Login/Register forms with validation
+- Dashboard rendering
+- Data entries CRUD
+- Categories management
+
+### Lint
+
+```bash
+ruff check backend/
+```
 
 ---
 
@@ -376,6 +484,7 @@ Ensure these are set in your production environment:
 
 ```bash
 SECRET_KEY=<strong-random-key>
+JWT_SECRET_KEY=<strong-random-key>
 DATABASE_URL=postgresql://user:password@host:port/database
 GOOGLE_CLIENT_ID=<your-google-client-id>
 GOOGLE_CLIENT_SECRET=<your-google-client-secret>
@@ -391,10 +500,10 @@ FRONTEND_URL=https://your-domain.com
 **Backend tests:**
 ```bash
 cd backend
-SECRET_KEY=test-secret pytest tests/ -v
+SECRET_KEY=test JWT_SECRET_KEY=test pytest tests/ -v
 
 # With coverage
-SECRET_KEY=test-secret pytest tests/ -v --cov=app --cov-report=html
+SECRET_KEY=test JWT_SECRET_KEY=test pytest tests/ -v --cov=app --cov-report=html
 ```
 
 **Frontend tests:**
@@ -444,6 +553,7 @@ docker-compose down
 Required for production:
 ```bash
 SECRET_KEY=<strong-random-key>
+JWT_SECRET_KEY=<strong-random-key>
 DATABASE_URL=postgresql://user:password@host:port/database
 FLASK_ENV=production
 FRONTEND_URL=https://your-domain.com
@@ -502,4 +612,4 @@ For issues and questions:
 
 ---
 
-*Last updated: February 2026*
+*Last updated: September 2026*

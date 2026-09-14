@@ -60,7 +60,7 @@ describe('AuthContext', () => {
       await result.current.login('test@test.com', 'password123')
     })
     
-    expect(api.post).toHaveBeenCalledWith('/api/auth/login', { email: 'test@test.com', password: 'password123' })
+    expect(api.post).toHaveBeenCalledWith('/auth/login', { email: 'test@test.com', password: 'password123' })
     expect(result.current.user).toEqual(mockUser)
   })
 
@@ -74,7 +74,7 @@ describe('AuthContext', () => {
       await result.current.register('new@test.com', 'password123', 'newuser')
     })
     
-    expect(api.post).toHaveBeenCalledWith('/api/auth/register', { email: 'new@test.com', password: 'password123', username: 'newuser' })
+    expect(api.post).toHaveBeenCalledWith('/auth/register', { email: 'new@test.com', password: 'password123', username: 'newuser' })
     expect(result.current.user).toEqual(mockUser)
   })
 
@@ -92,7 +92,7 @@ describe('AuthContext', () => {
       await result.current.logout()
     })
     
-    expect(api.post).toHaveBeenCalledWith('/api/auth/logout')
+    expect(api.post).toHaveBeenCalledWith('/auth/logout')
     expect(result.current.user).toBeNull()
   })
 
@@ -106,7 +106,7 @@ describe('AuthContext', () => {
       await result.current.googleLogin('google-id-token')
     })
     
-    expect(api.post).toHaveBeenCalledWith('/api/auth/google/mobile', { id_token: 'google-id-token' })
+    expect(api.post).toHaveBeenCalledWith('/auth/google/mobile', { id_token: 'google-id-token' })
     expect(result.current.user).toEqual(mockUser)
   })
 })

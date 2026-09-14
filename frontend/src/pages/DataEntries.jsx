@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import api from '../utils/api'
 
 export default function DataEntries() {
@@ -9,6 +9,7 @@ export default function DataEntries() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingEntry, setEditingEntry] = useState(null)
@@ -26,13 +27,20 @@ export default function DataEntries() {
   })
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
     fetchData()
-  }, [page, search, filterCategory])
+  }, [page, debouncedSearch, filterCategory])
 
   const fetchData = async () => {
     try {
       const params = new URLSearchParams({ page, per_page: 20 })
-      if (search) params.append('search', search)
+      if (debouncedSearch) params.append('search', debouncedSearch)
       if (filterCategory) params.append('category_id', filterCategory)
 
       const [entriesRes, categoriesRes] = await Promise.all([
@@ -64,7 +72,7 @@ export default function DataEntries() {
       resetForm()
       fetchData()
     } catch (error) {
-      console.error('Error saving entry:', error)
+      alert(error.response?.data?.error || 'Failed to save entry')
     }
   }
 
@@ -91,7 +99,7 @@ export default function DataEntries() {
       await api.delete(`/data/${id}`)
       fetchData()
     } catch (error) {
-      console.error('Error deleting entry:', error)
+      alert(error.response?.data?.error || 'Failed to delete entry')
     }
   }
 
@@ -255,15 +263,36 @@ export default function DataEntries() {
 
         <div className="pagination">
           <button disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</button>
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => (
-            <button
-              key={i + 1}
-              className={page === i + 1 ? 'active' : ''}
-              onClick={() => setPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
+          {(() => {
+            const pages = []
+            let start = Math.max(1, page - 2)
+            let end = Math.min(totalPages, start + 4)
+            if (end - start < 4) start = Math.max(1, end - 4)
+            
+            if (start > 1) {
+              pages.push(<button key={1} onClick={() => setPage(1)}>1</button>)
+              if (start > 2) pages.push(<span key="start-ellipsis">...</span>)
+            }
+            
+            for (let i = start; i <= end; i++) {
+              pages.push(
+                <button
+                  key={i}
+                  className={page === i ? 'active' : ''}
+                  onClick={() => setPage(i)}
+                >
+                  {i}
+                </button>
+              )
+            }
+            
+            if (end < totalPages) {
+              if (end < totalPages - 1) pages.push(<span key="end-ellipsis">...</span>)
+              pages.push(<button key={totalPages} onClick={() => setPage(totalPages)}>{totalPages}</button>)
+            }
+            
+            return pages
+          })()}
           <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
         </div>
       </div>
@@ -361,6 +390,17 @@ export default function DataEntries() {
                     onChange={(e) => setFormData({ ...formData, recovered: parseInt(e.target.value) || 0 })}
                   />
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Active Cases</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.active_cases}
+                    onChange={(e) => setFormData({ ...formData, active_cases: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Population</label>
                   <input
