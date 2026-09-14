@@ -1,10 +1,10 @@
 from datetime import timedelta
 
 
-def calc_growth_rate(entries, field='confirmed_cases'):
+def calc_growth_rate(entries, field='metric_a'):
     if len(entries) < 2:
         return []
-    
+
     result = []
     for i in range(1, len(entries)):
         prev = getattr(entries[i - 1], field, 0) or 0
@@ -21,10 +21,10 @@ def calc_growth_rate(entries, field='confirmed_cases'):
     return result
 
 
-def calc_moving_average(entries, field='confirmed_cases', window=7):
+def calc_moving_average(entries, field='metric_a', window=7):
     if len(entries) < window:
         return []
-    
+
     result = []
     for i in range(window - 1, len(entries)):
         window_data = entries[i - window + 1:i + 1]
@@ -37,26 +37,26 @@ def calc_moving_average(entries, field='confirmed_cases', window=7):
     return result
 
 
-def forecast_trend(entries, field='confirmed_cases', days_ahead=7):
+def forecast_trend(entries, field='metric_a', days_ahead=7):
     if len(entries) < 2:
         return []
-    
+
     x_values = list(range(len(entries)))
     y_values = [getattr(e, field, 0) or 0 for e in entries]
-    
+
     n = len(x_values)
     sum_x = sum(x_values)
     sum_y = sum(y_values)
     sum_xy = sum(x * y for x, y in zip(x_values, y_values))
     sum_x2 = sum(x * x for x in x_values)
-    
+
     denom = n * sum_x2 - sum_x * sum_x
     if denom == 0:
         return []
-    
+
     slope = (n * sum_xy - sum_x * sum_y) / denom
     intercept = (sum_y - slope * sum_x) / n
-    
+
     last_date = entries[-1].date
     result = []
     for i in range(1, days_ahead + 1):
@@ -69,18 +69,18 @@ def forecast_trend(entries, field='confirmed_cases', days_ahead=7):
     return result
 
 
-def detect_anomalies(entries, field='confirmed_cases', threshold=3):
+def detect_anomalies(entries, field='metric_a', threshold=3):
     if len(entries) < 3:
         return []
-    
+
     values = [getattr(e, field, 0) or 0 for e in entries]
     mean = sum(values) / len(values)
     variance = sum((v - mean) ** 2 for v in values) / len(values)
     std_dev = variance ** 0.5
-    
+
     if std_dev == 0:
         return []
-    
+
     anomalies = []
     for entry in entries:
         val = getattr(entry, field, 0) or 0

@@ -15,21 +15,21 @@ def get_summary():
     category_id = request.args.get('category_id', type=int)
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    country = request.args.get('country')
-    
+    group_name = request.args.get('group_name') or request.args.get('country')
+
     query = db.session.query(
         func.count(DataEntry.id),
-        func.coalesce(func.sum(DataEntry.confirmed_cases), 0),
-        func.coalesce(func.sum(DataEntry.deaths), 0),
-        func.coalesce(func.sum(DataEntry.recovered), 0),
-        func.coalesce(func.sum(DataEntry.active_cases), 0),
-        func.coalesce(func.sum(DataEntry.population), 0)
+        func.coalesce(func.sum(DataEntry.metric_a), 0),
+        func.coalesce(func.sum(DataEntry.metric_b), 0),
+        func.coalesce(func.sum(DataEntry.metric_c), 0),
+        func.coalesce(func.sum(DataEntry.metric_d), 0),
+        func.coalesce(func.sum(DataEntry.metric_e), 0)
     ).filter(DataEntry.user_id == current_user.id)
-    
+
     if category_id:
         query = query.filter(DataEntry.category_id == category_id)
-    if country:
-        query = query.filter(DataEntry.country == country)
+    if group_name:
+        query = query.filter(DataEntry.group_name == group_name)
     if start_date:
         try:
             start_date = date.fromisoformat(start_date)
@@ -42,55 +42,55 @@ def get_summary():
         except ValueError:
             return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
         query = query.filter(DataEntry.date <= end_date)
-    
+
     result = query.first()
     total_entries = result[0] or 0
-    total_confirmed = int(result[1] or 0)
-    total_deaths = int(result[2] or 0)
-    total_recovered = int(result[3] or 0)
-    total_active = int(result[4] or 0)
-    total_population = int(result[5] or 0)
-    
-    countries = db.session.query(
-        DataEntry.country,
-        func.sum(DataEntry.confirmed_cases).label('confirmed'),
-        func.sum(DataEntry.deaths).label('deaths')
+    total_metric_a = int(result[1] or 0)
+    total_metric_b = int(result[2] or 0)
+    total_metric_c = int(result[3] or 0)
+    total_metric_d = int(result[4] or 0)
+    total_metric_e = int(result[5] or 0)
+
+    groups = db.session.query(
+        DataEntry.group_name,
+        func.sum(DataEntry.metric_a).label('metric_a'),
+        func.sum(DataEntry.metric_b).label('metric_b')
     ).filter(DataEntry.user_id == current_user.id)
-    
+
     if category_id:
-        countries = countries.filter(DataEntry.category_id == category_id)
+        groups = groups.filter(DataEntry.category_id == category_id)
     if start_date:
-        countries = countries.filter(DataEntry.date >= start_date)
+        groups = groups.filter(DataEntry.date >= start_date)
     if end_date:
-        countries = countries.filter(DataEntry.date <= end_date)
-    if country:
-        countries = countries.filter(DataEntry.country == country)
-    
-    countries = countries.group_by(DataEntry.country).all()
-    
-    country_data = [
+        groups = groups.filter(DataEntry.date <= end_date)
+    if group_name:
+        groups = groups.filter(DataEntry.group_name == group_name)
+
+    groups = groups.group_by(DataEntry.group_name).all()
+
+    group_data = [
         {
-            'country': c[0],
-            'confirmed': int(c[1]) if c[1] else 0,
-            'deaths': int(c[2]) if c[2] else 0
+            'group_name': g[0],
+            'metric_a': int(g[1]) if g[1] else 0,
+            'metric_b': int(g[2]) if g[2] else 0
         }
-        for c in countries if c[0]
+        for g in groups if g[0]
     ]
-    
-    country_data.sort(key=lambda x: x['confirmed'], reverse=True)
-    top_countries = country_data[:10]
-    
+
+    group_data.sort(key=lambda x: x['metric_a'], reverse=True)
+    top_groups = group_data[:10]
+
     return jsonify({
         'total_entries': total_entries,
-        'total_confirmed': total_confirmed,
-        'total_deaths': total_deaths,
-        'total_recovered': total_recovered,
-        'total_active': total_active,
-        'total_population': total_population,
-        'mortality_rate': round((total_deaths / total_confirmed * 100), 2) if total_confirmed > 0 else 0,
-        'recovery_rate': round((total_recovered / total_confirmed * 100), 2) if total_confirmed > 0 else 0,
-        'top_countries': top_countries,
-        'countries_count': len(country_data)
+        'total_metric_a': total_metric_a,
+        'total_metric_b': total_metric_b,
+        'total_metric_c': total_metric_c,
+        'total_metric_d': total_metric_d,
+        'total_metric_e': total_metric_e,
+        'rate_b': round((total_metric_b / total_metric_a * 100), 2) if total_metric_a > 0 else 0,
+        'rate_c': round((total_metric_c / total_metric_a * 100), 2) if total_metric_a > 0 else 0,
+        'top_groups': top_groups,
+        'groups_count': len(group_data)
     })
 
 
@@ -99,37 +99,37 @@ def get_summary():
 def get_trends():
     days = request.args.get('days', 30, type=int)
     category_id = request.args.get('category_id', type=int)
-    country = request.args.get('country')
-    
+    group_name = request.args.get('group_name') or request.args.get('country')
+
     query = db.session.query(
         DataEntry.date,
-        func.sum(DataEntry.confirmed_cases).label('confirmed'),
-        func.sum(DataEntry.deaths).label('deaths'),
-        func.sum(DataEntry.recovered).label('recovered'),
-        func.sum(DataEntry.active_cases).label('active')
+        func.sum(DataEntry.metric_a).label('metric_a'),
+        func.sum(DataEntry.metric_b).label('metric_b'),
+        func.sum(DataEntry.metric_c).label('metric_c'),
+        func.sum(DataEntry.metric_d).label('metric_d')
     ).filter(DataEntry.user_id == current_user.id)
-    
+
     if category_id:
         query = query.filter(DataEntry.category_id == category_id)
-    if country:
-        query = query.filter(DataEntry.country == country)
-    
+    if group_name:
+        query = query.filter(DataEntry.group_name == group_name)
+
     cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
     query = query.filter(DataEntry.date >= cutoff_date)
-    
+
     query = query.group_by(DataEntry.date).order_by(DataEntry.date)
-    
+
     trends = [
         {
             'date': r.date.isoformat() if r.date else None,
-            'confirmed': int(r.confirmed) if r.confirmed else 0,
-            'deaths': int(r.deaths) if r.deaths else 0,
-            'recovered': int(r.recovered) if r.recovered else 0,
-            'active': int(r.active) if r.active else 0
+            'metric_a': int(r.metric_a) if r.metric_a else 0,
+            'metric_b': int(r.metric_b) if r.metric_b else 0,
+            'metric_c': int(r.metric_c) if r.metric_c else 0,
+            'metric_d': int(r.metric_d) if r.metric_d else 0
         }
         for r in query.all()
     ]
-    
+
     return jsonify({'trends': trends})
 
 
@@ -141,12 +141,12 @@ def get_category_breakdown():
         Category.id,
         Category.name,
         Category.color,
-        func.coalesce(func.sum(DataEntry.confirmed_cases), 0).label('total'),
+        func.coalesce(func.sum(DataEntry.metric_a), 0).label('total'),
         func.count(DataEntry.id).label('count')
     ).outerjoin(DataEntry, (Category.id == DataEntry.category_id) & (DataEntry.user_id == current_user.id)
     ).filter(Category.user_id == current_user.id
     ).group_by(Category.id).all()
-    
+
     return jsonify([{
         'category_id': b[0],
         'category_name': b[1],
@@ -162,11 +162,11 @@ def get_date_range():
     earliest = db.session.query(func.min(DataEntry.date)).filter(
         DataEntry.user_id == current_user.id
     ).scalar()
-    
+
     latest = db.session.query(func.max(DataEntry.date)).filter(
         DataEntry.user_id == current_user.id
     ).scalar()
-    
+
     return jsonify({
         'earliest': earliest.isoformat() if earliest else None,
         'latest': latest.isoformat() if latest else None
@@ -177,23 +177,23 @@ def get_date_range():
 @login_required
 def get_growth_rate():
     days = request.args.get('days', 30, type=int)
-    country = request.args.get('country')
-    field = request.args.get('field', 'confirmed_cases')
-    
+    group_name = request.args.get('group_name') or request.args.get('country')
+    field = request.args.get('field', 'metric_a')
+
     query = DataEntry.query.filter_by(user_id=current_user.id)
-    
-    if country:
-        query = query.filter_by(country=country)
-    
+
+    if group_name:
+        query = query.filter_by(group_name=group_name)
+
     cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
     query = query.filter(DataEntry.date >= cutoff_date)
     query = query.order_by(DataEntry.date)
-    
+
     entries = query.all()
-    
+
     from app.services.analytics import calc_growth_rate
     growth = calc_growth_rate(entries, field)
-    
+
     return jsonify({'growth_rate': growth})
 
 
@@ -202,23 +202,23 @@ def get_growth_rate():
 def get_forecast():
     days = request.args.get('days', 30, type=int)
     forecast_days = request.args.get('forecast_days', 7, type=int)
-    country = request.args.get('country')
-    field = request.args.get('field', 'confirmed_cases')
-    
+    group_name = request.args.get('group_name') or request.args.get('country')
+    field = request.args.get('field', 'metric_a')
+
     query = DataEntry.query.filter_by(user_id=current_user.id)
-    
-    if country:
-        query = query.filter_by(country=country)
-    
+
+    if group_name:
+        query = query.filter_by(group_name=group_name)
+
     cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
     query = query.filter(DataEntry.date >= cutoff_date)
     query = query.order_by(DataEntry.date)
-    
+
     entries = query.all()
-    
+
     from app.services.analytics import forecast_trend
     forecast = forecast_trend(entries, field, forecast_days)
-    
+
     return jsonify({'forecast': forecast})
 
 
@@ -227,23 +227,23 @@ def get_forecast():
 def get_moving_average():
     days = request.args.get('days', 30, type=int)
     window = request.args.get('window', 7, type=int)
-    country = request.args.get('country')
-    field = request.args.get('field', 'confirmed_cases')
-    
+    group_name = request.args.get('group_name') or request.args.get('country')
+    field = request.args.get('field', 'metric_a')
+
     query = DataEntry.query.filter_by(user_id=current_user.id)
-    
-    if country:
-        query = query.filter_by(country=country)
-    
+
+    if group_name:
+        query = query.filter_by(group_name=group_name)
+
     cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
     query = query.filter(DataEntry.date >= cutoff_date)
     query = query.order_by(DataEntry.date)
-    
+
     entries = query.all()
-    
+
     from app.services.analytics import calc_moving_average
     ma = calc_moving_average(entries, field, window)
-    
+
     return jsonify({'moving_average': ma})
 
 
@@ -252,20 +252,20 @@ def get_moving_average():
 def get_anomalies():
     days = request.args.get('days', 90, type=int)
     threshold = request.args.get('threshold', 3, type=float)
-    country = request.args.get('country')
-    
+    group_name = request.args.get('group_name') or request.args.get('country')
+
     query = DataEntry.query.filter_by(user_id=current_user.id)
-    
-    if country:
-        query = query.filter_by(country=country)
-    
+
+    if group_name:
+        query = query.filter_by(group_name=group_name)
+
     cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=days)
     query = query.filter(DataEntry.date >= cutoff_date)
     query = query.order_by(DataEntry.date)
-    
+
     entries = query.all()
-    
+
     from app.services.analytics import detect_anomalies
-    anomalies = detect_anomalies(entries, 'confirmed_cases', threshold)
-    
+    anomalies = detect_anomalies(entries, 'metric_a', threshold)
+
     return jsonify({'anomalies': anomalies})

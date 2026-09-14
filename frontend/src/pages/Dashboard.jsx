@@ -90,8 +90,8 @@ export default function Dashboard() {
           <div className="stat-value primary">{formatNumber(summary?.total_entries)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Confirmed Cases</div>
-          <div className="stat-value danger">{formatNumber(summary?.total_confirmed)}</div>
+          <div className="stat-label">Metric A</div>
+          <div className="stat-value danger">{formatNumber(summary?.total_metric_a)}</div>
           {calcTrend('confirmed') && (
             <div className={`stat-trend ${parseFloat(calcTrend('confirmed')) > 0 ? 'up' : 'down'}`}>
               {parseFloat(calcTrend('confirmed')) > 0 ? '↑' : '↓'} {Math.abs(calcTrend('confirmed'))}%
@@ -99,8 +99,8 @@ export default function Dashboard() {
           )}
         </div>
         <div className="stat-card">
-          <div className="stat-label">Deaths</div>
-          <div className="stat-value">{formatNumber(summary?.total_deaths)}</div>
+          <div className="stat-label">Metric B</div>
+          <div className="stat-value">{formatNumber(summary?.total_metric_b)}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Recovery Rate</div>
@@ -112,7 +112,7 @@ export default function Dashboard() {
         </div>
         <div className="stat-card">
           <div className="stat-label">Countries</div>
-          <div className="stat-value">{summary?.countries_count || 0}</div>
+          <div className="stat-value">{summary?.groups_count || 0}</div>
         </div>
       </div>
 
@@ -127,8 +127,8 @@ export default function Dashboard() {
               <Tooltip formatter={(value) => formatNumber(value)} />
               <Legend />
               <Area type="monotone" dataKey="confirmed" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} name="Confirmed" />
-              <Area type="monotone" dataKey="deaths" stackId="2" stroke="#EF4444" fill="#EF4444" fillOpacity={0.3} name="Deaths" />
-              <Area type="monotone" dataKey="recovered" stackId="3" stroke="#10B981" fill="#10B981" fillOpacity={0.3} name="Recovered" />
+              <Area type="monotone" dataKey="metric_b" stackId="2" stroke="#EF4444" fill="#EF4444" fillOpacity={0.3} name="Metric B" />
+              <Area type="monotone" dataKey="metric_c" stackId="3" stroke="#10B981" fill="#10B981" fillOpacity={0.3} name="Metric C" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -165,7 +165,7 @@ export default function Dashboard() {
               <Tooltip formatter={(value) => formatNumber(value)} />
               <Legend />
               <Bar dataKey="confirmed" fill="#3B82F6" name="Confirmed" />
-              <Bar dataKey="deaths" fill="#EF4444" name="Deaths" />
+              <Bar dataKey="metric_b" fill="#EF4444" name="Metric B" />
             </BarChart>
           </ResponsiveContainer>
         </div>

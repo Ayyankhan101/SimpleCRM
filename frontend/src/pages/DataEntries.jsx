@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../utils/api'
+import ImportPreview from '../components/ImportPreview'
 
 export default function DataEntries() {
   const [entries, setEntries] = useState([])
@@ -13,16 +14,17 @@ export default function DataEntries() {
   const [filterCategory, setFilterCategory] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingEntry, setEditingEntry] = useState(null)
+  const [importFile, setImportFile] = useState(null)
   const [formData, setFormData] = useState({
     title: '',
     date: '',
     country: '',
     region: '',
-    confirmed_cases: 0,
-    deaths: 0,
-    recovered: 0,
-    active_cases: 0,
-    population: 0,
+    metric_a: 0,
+    metric_b: 0,
+    metric_c: 0,
+    metric_d: 0,
+    metric_e: 0,
     category_id: ''
   })
 
@@ -81,13 +83,13 @@ export default function DataEntries() {
     setFormData({
       title: entry.title,
       date: entry.date,
-      country: entry.country || '',
-      region: entry.region || '',
-      confirmed_cases: entry.confirmed_cases,
-      deaths: entry.deaths,
-      recovered: entry.recovered,
-      active_cases: entry.active_cases,
-      population: entry.population,
+      country: entry.group_name || '',
+      region: entry.subgroup_name || '',
+      metric_a: entry.metric_a,
+      metric_b: entry.metric_b,
+      metric_c: entry.metric_c,
+      metric_d: entry.metric_d,
+      metric_e: entry.metric_e,
       category_id: entry.category_id || ''
     })
     setShowModal(true)
@@ -109,11 +111,11 @@ export default function DataEntries() {
       date: '',
       country: '',
       region: '',
-      confirmed_cases: 0,
-      deaths: 0,
-      recovered: 0,
-      active_cases: 0,
-      population: 0,
+      metric_a: 0,
+      metric_b: 0,
+      metric_c: 0,
+      metric_d: 0,
+      metric_e: 0,
       category_id: ''
     })
   }
@@ -136,19 +138,8 @@ export default function DataEntries() {
   const handleImport = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      await api.post('/data/import', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      fetchData()
-      alert('Data imported successfully!')
-    } catch (error) {
-      alert('Error importing data: ' + (error.response?.data?.error || error.message))
-    }
+    setImportFile(file)
+    e.target.value = ''
   }
 
   if (loading) {
@@ -161,6 +152,16 @@ export default function DataEntries() {
         <p>{error}</p>
         <button onClick={fetchData}>Retry</button>
       </div>
+    )
+  }
+
+  if (importFile) {
+    return (
+      <ImportPreview
+        file={importFile}
+        onImport={() => { setImportFile(null); fetchData() }}
+        onCancel={() => setImportFile(null)}
+      />
     )
   }
 
@@ -220,10 +221,10 @@ export default function DataEntries() {
               <tr key={entry.id}>
                 <td>{entry.title}</td>
                 <td>{entry.date}</td>
-                <td>{entry.country}</td>
-                <td>{entry.confirmed_cases?.toLocaleString()}</td>
-                <td>{entry.deaths?.toLocaleString()}</td>
-                <td>{entry.recovered?.toLocaleString()}</td>
+                <td>{entry.group_name}</td>
+                <td>{entry.metric_a?.toLocaleString()}</td>
+                <td>{entry.metric_b?.toLocaleString()}</td>
+                <td>{entry.metric_c?.toLocaleString()}</td>
                 <td>
                   <span style={{ 
                     background: entry.category?.color || '#ccc',
@@ -362,52 +363,52 @@ export default function DataEntries() {
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Confirmed Cases</label>
+                  <label className="form-label">Metric A</label>
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.confirmed_cases}
-                    onChange={(e) => setFormData({ ...formData, confirmed_cases: parseInt(e.target.value) || 0 })}
+                    value={formData.metric_a}
+                    onChange={(e) => setFormData({ ...formData, metric_a: parseInt(e.target.value) || 0 })}
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Deaths</label>
+                  <label className="form-label">Metric B</label>
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.deaths}
-                    onChange={(e) => setFormData({ ...formData, deaths: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Recovered</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={formData.recovered}
-                    onChange={(e) => setFormData({ ...formData, recovered: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Active Cases</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={formData.active_cases}
-                    onChange={(e) => setFormData({ ...formData, active_cases: parseInt(e.target.value) || 0 })}
+                    value={formData.metric_b}
+                    onChange={(e) => setFormData({ ...formData, metric_b: parseInt(e.target.value) || 0 })}
                   />
                 </div>
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Population</label>
+                  <label className="form-label">Metric C</label>
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.population}
-                    onChange={(e) => setFormData({ ...formData, population: parseInt(e.target.value) || 0 })}
+                    value={formData.metric_c}
+                    onChange={(e) => setFormData({ ...formData, metric_c: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Metric D</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.metric_d}
+                    onChange={(e) => setFormData({ ...formData, metric_d: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Metric E</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.metric_e}
+                    onChange={(e) => setFormData({ ...formData, metric_e: parseInt(e.target.value) || 0 })}
                   />
                 </div>
               </div>
