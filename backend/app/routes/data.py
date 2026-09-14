@@ -4,8 +4,9 @@ import json
 import logging
 from datetime import date, datetime, timezone
 
-from app import cache
+from app import cache, limiter
 from app.models import Category, DataEntry, db
+from app.services.security import sanitize_dict, sanitize_string
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
@@ -77,11 +78,14 @@ def get_entry(id):
 
 @bp.route('', methods=['POST'])
 @login_required
+@limiter.limit("30/minute")
 def create_entry():
     data = request.get_json()
 
     if not data or not data.get('title') or not data.get('date'):
         return jsonify({'error': 'Title and date are required'}), 400
+
+    data = sanitize_dict(data)
 
     try:
         entry_date = date.fromisoformat(data['date'])
@@ -140,6 +144,7 @@ def create_entry():
 
 @bp.route('/<int:id>', methods=['PUT'])
 @login_required
+@limiter.limit("30/minute")
 def update_entry(id):
     entry = DataEntry.query.filter_by(id=id, user_id=current_user.id).first()
 
@@ -199,6 +204,7 @@ def update_entry(id):
 
 @bp.route('/<int:id>', methods=['DELETE'])
 @login_required
+@limiter.limit("20/minute")
 def delete_entry(id):
     entry = DataEntry.query.filter_by(id=id, user_id=current_user.id).first()
 
@@ -217,6 +223,7 @@ def delete_entry(id):
 
 @bp.route('/bulk', methods=['DELETE'])
 @login_required
+@limiter.limit("10/minute")
 def bulk_delete():
     data = request.get_json()
     if not data:
@@ -244,6 +251,7 @@ def bulk_delete():
 
 @bp.route('/import', methods=['POST'])
 @login_required
+@limiter.limit("5/minute")
 def import_csv():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400

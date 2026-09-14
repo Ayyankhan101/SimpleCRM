@@ -153,15 +153,15 @@ class TestInputSanitization:
             'date': '2024-01-01'
         })
         assert resp.status_code == 201
-        # Title stored as-is (backend is API, not HTML renderer)
-        assert '<script>' in resp.json['title']
+        assert '<script>' not in resp.json['title']
+        assert 'alert' in resp.json['title']
 
     def test_xss_in_category_name(self, auth_client):
         resp = auth_client.post('/api/categories', json={
             'name': '<img src=x onerror=alert(1)>'
         })
         assert resp.status_code == 201
-        assert '<img' in resp.json['name']
+        assert '<img' not in resp.json['name']
 
     def test_very_long_title(self, auth_client):
         resp = auth_client.post('/api/data', json={
