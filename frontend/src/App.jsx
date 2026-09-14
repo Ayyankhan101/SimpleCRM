@@ -11,6 +11,9 @@ const Categories = lazy(() => import('./pages/Categories'))
 const Sources = lazy(() => import('./pages/Sources'))
 const Compare = lazy(() => import('./pages/Compare'))
 const Notifications = lazy(() => import('./pages/Notifications'))
+const Contacts = lazy(() => import('./pages/Contacts'))
+const Deals = lazy(() => import('./pages/Deals'))
+const Activities = lazy(() => import('./pages/Activities'))
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -40,6 +43,9 @@ function App() {
           <Route path="sources" element={<Sources />} />
           <Route path="compare" element={<Compare />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="contacts" element={<Contacts />} />
+          <Route path="deals" element={<Deals />} />
+          <Route path="activities" element={<Activities />} />
         </Route>
       </Routes>
     </Suspense>
