@@ -8,6 +8,7 @@ from app.schemas import ActivitySchema
 from app.api_v1 import activities_blp
 
 
+@activities_blp.route('/', methods=['GET'])
 @activities_blp.doc(security=[{'Bearer': []}])
 @activities_blp.response(200, ActivitySchema(many=True))
 @login_required
@@ -23,6 +24,7 @@ def list_activities():
     return query.order_by(Activity.created_at.desc()).all()
 
 
+@activities_blp.route('/', methods=['POST'])
 @activities_blp.arguments(ActivitySchema(only=('type', 'subject', 'body', 'outcome', 'deal_id', 'contact_id', 'due_date')))
 @activities_blp.response(201, ActivitySchema)
 @activities_blp.doc(security=[{'Bearer': []}])
@@ -45,6 +47,7 @@ def create_activity(data):
     return activity
 
 
+@activities_blp.route('/<int:activity_id>', methods=['PUT'])
 @activities_blp.doc(security=[{'Bearer': []}])
 @activities_blp.response(204)
 @login_required

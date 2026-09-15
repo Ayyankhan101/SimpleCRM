@@ -8,6 +8,7 @@ from app.schemas import ContactSchema
 from app.api_v1 import contacts_blp
 
 
+@contacts_blp.route('/', methods=['GET'])
 @contacts_blp.doc(security=[{'Bearer': []}])
 @contacts_blp.response(200, ContactSchema(many=True))
 @login_required
@@ -23,6 +24,7 @@ def list_contacts():
     return query.order_by(Contact.created_at.desc()).all()
 
 
+@contacts_blp.route('/', methods=['POST'])
 @contacts_blp.arguments(ContactSchema(only=('first_name', 'last_name', 'email', 'phone', 'company', 'role', 'stage', 'score', 'notes')))
 @contacts_blp.response(201, ContactSchema)
 @contacts_blp.doc(security=[{'Bearer': []}])
@@ -47,11 +49,12 @@ def create_contact(data):
     return contact
 
 
+@contacts_blp.route('/<int:contact_id>', methods=['PUT'])
 @contacts_blp.doc(security=[{'Bearer': []}])
-@contacts_blp.arguments(ContactSchema(only=('first_name', 'last_name', 'email', 'phone', 'company', 'role', 'stage', 'score', 'notes')))
+@contacts_blp.arguments(ContactSchema(only=('first_name', 'last_name', 'email', 'phone', 'company', 'role', 'stage', 'score', 'notes'), partial=True))
 @contacts_blp.response(200, ContactSchema)
 @login_required
-def update_contact(contact_id, data):
+def update_contact(data, contact_id):
     """Update an existing contact."""
     contact = Contact.query.filter_by(id=contact_id, owner_id=current_user.id, deleted_at=None).first_or_404()
     for key, value in data.items():
@@ -62,6 +65,7 @@ def update_contact(contact_id, data):
     return contact
 
 
+@contacts_blp.route('/<int:contact_id>', methods=['DELETE'])
 @contacts_blp.doc(security=[{'Bearer': []}])
 @contacts_blp.response(204)
 @login_required
