@@ -44,7 +44,6 @@ def create_app(config_class=Config):
     api.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    limiter.init_app(app)
     csrf.init_app(app)
     cache.init_app(app)
     CORS(app,
@@ -86,6 +85,12 @@ def create_app(config_class=Config):
     api.register_blueprint(contacts_blp)
     api.register_blueprint(deals_blp)
     api.register_blueprint(activities_blp)
+
+    # Exempt ALL API blueprints from CSRF — REST API uses SameSite cookies
+    for bp_obj in [auth.bp, data.bp, categories.bp, analytics.bp,
+                   sources.bp, webhooks.bp, notifications.bp, health.bp,
+                   contacts_blp, deals_blp, activities_blp]:
+        csrf.exempt(bp_obj)
 
     @app.errorhandler(404)
     def not_found(e):

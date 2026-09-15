@@ -8,6 +8,7 @@ venv/
 
 # Node
 node_modules/
+dist/
 
 # DB
 *.db
@@ -18,6 +19,16 @@ graphify-out/
 htmlcov/
 .coverage
 coverage.xml
+
+# Docker
+docker-compose.override.yml
+*.tar
+
+# Test artifacts
+test_cookies.txt
+*.log
+.pytest_cache/
+htmlcov/
 
 # IDE
 .vscode/

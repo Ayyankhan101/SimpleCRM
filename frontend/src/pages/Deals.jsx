@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../utils/api'
 
-const STAGES = ['discovery', 'qualification', 'proposal', 'negotiation', 'closed_won', 'closed_lost']
+const STAGES = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']
 
 export default function Deals() {
   const [deals, setDeals] = useState([])
@@ -11,14 +11,15 @@ export default function Deals() {
   const [editingDeal, setEditingDeal] = useState(null)
   const [filterStage, setFilterStage] = useState('')
   const [formData, setFormData] = useState({
-    title: '', value: '', stage: 'discovery', contact_id: '', notes: ''
+    title: '', value: '', stage: 'lead', contact_id: '', notes: ''
   })
 
   const fetchDeals = useCallback(async () => {
     try {
+      setError(null)
       const params = new URLSearchParams()
       if (filterStage) params.append('stage', filterStage)
-      const res = await api.get(`/api/v1/deals?${params}`)
+      const res = await api.get(`/v1/deals`, { params })
       setDeals(res.data)
     } catch (err) {
       setError('Failed to load deals')
@@ -32,11 +33,17 @@ export default function Deals() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const payload = { ...formData, value: parseFloat(formData.value) || 0 }
+      const payload = {
+        title: formData.title,
+        value: parseFloat(formData.value) || 0,
+        stage: formData.stage || 'lead',
+        notes: formData.notes || null,
+        contact_id: formData.contact_id ? parseInt(formData.contact_id) : null
+      }
       if (editingDeal) {
-        await api.put(`/api/v1/deals/${editingDeal.id}`, payload)
+        await api.put(`/v1/deals/${editingDeal.id}`, payload)
       } else {
-        await api.post('/api/v1/deals', payload)
+        await api.post('/v1/deals', payload)
       }
       setShowModal(false)
       setEditingDeal(null)
@@ -50,7 +57,7 @@ export default function Deals() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this deal?')) return
     try {
-      await api.delete(`/api/v1/deals/${id}`)
+      await api.delete(`/v1/deals/${id}`)
       fetchDeals()
     } catch (err) {
       setError('Failed to delete deal')
@@ -70,7 +77,7 @@ export default function Deals() {
   }
 
   const resetForm = () => {
-    setFormData({ title: '', value: '', stage: 'discovery', contact_id: '', notes: '' })
+    setFormData({ title: '', value: '', stage: 'lead', contact_id: '', notes: '' })
   }
 
   const stageColor = (stage) => {

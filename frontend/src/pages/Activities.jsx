@@ -16,9 +16,8 @@ export default function Activities() {
 
   const fetchActivities = useCallback(async () => {
     try {
-      const params = new URLSearchParams()
-      if (filterType) params.append('type', filterType)
-      const res = await api.get(`/api/v1/activities?${params}`)
+      setError(null)
+      const res = await api.get('/v1/activities', { params: filterType ? { type: filterType } : {} })
       setActivities(res.data)
     } catch (err) {
       setError('Failed to load activities')
@@ -32,13 +31,17 @@ export default function Activities() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const payload = { ...formData }
-      if (payload.contact_id) payload.contact_id = parseInt(payload.contact_id)
-      if (payload.deal_id) payload.deal_id = parseInt(payload.deal_id)
+      const payload = {
+        type: formData.type,
+        subject: formData.subject,
+        body: formData.body || null,
+        contact_id: formData.contact_id ? parseInt(formData.contact_id) : null,
+        deal_id: formData.deal_id ? parseInt(formData.deal_id) : null
+      }
       if (editingActivity) {
-        await api.put(`/api/v1/activities/${editingActivity.id}`, payload)
+        await api.put(`/v1/activities/${editingActivity.id}`, payload)
       } else {
-        await api.post('/api/v1/activities', payload)
+        await api.post('/v1/activities', payload)
       }
       setShowModal(false)
       setEditingActivity(null)
@@ -52,7 +55,7 @@ export default function Activities() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this activity?')) return
     try {
-      await api.delete(`/api/v1/activities/${id}`)
+      await api.delete(`/v1/activities/${id}`)
       fetchActivities()
     } catch (err) {
       setError('Failed to delete activity')

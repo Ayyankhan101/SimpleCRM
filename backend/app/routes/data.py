@@ -342,10 +342,10 @@ def preview_csv():
 @bp.route('/export', methods=['GET'])
 @login_required
 def export_csv():
+    entries = DataEntry.query.filter_by(user_id=current_user.id).order_by(DataEntry.date.desc()).all()
+
     def generate():
         yield 'id,title,date,group_name,subgroup_name,metric_a,metric_b,metric_c,metric_d,metric_e,category_id\n'
-
-        entries = DataEntry.query.filter_by(user_id=current_user.id).order_by(DataEntry.date.desc()).yield_per(1000)
 
         for entry in entries:
             row = [

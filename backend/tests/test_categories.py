@@ -28,3 +28,20 @@ def test_delete_category(auth_client):
     cat_id = create_res.json['id']
     response = auth_client.delete(f'/api/categories/{cat_id}')
     assert response.status_code == 200
+
+
+def test_delete_category_cascade(auth_client):
+    cat_res = auth_client.post('/api/categories', json={'name': 'Cascade Cat'})
+    cat_id = cat_res.json['id']
+    
+    auth_client.post('/api/data', json={
+        'title': 'Entry with Category',
+        'date': '2024-01-15',
+        'category_id': cat_id
+    })
+    
+    auth_client.delete(f'/api/categories/{cat_id}')
+    
+    response = auth_client.get('/api/data')
+    assert response.status_code == 200
+    assert response.json['entries'][0]['category_id'] is None

@@ -27,7 +27,7 @@ def create_notification():
     data = request.json
     if not data or not data.get('name') or not data.get('notify_type'):
         return jsonify({'error': 'Name and notify_type required'}), 400
-    
+
     config = NotificationConfig(
         name=data['name'],
         notify_type=data['notify_type'],
@@ -37,7 +37,7 @@ def create_notification():
     )
     db.session.add(config)
     db.session.commit()
-    
+
     return jsonify({
         'id': config.id,
         'name': config.name,
@@ -53,7 +53,7 @@ def update_notification(nid):
     config = NotificationConfig.query.filter_by(id=nid, user_id=current_user.id).first()
     if not config:
         return jsonify({'error': 'Not found'}), 404
-    
+
     data = request.json
     if 'name' in data:
         config.name = data['name']
@@ -61,7 +61,7 @@ def update_notification(nid):
         config.config_json = json.dumps(data['config'])
     if 'is_active' in data:
         config.is_active = data['is_active']
-    
+
     db.session.commit()
     return jsonify({
         'id': config.id,
@@ -78,7 +78,7 @@ def delete_notification(nid):
     config = NotificationConfig.query.filter_by(id=nid, user_id=current_user.id).first()
     if not config:
         return jsonify({'error': 'Not found'}), 404
-    
+
     db.session.delete(config)
     db.session.commit()
     return jsonify({'message': 'Deleted'})
@@ -90,17 +90,17 @@ def test_notification(nid):
     config = NotificationConfig.query.filter_by(id=nid, user_id=current_user.id).first()
     if not config:
         return jsonify({'error': 'Not found'}), 404
-    
+
     from app.services.notifications import (
         send_email_notification,
         send_webhook_notification,
     )
-    
+
     if config.notify_type == 'email':
         result = send_email_notification(config, 'Test Notification', 'This is a test message.')
     elif config.notify_type == 'webhook':
         result = send_webhook_notification(config, {'event': 'test', 'timestamp': 'now'})
     else:
         return jsonify({'error': 'Unknown notification type'}), 400
-    
+
     return jsonify({'success': result})

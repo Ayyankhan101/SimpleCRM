@@ -84,7 +84,7 @@ class TestWebhooks:
         response = client.post(f'/api/webhooks/{source.id}/receive', json={
             'title': 'Webhook Entry',
             'date': '2025-01-15',
-            'confirmed_cases': 100
+            'metric_a': 100
         })
         assert response.status_code == 200
         assert response.json['received'] == 1

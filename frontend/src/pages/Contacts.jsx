@@ -18,9 +18,9 @@ export default function Contacts() {
 
   const fetchContacts = useCallback(async () => {
     try {
-      const params = new URLSearchParams()
-      if (filterStage) params.append('stage', filterStage)
-      const res = await api.get(`/api/v1/contacts?${params}`)
+      setError(null)
+      const contactParams = filterStage ? { stage: filterStage } : {}
+      const res = await api.get('/v1/contacts', { params: contactParams })
       let data = res.data
       if (search) {
         const q = search.toLowerCase()
@@ -45,9 +45,9 @@ export default function Contacts() {
     e.preventDefault()
     try {
       if (editingContact) {
-        await api.put(`/api/v1/contacts/${editingContact.id}`, formData)
+        await api.put(`/v1/contacts/${editingContact.id}`, formData)
       } else {
-        await api.post('/api/v1/contacts', formData)
+        await api.post('/v1/contacts', formData)
       }
       setShowModal(false)
       setEditingContact(null)
@@ -61,7 +61,7 @@ export default function Contacts() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this contact?')) return
     try {
-      await api.delete(`/api/v1/contacts/${id}`)
+      await api.delete(`/v1/contacts/${id}`)
       fetchContacts()
     } catch (err) {
       setError('Failed to delete contact')

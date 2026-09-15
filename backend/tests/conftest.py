@@ -42,12 +42,4 @@ def auth_client(client, db):
         'password': 'Password123',
         'username': 'testuser'
     })
-    from app.models import User, Organization, db as _db
-    user = User.query.filter_by(email='test@example.com').first()
-    user.role = 'member'
-    org = Organization(name='Test Org', slug='test-org')
-    _db.session.add(org)
-    _db.session.flush()
-    user.org_id = org.id
-    _db.session.commit()
     return client
