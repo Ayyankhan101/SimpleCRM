@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleCRM — The CRM That Doesn't Make You Feel Stupid</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1a1a1a; }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+        
+        /* Hero */
+        .hero { padding: 80px 0 60px; text-align: center; }
+        .hero h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 20px; }
+        .hero p { font-size: 1.25rem; color: #666; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .hero .cta { display: inline-block; background: #2563eb; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; }
+        .hero .cta:hover { background: #1d4ed8; }
+        .hero .subtext { font-size: 0.9rem; color: #888; margin-top: 15px; }
+        
+        /* Pain Section */
+        .pain { padding: 60px 0; background: #fef2f2; }
+        .pain h2 { text-align: center; font-size: 1.8rem; margin-bottom: 30px; }
+        .pain-list { max-width: 600px; margin: 0 auto; }
+        .pain-item { display: flex; align-items: flex-start; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; }
+        .pain-icon { font-size: 1.5rem; margin-right: 15px; }
+        .pain-text { flex: 1; }
+        .pain-text strong { display: block; margin-bottom: 5px; }
+        
+        /* Solution Section */
+        .solution { padding: 60px 0; }
+        .solution h2 { text-align: center; font-size: 1.8rem; margin-bottom: 30px; }
+        .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
+        .feature { text-align: center; padding: 30px 20px; border: 1px solid #e5e7eb; border-radius: 12px; }
+        .feature-icon { font-size: 2.5rem; margin-bottom: 15px; }
+        .feature h3 { font-size: 1.2rem; margin-bottom: 10px; }
+        .feature p { color: #666; font-size: 0.95rem; }
+        
+        /* Comparison */
+        .comparison { padding: 60px 0; background: #f9fafb; }
+        .comparison h2 { text-align: center; font-size: 1.8rem; margin-bottom: 30px; }
+        .comparison table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        .comparison th, .comparison td { padding: 15px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .comparison th { background: white; font-weight: 600; }
+        .comparison .check { color: #10b981; }
+        .comparison .cross { color: #ef4444; }
+        
+        /* Pricing */
+        .pricing { padding: 60px 0; }
+        .pricing h2 { text-align: center; font-size: 1.8rem; margin-bottom: 30px; }
+        .pricing-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
+        .pricing-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 30px; text-align: center; }
+        .pricing-card.featured { border-color: #2563eb; position: relative; }
+        .pricing-card.featured::before { content: 'Most Popular'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #2563eb; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .pricing-card h3 { font-size: 1.3rem; margin-bottom: 10px; }
+        .pricing-card .price { font-size: 2rem; font-weight: 700; margin-bottom: 20px; }
+        .pricing-card .price span { font-size: 1rem; font-weight: 400; color: #666; }
+        .pricing-card ul { list-style: none; text-align: left; margin-bottom: 20px; }
+        .pricing-card li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+        .pricing-card .cta { display: block; background: #2563eb; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .pricing-card.featured .cta { background: #2563eb; }
+        
+        /* CTA */
+        .final-cta { padding: 80px 0; text-align: center; background: #1a1a1a; color: white; }
+        .final-cta h2 { font-size: 2rem; margin-bottom: 20px; }
+        .final-cta p { color: #a0a0a0; margin-bottom: 30px; }
+        .final-cta .cta { display: inline-block; background: #2563eb; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; }
+        
+        /* Footer */
+        footer { padding: 40px 0; text-align: center; color: #888; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <div class="container">
+            <h1>Stop paying for features you'll never use.</h1>
+            <p>HubSpot has 1,200 features. You need 5. SimpleCRM gives you contacts, deals, and tasks — without the bloat.</p>
+            <a href="#pricing" class="cta">Start Free →</a>
+            <p class="subtext">Free for 1 user. No credit card required.</p>
+        </div>
+    </section>
+    
+    <section class="pain">
+        <div class="container">
+            <h2>Sound familiar?</h2>
+            <div class="pain-list">
+                <div class="pain-item">
+                    <span class="pain-icon">😤</span>
+                    <div class="pain-text">
+                        <strong>HubSpot has 47 menu items</strong>
+                        You just want to add a contact and track a deal. Instead you're lost in marketing automation you'll never use.
+                    </div>
+                </div>
+                <div class="pain-item">
+                    <span class="pain-icon">💸</span>
+                    <div class="pain-text">
+                        <strong>$20/user/month adds up fast</strong>
+                        You have 5 employees. That's $1,200/year for features you don't need.
+                    </div>
+                </div>
+                <div class="pain-item">
+                    <span class="pain-icon">🤷</span>
+                    <div class="pain-text">
+                        <strong>Spreadsheets don't remind you to follow up</strong>
+                        You forgot to call that lead last week. They went with someone else.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="solution">
+        <div class="container">
+            <h2>3 features. That's it.</h2>
+            <div class="features">
+                <div class="feature">
+                    <span class="feature-icon">👤</span>
+                    <h3>Contacts</h3>
+                    <p>All your customers in one place. Name, email, phone, company, notes. That's it.</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">💼</span>
+                    <h3>Deals</h3>
+                    <p>See your pipeline at a glance. Drag and drop deals from lead to closed.</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✅</span>
+                    <h3>Tasks</h3>
+                    <p>Never forget a follow-up. Get reminders for every deal, every contact.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="comparison">
+        <div class="container">
+            <h2>Why switch?</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>HubSpot Free</th>
+                        <th>SimpleCRM</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Contacts</td>
+                        <td>1,000 limit</td>
+                        <td class="check">✓ Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td>Deals</td>
+                        <td class="check">✓</td>
+                        <td class="check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Tasks</td>
+                        <td class="check">✓</td>
+                        <td class="check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Marketing automation</td>
+                        <td class="check">✓ (confusing)</td>
+                        <td class="cross">✗ (don't need it)</td>
+                    </tr>
+                    <tr>
+                        <td>Lead scoring</td>
+                        <td class="check">✓ (overkill)</td>
+                        <td class="cross">✗ (don't need it)</td>
+                    </tr>
+                    <tr>
+                        <td>Menu items</td>
+                        <td>47</td>
+                        <td>4</td>
+                    </tr>
+                    <tr>
+                        <td>Price when you grow</td>
+                        <td>$20/user/month</td>
+                        <td>$10/user/month</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2>Simple pricing</h2>
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">$0 <span>/month</span></div>
+                    <ul>
+                        <li>1 user</li>
+                        <li>100 contacts</li>
+                        <li>25 deals</li>
+                        <li>Tasks & reminders</li>
+                    </ul>
+                    <a href="#" class="cta">Start Free</a>
+                </div>
+                <div class="pricing-card featured">
+                    <h3>Starter</h3>
+                    <div class="price">$10 <span>/month</span></div>
+                    <ul>
+                        <li>3 users</li>
+                        <li>1,000 contacts</li>
+                        <li>Unlimited deals</li>
+                        <li>Tasks & reminders</li>
+                        <li>CSV import</li>
+                    </ul>
+                    <a href="#" class="cta">Get Started</a>
+                </div>
+                <div class="pricing-card">
+                    <h3>Growth</h3>
+                    <div class="price">$25 <span>/month</span></div>
+                    <ul>
+                        <li>10 users</li>
+                        <li>Unlimited contacts</li>
+                        <li>Unlimited deals</li>
+                        <li>Tasks & reminders</li>
+                        <li>CSV import</li>
+                        <li>API access</li>
+                    </ul>
+                    <a href="#" class="cta">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="final-cta">
+        <div class="container">
+            <h2>Ready to simplify?</h2>
+            <p>Join 50+ small businesses who switched from HubSpot.</p>
+            <a href="#" class="cta">Start Free →</a>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <p>© 2026 SimpleCRM. Built for small businesses, by small businesses.</p>
+        </div>
+    </footer>
+</body>
+</html>

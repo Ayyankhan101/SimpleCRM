@@ -6,11 +6,6 @@ import Layout from './components/Layout'
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
-const DataEntries = lazy(() => import('./pages/DataEntries'))
-const Categories = lazy(() => import('./pages/Categories'))
-const Sources = lazy(() => import('./pages/Sources'))
-const Compare = lazy(() => import('./pages/Compare'))
-const Notifications = lazy(() => import('./pages/Notifications'))
 const Contacts = lazy(() => import('./pages/Contacts'))
 const Deals = lazy(() => import('./pages/Deals'))
 const Activities = lazy(() => import('./pages/Activities'))
@@ -38,11 +33,6 @@ function App() {
           </PrivateRoute>
         }>
           <Route index element={<Dashboard />} />
-          <Route path="data" element={<DataEntries />} />
-          <Route path="categories" element={<Categories />} />
-          <Route path="sources" element={<Sources />} />
-          <Route path="compare" element={<Compare />} />
-          <Route path="notifications" element={<Notifications />} />
           <Route path="contacts" element={<Contacts />} />
           <Route path="deals" element={<Deals />} />
           <Route path="activities" element={<Activities />} />

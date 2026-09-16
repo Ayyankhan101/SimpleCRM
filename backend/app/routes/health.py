@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timezone
 
-from app.models import DataEntry, User, db
+from app.models import Contact, Deal, Activity, User, db
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 
@@ -28,11 +28,15 @@ def health_check():
 
     # Data stats
     try:
-        entry_count = db.session.query(DataEntry).count()
+        contact_count = db.session.query(Contact).count()
+        deal_count = db.session.query(Deal).count()
+        activity_count = db.session.query(Activity).count()
         user_count = db.session.query(User).count()
         checks['data'] = {
             'status': 'healthy',
-            'entries': entry_count,
+            'contacts': contact_count,
+            'deals': deal_count,
+            'activities': activity_count,
             'users': user_count
         }
     except Exception as e:

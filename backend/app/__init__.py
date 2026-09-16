@@ -1,8 +1,6 @@
-import json
 import os
 from datetime import datetime, timezone
 
-import pandas as pd
 from config import Config
 from flask import Flask, jsonify
 from flask_caching import Cache
@@ -14,9 +12,7 @@ from flask_migrate import Migrate
 from flask_smorest import Api
 from flask_wtf.csrf import CSRFProtect
 
-from app.models import Category, DataEntry, User, db
-from app.models import DataSource as DataSource
-from app.models import NotificationConfig as NotificationConfig
+from app.models import User, db
 
 migrate = Migrate()
 login_manager = LoginManager()
@@ -33,7 +29,7 @@ api = Api()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    app.config['API_TITLE'] = 'CRM Data Analytics API'
+    app.config['API_TITLE'] = 'SimpleCRM API'
     app.config['API_VERSION'] = 'v1'
     app.config['OPENAPI_VERSION'] = '3.0.3'
     app.config['OPENAPI_URL_PREFIX'] = '/api/docs'
@@ -60,23 +56,8 @@ def create_app(config_class=Config):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    from app.routes import (
-        analytics,
-        auth,
-        categories,
-        data,
-        health,
-        notifications,
-        sources,
-        webhooks,
-    )
+    from app.routes import auth, health
     app.register_blueprint(auth.bp)
-    app.register_blueprint(data.bp)
-    app.register_blueprint(categories.bp)
-    app.register_blueprint(analytics.bp)
-    app.register_blueprint(sources.bp)
-    app.register_blueprint(webhooks.bp)
-    app.register_blueprint(notifications.bp)
     app.register_blueprint(health.bp)
 
     from app.api_v1.contacts import contacts_blp
@@ -87,9 +68,7 @@ def create_app(config_class=Config):
     api.register_blueprint(activities_blp)
 
     # Exempt ALL API blueprints from CSRF — REST API uses SameSite cookies
-    for bp_obj in [auth.bp, data.bp, categories.bp, analytics.bp,
-                   sources.bp, webhooks.bp, notifications.bp, health.bp,
-                   contacts_blp, deals_blp, activities_blp]:
+    for bp_obj in [auth.bp, health.bp, contacts_blp, deals_blp, activities_blp]:
         csrf.exempt(bp_obj)
 
     @app.errorhandler(404)
@@ -125,87 +104,57 @@ def seed_demo_data():
     try:
         print("Seeding demo data...")
 
-        user = User(email='demo@example.com', username='demo')
+        from app.models import Organization
+        org = Organization(name='Demo Company', slug='demo-company', plan='free')
+        db.session.add(org)
+        db.session.flush()
+
+        user = User(email='demo@example.com', username='demo', org_id=org.id)
         user.set_password('demo123')
         db.session.add(user)
         db.session.flush()
 
-        categories_data = [
-            {'name': 'COVID-19', 'description': 'COVID-19 pandemic data', 'color': '#EF4444', 'icon': 'virus'},
-            {'name': 'Healthcare', 'description': 'Healthcare statistics', 'color': '#10B981', 'icon': 'heart'},
-            {'name': 'Economy', 'description': 'Economic indicators', 'color': '#F59E0B', 'icon': 'chart-line'},
-            {'name': 'Demographics', 'description': 'Population demographics', 'color': '#8B5CF6', 'icon': 'users'},
+        # Create demo contacts
+        from app.models import Contact
+        contacts_data = [
+            {'first_name': 'John', 'last_name': 'Doe', 'email': 'john@example.com', 'company': 'Acme Corp', 'stage': 'lead'},
+            {'first_name': 'Jane', 'last_name': 'Smith', 'email': 'jane@example.com', 'company': 'Tech Co', 'stage': 'prospect'},
+            {'first_name': 'Bob', 'last_name': 'Wilson', 'email': 'bob@example.com', 'company': 'Design Studio', 'stage': 'customer'},
         ]
 
-        for cat_data in categories_data:
-            category = Category(**cat_data, user_id=user.id)
-            db.session.add(category)
+        for c_data in contacts_data:
+            contact = Contact(**c_data, owner_id=user.id, org_id=org.id)
+            db.session.add(contact)
 
         db.session.flush()
 
-        covid_category = Category.query.filter_by(name='COVID-19', user_id=user.id).first()
-
-        countries = [
-            {'group_name': 'USA', 'subgroup_name': 'North America', 'metric_e': 331000000},
-            {'group_name': 'India', 'subgroup_name': 'Asia', 'metric_e': 1380000000},
-            {'group_name': 'Brazil', 'subgroup_name': 'South America', 'metric_e': 212000000},
-            {'group_name': 'France', 'subgroup_name': 'Europe', 'metric_e': 67000000},
-            {'group_name': 'Germany', 'subgroup_name': 'Europe', 'metric_e': 83000000},
-            {'group_name': 'UK', 'subgroup_name': 'Europe', 'metric_e': 67000000},
-            {'group_name': 'Italy', 'subgroup_name': 'Europe', 'metric_e': 60000000},
-            {'group_name': 'Spain', 'subgroup_name': 'Europe', 'metric_e': 47000000},
-            {'group_name': 'Argentina', 'subgroup_name': 'South America', 'metric_e': 45000000},
-            {'group_name': 'Russia', 'subgroup_name': 'Europe', 'metric_e': 144000000},
-            {'group_name': 'Mexico', 'subgroup_name': 'North America', 'metric_e': 128000000},
-            {'group_name': 'Japan', 'subgroup_name': 'Asia', 'metric_e': 126000000},
-            {'group_name': 'South Africa', 'subgroup_name': 'Africa', 'metric_e': 59000000},
-            {'group_name': 'Canada', 'subgroup_name': 'North America', 'metric_e': 38000000},
-            {'group_name': 'Australia', 'subgroup_name': 'Oceania', 'metric_e': 25000000},
-            {'group_name': 'China', 'subgroup_name': 'Asia', 'metric_e': 1400000000},
-            {'group_name': 'Indonesia', 'subgroup_name': 'Asia', 'metric_e': 273000000},
-            {'group_name': 'Pakistan', 'subgroup_name': 'Asia', 'metric_e': 220000000},
-            {'group_name': 'Nigeria', 'subgroup_name': 'Africa', 'metric_e': 206000000},
-            {'group_name': 'Bangladesh', 'subgroup_name': 'Asia', 'metric_e': 164000000},
+        # Create demo deals
+        from app.models import Deal
+        contacts = Contact.query.filter_by(owner_id=user.id).all()
+        deals_data = [
+            {'title': 'Website Redesign', 'value': 15000, 'stage': 'proposal', 'contact_id': contacts[0].id},
+            {'title': 'Mobile App', 'value': 25000, 'stage': 'lead', 'contact_id': contacts[1].id},
+            {'title': 'Brand Identity', 'value': 8000, 'stage': 'closed_won', 'contact_id': contacts[2].id},
         ]
 
-        import random
-        random.seed(42)
+        for d_data in deals_data:
+            deal = Deal(**d_data, owner_id=user.id, org_id=org.id)
+            db.session.add(deal)
 
-        base_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
-        entries = []
+        # Create demo activities
+        from app.models import Activity
+        activities_data = [
+            {'type': 'call', 'subject': 'Follow up with John', 'due_date': datetime.now(timezone.utc)},
+            {'type': 'email', 'subject': 'Send proposal to Jane', 'due_date': datetime.now(timezone.utc)},
+            {'type': 'meeting', 'subject': 'Kickoff with Bob', 'completed': True, 'completed_at': datetime.now(timezone.utc)},
+        ]
 
-        for i in range(500):
-            country_data = random.choice(countries)
-            days_offset = random.randint(0, 730)
-            entry_date = base_date + pd.Timedelta(days=days_offset)
+        for a_data in activities_data:
+            activity = Activity(**a_data, owner_id=user.id, org_id=org.id)
+            db.session.add(activity)
 
-            confirmed = random.randint(100, 5000000) if days_offset > 60 else random.randint(10, 1000)
-            deaths = int(confirmed * random.uniform(0.01, 0.05))
-            recovered = int(confirmed * random.uniform(0.6, 0.9))
-            active = confirmed - deaths - recovered
-
-            entry = DataEntry(
-                title=f"COVID-19 Data - {country_data['group_name']} - {entry_date.strftime('%Y-%m-%d')}",
-                date=entry_date.date(),
-                group_name=country_data['group_name'],
-                subgroup_name=country_data['subgroup_name'],
-                metric_a=confirmed,
-                metric_b=deaths,
-                metric_c=recovered,
-                metric_d=active,
-                metric_e=country_data['metric_e'],
-                category_id=covid_category.id,
-                user_id=user.id,
-                values_json=json.dumps({
-                    'tests': random.randint(1000, 10000000),
-                    'hospitalizations': random.randint(10, 50000),
-                    'icu_admissions': random.randint(1, 5000)
-                })
-            )
-            entries.append(entry)
-
-        db.session.add_all(entries)
         db.session.commit()
-        print(f"Seeded {len(entries)} demo data entries!")
-    except Exception:
+        print("Seeded demo data: 3 contacts, 3 deals, 3 activities")
+    except Exception as e:
+        print(f"Seed error: {e}")
         db.session.rollback()
