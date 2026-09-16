@@ -1,7 +1,4 @@
-def handler(request):
-    """Test handler."""
-    return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
-        'body': '{"status": "ok"}'
-    }
+def app(environ, start_response):
+    """Simple WSGI app for testing."""
+    start_response('200 OK', [('Content-Type', 'application/json')])
+    return [b'{"status": "ok"}']
