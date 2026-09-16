@@ -89,6 +89,7 @@ def create_app(config_class=Config):
         return jsonify({'error': 'Internal server error'}), 500
 
     with app.app_context():
+        db.create_all()
         if os.environ.get('FLASK_ENV') not in ('testing', 'production'):
             seed_demo_data()
 
