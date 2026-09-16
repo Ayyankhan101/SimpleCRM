@@ -42,8 +42,9 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     csrf.init_app(app)
     cache.init_app(app)
+    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
     CORS(app,
-         origins=["http://localhost:5173", "http://localhost:3000"],
+         origins=[frontend_url, "http://localhost:5173", "http://localhost:3000"],
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

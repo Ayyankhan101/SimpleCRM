@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://simplecrm-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://simplecrm-api.onrender.com/api/v1/:path*"
+    }
+  ]
+}
