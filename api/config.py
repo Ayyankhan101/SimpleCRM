@@ -14,8 +14,10 @@ class Config:
 
     BASE_DIR = Path(__file__).parent
     INSTANCE_DIR = BASE_DIR / 'instance'
-    INSTANCE_DIR.mkdir(exist_ok=True)
-    
+
+    if not os.environ.get('VERCEL'):
+        INSTANCE_DIR.mkdir(exist_ok=True)
+
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{INSTANCE_DIR / "data_analytics.db"}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
