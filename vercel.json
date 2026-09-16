@@ -1,12 +1,14 @@
 {
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/:path*",
-      "destination": "https://simplecrm-api.onrender.com/api/:path*"
-    },
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
     {
-      "source": "/api/v1/:path*",
-      "destination": "https://simplecrm-api.onrender.com/api/v1/:path*"
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
     }
   ]
 }
