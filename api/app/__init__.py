@@ -28,6 +28,10 @@ api = Api()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
+
+    if os.environ.get('VERCEL'):
+        app.instance_path = '/tmp'
+
     app.config.from_object(config_class)
     app.config['API_TITLE'] = 'SimpleCRM API'
     app.config['API_VERSION'] = 'v1'
