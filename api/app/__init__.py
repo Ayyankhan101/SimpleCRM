@@ -90,8 +90,7 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
-        if os.environ.get('FLASK_ENV') not in ('testing', 'production'):
-            seed_demo_data()
+        seed_demo_data()
 
     if os.environ.get('ENFORCE_HTTPS', '').lower() == 'true':
         from app.services.security import enforce_https
