@@ -8,6 +8,7 @@ import Input from '../components/ui/Input'
 import Badge from '../components/ui/Badge'
 import Modal from '../components/ui/Modal'
 import EmptyState from '../components/ui/EmptyState'
+import ContactPicker from '../components/ContactPicker'
 import { TableSkeleton } from '../components/ui/Skeleton'
 
 const defaultForm = { title: '', value: '', stage: 'lead', contact_id: '', notes: '' }
@@ -237,11 +238,9 @@ export default function Deals() {
               </select>
             </div>
           </div>
-          <Input
-            label="Contact ID"
-            type="number"
+          <ContactPicker
             value={formData.contact_id}
-            onChange={(e) => setFormData({ ...formData, contact_id: e.target.value })}
+            onChange={(id) => setFormData({ ...formData, contact_id: id || '' })}
           />
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Notes</label>

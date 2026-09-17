@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { House, Users, CurrencyCircleDollar, Lightning, SignOut, List, X, Sun, Moon } from '@phosphor-icons/react'
+import { House, Users, CurrencyCircleDollar, Lightning, SignOut, List, X, Sun, Moon, Funnel } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/', icon: House, label: 'Dashboard', end: true },
   { to: '/contacts', icon: Users, label: 'Contacts' },
   { to: '/deals', icon: CurrencyCircleDollar, label: 'Deals' },
+  { to: '/pipeline', icon: Funnel, label: 'Pipeline' },
   { to: '/activities', icon: Lightning, label: 'Activities' },
 ]
 
