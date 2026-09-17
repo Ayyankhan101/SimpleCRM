@@ -3,8 +3,8 @@ import { motion } from 'framer-motion'
 
 const variants = {
   primary: 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm',
-  secondary: 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200',
-  ghost: 'text-zinc-600 hover:bg-zinc-100',
+  secondary: 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700',
+  ghost: 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
   danger: 'bg-red-500 text-white hover:bg-red-600 shadow-sm',
 }
 

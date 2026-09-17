@@ -48,7 +48,7 @@ export default function Register() {
 
   return (
     <div className="min-h-[100dvh] flex">
-      {/* Left panel — branding */}
+      {/* Left panel — branding (always dark) */}
       <div className="hidden lg:flex lg:w-1/2 bg-zinc-950 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-emerald-500 rounded-full blur-[128px]" />
@@ -79,7 +79,7 @@ export default function Register() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-zinc-950">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -90,11 +90,11 @@ export default function Register() {
             <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center">
               <TrendUp size={18} className="text-white" weight="bold" />
             </div>
-            <span className="text-lg font-bold text-zinc-950">SimpleCRM</span>
+            <span className="text-lg font-bold text-zinc-950 dark:text-zinc-50">SimpleCRM</span>
           </div>
 
-          <h2 className="text-2xl font-bold text-zinc-950 tracking-tight mb-1">Create account</h2>
-          <p className="text-sm text-zinc-500 mb-8">Start your free trial</p>
+          <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight mb-1">Create account</h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8">Start your free trial</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -136,9 +136,9 @@ export default function Register() {
                     {test(form.password) ? (
                       <Check size={14} className="text-emerald-500" weight="bold" />
                     ) : (
-                      <X size={14} className="text-zinc-300" />
+                      <X size={14} className="text-zinc-300 dark:text-zinc-600" />
                     )}
-                    <span className={test(form.password) ? 'text-emerald-600' : 'text-zinc-400'}>
+                    <span className={test(form.password) ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400 dark:text-zinc-500'}>
                       {label}
                     </span>
                   </div>
@@ -160,7 +160,7 @@ export default function Register() {
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600"
+                className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400"
               >
                 {error}
               </motion.div>
@@ -172,9 +172,9 @@ export default function Register() {
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-zinc-500">
+          <p className="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+            <Link to="/login" className="font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
               Sign in
             </Link>
           </p>

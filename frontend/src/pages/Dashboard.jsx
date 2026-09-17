@@ -89,16 +89,16 @@ export default function Dashboard() {
   if (loading) return <StatSkeleton />
 
   const statItems = [
-    { label: 'Contacts', value: stats.contacts, color: 'text-zinc-950', icon: Users, to: '/contacts' },
-    { label: 'Deals', value: stats.deals, color: 'text-emerald-600', icon: CurrencyCircleDollar, to: '/deals' },
-    { label: 'Activities', value: stats.activities, color: 'text-amber-600', icon: Lightning, to: '/activities' },
+    { label: 'Contacts', value: stats.contacts, color: 'text-zinc-950 dark:text-zinc-50', icon: Users, to: '/contacts' },
+    { label: 'Deals', value: stats.deals, color: 'text-emerald-600 dark:text-emerald-400', icon: CurrencyCircleDollar, to: '/deals' },
+    { label: 'Activities', value: stats.activities, color: 'text-amber-600 dark:text-amber-400', icon: Lightning, to: '/activities' },
   ]
 
   return (
     <motion.div variants={container} initial="hidden" animate="visible">
       <motion.div variants={item} className="mb-8">
-        <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">Dashboard</h1>
-        <p className="text-sm text-zinc-500 mt-1">Overview of your CRM</p>
+        <h1 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight">Dashboard</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Overview of your CRM</p>
       </motion.div>
 
       {/* Stats — border-top grouping, no cards */}
@@ -107,11 +107,11 @@ export default function Dashboard() {
           <Link
             key={label}
             to={to}
-            className="group p-6 border-t-2 border-zinc-100 hover:border-emerald-500 transition-colors duration-200"
+            className="group p-6 border-t-2 border-zinc-100 dark:border-zinc-800 hover:border-emerald-500 transition-colors duration-200"
           >
             <div className="flex items-center gap-2 mb-2">
               <Icon size={16} className="text-zinc-400 group-hover:text-emerald-500 transition-colors" />
-              <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{label}</span>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{label}</span>
             </div>
             <div className={`text-3xl font-bold font-mono ${color}`}>
               <AnimatedNumber value={value} />
@@ -123,8 +123,8 @@ export default function Dashboard() {
       {/* Bento grid: 2fr 1fr */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Pipeline chart — 3 cols */}
-        <motion.div variants={item} className="lg:col-span-3 bg-white rounded-4xl border border-slate-200/50 shadow-diffusion p-8">
-          <h3 className="text-sm font-semibold text-zinc-950 mb-6">Deal Pipeline</h3>
+        <motion.div variants={item} className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-8">
+          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-6">Deal Pipeline</h3>
           {pipeline.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={pipeline} barSize={32}>
@@ -157,26 +157,26 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Upcoming activities — 2 cols */}
-        <motion.div variants={item} className="lg:col-span-2 bg-white rounded-4xl border border-slate-200/50 shadow-diffusion p-8">
-          <h3 className="text-sm font-semibold text-zinc-950 mb-6">Upcoming Activities</h3>
+        <motion.div variants={item} className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-8">
+          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-6">Upcoming Activities</h3>
           {upcomingActivities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <CalendarBlank size={28} className="text-zinc-300 mb-3" />
-              <p className="text-sm text-zinc-400">No upcoming activities</p>
+              <CalendarBlank size={28} className="text-zinc-300 dark:text-zinc-600 mb-3" />
+              <p className="text-sm text-zinc-400 dark:text-zinc-500">No upcoming activities</p>
             </div>
           ) : (
             <div className="space-y-3">
               {upcomingActivities.map((activity) => {
                 const typeColor = getStageColor(ACTIVITY_TYPES, activity.type)
                 return (
-                  <div key={activity.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 transition-colors">
+                  <div key={activity.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <Badge color={typeColor} dot>
                       {getStageLabel(ACTIVITY_TYPES, activity.type)}
                     </Badge>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-950 truncate">{activity.subject}</p>
+                      <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50 truncate">{activity.subject}</p>
                     </div>
-                    <span className="text-xs text-zinc-400 whitespace-nowrap">
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
                       {formatRelativeDate(activity.due_date)}
                     </span>
                   </div>

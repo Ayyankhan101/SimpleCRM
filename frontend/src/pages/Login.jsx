@@ -41,7 +41,7 @@ export default function Login() {
 
   return (
     <div className="min-h-[100dvh] flex">
-      {/* Left panel — branding */}
+      {/* Left panel — branding (always dark) */}
       <div className="hidden lg:flex lg:w-1/2 bg-zinc-950 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500 rounded-full blur-[128px]" />
@@ -72,7 +72,7 @@ export default function Login() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-zinc-950">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -83,11 +83,11 @@ export default function Login() {
             <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center">
               <TrendUp size={18} className="text-white" weight="bold" />
             </div>
-            <span className="text-lg font-bold text-zinc-950">SimpleCRM</span>
+            <span className="text-lg font-bold text-zinc-950 dark:text-zinc-50">SimpleCRM</span>
           </div>
 
-          <h2 className="text-2xl font-bold text-zinc-950 tracking-tight mb-1">Welcome back</h2>
-          <p className="text-sm text-zinc-500 mb-8">Sign in to your account</p>
+          <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight mb-1">Welcome back</h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8">Sign in to your account</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -113,7 +113,7 @@ export default function Login() {
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600"
+                className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400"
               >
                 {error}
               </motion.div>
@@ -127,16 +127,16 @@ export default function Login() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-100" />
+              <div className="w-full border-t border-zinc-100 dark:border-zinc-800" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-3 bg-white text-zinc-400">or</span>
+              <span className="px-3 bg-white dark:bg-zinc-950 text-zinc-400 dark:text-zinc-500">or</span>
             </div>
           </div>
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-5 py-2.5 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all duration-200"
+            className="w-full flex items-center justify-center gap-3 px-5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 active:scale-[0.98] transition-all duration-200"
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -147,9 +147,9 @@ export default function Login() {
             Continue with Google
           </button>
 
-          <p className="mt-8 text-center text-sm text-zinc-500">
+          <p className="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
             Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+            <Link to="/register" className="font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
               Sign up
             </Link>
           </p>
