@@ -2,11 +2,21 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { CurrencyCircleDollar, CalendarBlank, DotsSixVertical } from '@phosphor-icons/react'
 import api from '../utils/api'
 import { DEAL_STAGES, getStageColor, getStageLabel, formatCurrency, formatRelativeDate } from '../lib/constants'
 import { CardSkeleton } from '../components/ui/Skeleton'
+
+const stageDotColors = {
+  zinc: 'bg-zinc-500',
+  sky: 'bg-sky-500',
+  amber: 'bg-amber-500',
+  orange: 'bg-orange-500',
+  emerald: 'bg-emerald-500',
+  red: 'bg-red-500',
+}
 
 function DealCard({ deal, contactName, overlay = false }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -18,8 +28,6 @@ function DealCard({ deal, contactName, overlay = false }) {
     transform: CSS.Transform.toString(transform),
     transition,
   }
-
-  const color = getStageColor(DEAL_STAGES, deal.stage)
 
   return (
     <div
@@ -71,15 +79,18 @@ function DealCardOverlay({ deal, contactName }) {
 
 function ColumnContainer({ stage, deals, contactMap }) {
   const color = getStageColor(DEAL_STAGES, stage)
+  const dotColor = stageDotColors[color] || 'bg-zinc-500'
   const totalValue = deals.reduce((sum, d) => sum + (d.value || 0), 0)
   const dealIds = deals.map((d) => d.id)
+
+  const { setNodeRef, isOver } = useDroppable({ id: stage })
 
   return (
     <div className="flex flex-col min-w-[280px] max-w-[320px] w-full">
       {/* Column header */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full bg-${color}-500`} />
+          <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
           <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
             {getStageLabel(DEAL_STAGES, stage)}
           </h3>
@@ -94,12 +105,22 @@ function ColumnContainer({ stage, deals, contactMap }) {
         )}
       </div>
 
-      {/* Cards area */}
-      <SortableContext items={dealIds} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 space-y-2 min-h-[120px] rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-800 p-2">
+      {/* Cards area — droppable container */}
+      <div
+        ref={setNodeRef}
+        className={`
+          flex-1 space-y-2 min-h-[120px] rounded-xl p-2 transition-colors duration-150
+          border border-dashed
+          ${isOver
+            ? 'bg-emerald-50/80 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700'
+            : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800'
+          }
+        `}
+      >
+        <SortableContext items={dealIds} strategy={verticalListSortingStrategy}>
           {deals.length === 0 ? (
             <div className="flex items-center justify-center h-24 text-xs text-zinc-400 dark:text-zinc-600">
-              No deals
+              {isOver ? 'Drop here' : 'No deals'}
             </div>
           ) : (
             deals.map((deal) => (
@@ -110,8 +131,8 @@ function ColumnContainer({ stage, deals, contactMap }) {
               />
             ))
           )}
-        </div>
-      </SortableContext>
+        </SortableContext>
+      </div>
     </div>
   )
 }
@@ -162,6 +183,7 @@ export default function Pipeline() {
 
   const stageColumns = DEAL_STAGES.filter((s) => !['closed_won', 'closed_lost'].includes(s.value))
   const closedColumns = DEAL_STAGES.filter((s) => ['closed_won', 'closed_lost'].includes(s.value))
+  const validStages = DEAL_STAGES.map((s) => s.value)
 
   const getDealsForStage = (stage) =>
     deals.filter((d) => d.stage === stage)
@@ -181,22 +203,21 @@ export default function Pipeline() {
     const activeDeal = deals.find((d) => d.id === active.id)
     if (!activeDeal) return
 
-    // Determine target stage from the droppable container
+    // Determine target stage:
+    // 1. over.id is a valid stage string → dropped on column (empty or via useDroppable)
+    // 2. over.id is a deal ID → dropped on another card
     let targetStage = null
 
-    // over.id could be a deal ID (dropped on another card) or a stage string (dropped on empty column)
-    const overDeal = deals.find((d) => d.id === over.id)
-    if (overDeal) {
-      targetStage = overDeal.stage
-    } else {
-      // Dropped on column area — over.id is the stage string from SortableContext items
-      // But SortableContext items are deal IDs, so if over.id is not a deal, it's the column
+    if (validStages.includes(String(over.id))) {
       targetStage = String(over.id)
+    } else {
+      const overDeal = deals.find((d) => d.id === over.id)
+      if (overDeal) {
+        targetStage = overDeal.stage
+      }
     }
 
-    // Validate stage
-    const validStages = DEAL_STAGES.map((s) => s.value)
-    if (!validStages.includes(targetStage)) return
+    if (!targetStage) return
     if (targetStage === activeDeal.stage) return
 
     // Optimistic update
@@ -207,7 +228,6 @@ export default function Pipeline() {
     try {
       await api.put(`/v1/deals/${active.id}`, { stage: targetStage })
     } catch {
-      // Revert on error
       fetchData()
     }
   }

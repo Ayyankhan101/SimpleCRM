@@ -1,12 +1,5 @@
 {
   "documents": {
-    "huggingface_co_docs_hub_spaces-sdks-docker.md": {
-      "url": "https://huggingface.co/docs/hub/spaces-sdks-docker",
-      "title": "Docker Spaces · Hugging Face",
-      "fetchedAt": "2026-09-16T11:17:57.307Z",
-      "expiresAt": "2026-09-17T11:17:57.307Z",
-      "size": 15159
-    },
     "frontend-navy-psi-33_vercel_app.md": {
       "url": "https://frontend-navy-psi-33.vercel.app",
       "title": "Data Analytics App",
@@ -29,5 +22,5 @@
       "size": 149
     }
   },
-  "lastUpdated": "2026-09-17T01:31:39.164Z"
+  "lastUpdated": "2026-09-17T11:43:53.153Z"
 }

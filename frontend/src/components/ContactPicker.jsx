@@ -23,7 +23,7 @@ export default function ContactPicker({ value, onChange }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const selected = contacts.find((c) => c.id === Number(value))
+  const selected = contacts.find((c) => String(c.id) === String(value))
   const filtered = contacts.filter((c) => {
     if (!search) return true
     const q = search.toLowerCase()
@@ -46,7 +46,7 @@ export default function ContactPicker({ value, onChange }) {
             {selected.company && <span className="text-zinc-400 dark:text-zinc-500 text-xs">{selected.company}</span>}
             <button
               type="button"
-              onClick={() => { onChange(null); setSearch('') }}
+              onClick={() => { onChange(''); setSearch('') }}
               className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-700 transition-colors"
             >
               <X size={14} />
@@ -77,7 +77,7 @@ export default function ContactPicker({ value, onChange }) {
                 <button
                   key={c.id}
                   type="button"
-                  onClick={() => { onChange(c.id); setSearch(''); setOpen(false) }}
+                  onClick={() => { onChange(String(c.id)); setSearch(''); setOpen(false) }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
                 >
                   <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0">
