@@ -1,7 +1,43 @@
-import { useState, useEffect } from 'react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { Users, CurrencyCircleDollar, Lightning, ArrowRight, CalendarBlank } from '@phosphor-icons/react'
 import api from '../utils/api'
+import { DEAL_STAGES, ACTIVITY_TYPES, getStageColor, getStageLabel, formatRelativeDate } from '../lib/constants'
+import { StatSkeleton } from '../components/ui/Skeleton'
+import Badge from '../components/ui/Badge'
+
+function AnimatedNumber({ value, duration = 800 }) {
+  const [display, setDisplay] = useState(0)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    let start = 0
+    const startTime = performance.now()
+    const animate = (now) => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(eased * value))
+      if (progress < 1) ref.current = requestAnimationFrame(animate)
+    }
+    ref.current = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(ref.current)
+  }, [value, duration])
+
+  return <span>{display}</span>
+}
+
+const container = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+}
+
+const item = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+}
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ contacts: 0, deals: 0, activities: 0 })
@@ -18,7 +54,7 @@ export default function Dashboard() {
       const [contactsRes, dealsRes, activitiesRes] = await Promise.all([
         api.get('/contacts'),
         api.get('/deals'),
-        api.get('/activities')
+        api.get('/activities'),
       ])
 
       const contacts = contactsRes.data.items || []
@@ -28,20 +64,18 @@ export default function Dashboard() {
       setStats({
         contacts: contactsRes.data.total || 0,
         deals: dealsRes.data.total || 0,
-        activities: activitiesRes.data.total || 0
+        activities: activitiesRes.data.total || 0,
       })
 
-      // Build pipeline data from deals
       const stageCounts = {}
-      deals.forEach(deal => {
-        stageCounts[deal.stage] = (stageCounts[deal.stage] || 0) + 1
+      deals.forEach((d) => {
+        stageCounts[d.stage] = (stageCounts[d.stage] || 0) + 1
       })
       setPipeline(Object.entries(stageCounts).map(([stage, count]) => ({ stage, count })))
 
-      // Get upcoming activities
       setUpcomingActivities(
         activities
-          .filter(a => !a.completed && a.due_date)
+          .filter((a) => !a.completed && a.due_date)
           .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
           .slice(0, 5)
       )
@@ -52,69 +86,106 @@ export default function Dashboard() {
     }
   }
 
-  if (loading) {
-    return <div className="loading">Loading dashboard...</div>
-  }
+  if (loading) return <StatSkeleton />
 
-  const formatStage = (stage) => stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  const statItems = [
+    { label: 'Contacts', value: stats.contacts, color: 'text-zinc-950', icon: Users, to: '/contacts' },
+    { label: 'Deals', value: stats.deals, color: 'text-emerald-600', icon: CurrencyCircleDollar, to: '/deals' },
+    { label: 'Activities', value: stats.activities, color: 'text-amber-600', icon: Lightning, to: '/activities' },
+  ]
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Welcome back to SimpleCRM</p>
-      </div>
+    <motion.div variants={container} initial="hidden" animate="visible">
+      <motion.div variants={item} className="mb-8">
+        <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">Dashboard</h1>
+        <p className="text-sm text-zinc-500 mt-1">Overview of your CRM</p>
+      </motion.div>
 
-      <div className="stats-grid">
-        <Link to="/contacts" className="stat-card">
-          <div className="stat-label">Total Contacts</div>
-          <div className="stat-value primary">{stats.contacts}</div>
-        </Link>
-        <Link to="/deals" className="stat-card">
-          <div className="stat-label">Total Deals</div>
-          <div className="stat-value success">{stats.deals}</div>
-        </Link>
-        <Link to="/activities" className="stat-card">
-          <div className="stat-label">Total Activities</div>
-          <div className="stat-value warning">{stats.activities}</div>
-        </Link>
-      </div>
+      {/* Stats — border-top grouping, no cards */}
+      <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-3 gap-0 mb-8">
+        {statItems.map(({ label, value, color, icon: Icon, to }) => (
+          <Link
+            key={label}
+            to={to}
+            className="group p-6 border-t-2 border-zinc-100 hover:border-emerald-500 transition-colors duration-200"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Icon size={16} className="text-zinc-400 group-hover:text-emerald-500 transition-colors" />
+              <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{label}</span>
+            </div>
+            <div className={`text-3xl font-bold font-mono ${color}`}>
+              <AnimatedNumber value={value} />
+            </div>
+          </Link>
+        ))}
+      </motion.div>
 
-      <div className="charts-grid">
-        {pipeline.length > 0 && (
-          <div className="chart-card">
-            <h3 className="chart-title">Deal Pipeline</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={pipeline}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="stage" tickFormatter={formatStage} />
-                <YAxis />
-                <Tooltip formatter={(value) => [value, 'Deals']} labelFormatter={formatStage} />
-                <Bar dataKey="count" fill="#3B82F6" name="Deals" />
+      {/* Bento grid: 2fr 1fr */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Pipeline chart — 3 cols */}
+        <motion.div variants={item} className="lg:col-span-3 bg-white rounded-4xl border border-slate-200/50 shadow-diffusion p-8">
+          <h3 className="text-sm font-semibold text-zinc-950 mb-6">Deal Pipeline</h3>
+          {pipeline.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={pipeline} barSize={32}>
+                <XAxis
+                  dataKey="stage"
+                  tickFormatter={(s) => getStageLabel(DEAL_STAGES, s)}
+                  tick={{ fontSize: 11, fill: '#71717a' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis tick={{ fontSize: 11, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  formatter={(v) => [v, 'Deals']}
+                  labelFormatter={(s) => getStageLabel(DEAL_STAGES, s)}
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: '1px solid #e4e4e7',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    fontSize: '13px',
+                  }}
+                />
+                <Bar dataKey="count" fill="#10b981" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        )}
-
-        <div className="chart-card">
-          <h3 className="chart-title">Upcoming Activities</h3>
-          {upcomingActivities.length === 0 ? (
-            <p className="empty-state">No upcoming activities</p>
           ) : (
-            <div className="activities-list">
-              {upcomingActivities.map(activity => (
-                <div key={activity.id} className="activity-item">
-                  <div className="activity-type">{activity.type}</div>
-                  <div className="activity-subject">{activity.subject}</div>
-                  <div className="activity-date">
-                    {new Date(activity.due_date).toLocaleDateString()}
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-center h-64 text-sm text-zinc-400">
+              No deals yet
             </div>
           )}
-        </div>
+        </motion.div>
+
+        {/* Upcoming activities — 2 cols */}
+        <motion.div variants={item} className="lg:col-span-2 bg-white rounded-4xl border border-slate-200/50 shadow-diffusion p-8">
+          <h3 className="text-sm font-semibold text-zinc-950 mb-6">Upcoming Activities</h3>
+          {upcomingActivities.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <CalendarBlank size={28} className="text-zinc-300 mb-3" />
+              <p className="text-sm text-zinc-400">No upcoming activities</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {upcomingActivities.map((activity) => {
+                const typeColor = getStageColor(ACTIVITY_TYPES, activity.type)
+                return (
+                  <div key={activity.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <Badge color={typeColor} dot>
+                      {getStageLabel(ACTIVITY_TYPES, activity.type)}
+                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-zinc-950 truncate">{activity.subject}</p>
+                    </div>
+                    <span className="text-xs text-zinc-400 whitespace-nowrap">
+                      {formatRelativeDate(activity.due_date)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 }

@@ -14,7 +14,11 @@ function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
   
   if (loading) {
-    return <div className="loading">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-[100dvh] bg-zinc-50">
+        <div className="text-sm text-zinc-400">Loading...</div>
+      </div>
+    )
   }
   
   return user ? children : <Navigate to="/login" />
@@ -22,7 +26,11 @@ function PrivateRoute({ children }) {
 
 function App() {
   return (
-    <Suspense fallback={<div className="loading">Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[100dvh] bg-zinc-50">
+        <div className="text-sm text-zinc-400">Loading...</div>
+      </div>
+    }>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

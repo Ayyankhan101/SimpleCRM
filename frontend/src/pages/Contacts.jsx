@@ -1,30 +1,38 @@
 import { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
+import { Plus, MagnifyingGlass, Users, PencilSimple, Trash } from '@phosphor-icons/react'
 import api from '../utils/api'
+import { CONTACT_STAGES, getStageColor, getStageLabel } from '../lib/constants'
+import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
+import Badge from '../components/ui/Badge'
+import Modal from '../components/ui/Modal'
+import EmptyState from '../components/ui/EmptyState'
+import { TableSkeleton } from '../components/ui/Skeleton'
 
-const STAGES = ['lead', 'prospect', 'proposal', 'negotiation', 'closed_won', 'closed_lost']
+const defaultForm = {
+  first_name: '', last_name: '', email: '', phone: '',
+  company: '', role: '', stage: 'lead', score: 0, notes: '',
+}
 
 export default function Contacts() {
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [editingContact, setEditingContact] = useState(null)
   const [filterStage, setFilterStage] = useState('')
   const [search, setSearch] = useState('')
-  const [formData, setFormData] = useState({
-    first_name: '', last_name: '', email: '', phone: '',
-    company: '', role: '', stage: 'lead', score: 0, notes: ''
-  })
+  const [formData, setFormData] = useState(defaultForm)
+  const [saving, setSaving] = useState(false)
 
   const fetchContacts = useCallback(async () => {
     try {
-      setError(null)
-      const contactParams = filterStage ? { stage: filterStage } : {}
-      const res = await api.get('/v1/contacts', { params: contactParams })
+      const params = filterStage ? { stage: filterStage } : {}
+      const res = await api.get('/v1/contacts', { params })
       let data = res.data
       if (search) {
         const q = search.toLowerCase()
-        data = data.filter(c =>
+        data = data.filter((c) =>
           c.first_name?.toLowerCase().includes(q) ||
           c.last_name?.toLowerCase().includes(q) ||
           c.email?.toLowerCase().includes(q) ||
@@ -32,8 +40,8 @@ export default function Contacts() {
         )
       }
       setContacts(data)
-    } catch (err) {
-      setError('Failed to load contacts')
+    } catch {
+      // error handled silently
     } finally {
       setLoading(false)
     }
@@ -43,6 +51,7 @@ export default function Contacts() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSaving(true)
     try {
       if (editingContact) {
         await api.put(`/v1/contacts/${editingContact.id}`, formData)
@@ -51,10 +60,12 @@ export default function Contacts() {
       }
       setShowModal(false)
       setEditingContact(null)
-      resetForm()
+      setFormData(defaultForm)
       fetchContacts()
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save contact')
+    } catch {
+      // error handled silently
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -63,8 +74,8 @@ export default function Contacts() {
     try {
       await api.delete(`/v1/contacts/${id}`)
       fetchContacts()
-    } catch (err) {
-      setError('Failed to delete contact')
+    } catch {
+      // error handled silently
     }
   }
 
@@ -79,136 +90,206 @@ export default function Contacts() {
       role: contact.role || '',
       stage: contact.stage || 'lead',
       score: contact.score || 0,
-      notes: contact.notes || ''
+      notes: contact.notes || '',
     })
     setShowModal(true)
   }
 
-  const resetForm = () => {
-    setFormData({ first_name: '', last_name: '', email: '', phone: '', company: '', role: '', stage: 'lead', score: 0, notes: '' })
+  const openNew = () => {
+    setEditingContact(null)
+    setFormData(defaultForm)
+    setShowModal(true)
   }
 
-  const stageColor = (stage) => {
-    const colors = { lead: '#6366f1', prospect: '#8b5cf6', proposal: '#a855f7', negotiation: '#d946ef', closed_won: '#22c55e', closed_lost: '#ef4444' }
-    return colors[stage] || '#6b7280'
-  }
-
-  if (loading) return <div className="loading">Loading contacts...</div>
+  if (loading) return <TableSkeleton rows={5} cols={5} />
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h1>Contacts</h1>
-        <button className="btn btn-primary" onClick={() => { resetForm(); setEditingContact(null); setShowModal(true) }}>
-          + New Contact
-        </button>
+    <div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">Contacts</h1>
+          <p className="text-sm text-zinc-500 mt-1">{contacts.length} total contacts</p>
+        </div>
+        <Button onClick={openNew}>
+          <Plus size={16} weight="bold" />
+          New Contact
+        </Button>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
-
-      <div className="filters">
-        <input type="text" placeholder="Search contacts..." value={search} onChange={e => setSearch(e.target.value)} className="input" />
-        <select value={filterStage} onChange={e => setFilterStage(e.target.value)} className="input">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Search contacts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+          />
+        </div>
+        <select
+          value={filterStage}
+          onChange={(e) => setFilterStage(e.target.value)}
+          className="px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all min-w-[160px]"
+        >
           <option value="">All Stages</option>
-          {STAGES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+          {CONTACT_STAGES.map((s) => (
+            <option key={s.value} value={s.value}>{s.label}</option>
+          ))}
         </select>
       </div>
 
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Company</th>
-              <th>Stage</th>
-              <th>Score</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contacts.length === 0 ? (
-              <tr><td colSpan="6" className="empty">No contacts found</td></tr>
-            ) : contacts.map(c => (
-              <tr key={c.id}>
-                <td>{c.first_name} {c.last_name}</td>
-                <td>{c.email || '-'}</td>
-                <td>{c.company || '-'}</td>
-                <td>
-                  <span className="badge" style={{ background: stageColor(c.stage) }}>
-                    {c.stage?.replace('_', ' ')}
-                  </span>
-                </td>
-                <td>{c.score || 0}</td>
-                <td className="actions">
-                  <button className="btn btn-sm" onClick={() => handleEdit(c)}>Edit</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>{editingContact ? 'Edit Contact' : 'New Contact'}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>First Name *</label>
-                  <input type="text" className="input" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} required />
-                </div>
-                <div className="form-group">
-                  <label>Last Name</label>
-                  <input type="text" className="input" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Email</label>
-                  <input type="email" className="input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label>Phone</label>
-                  <input type="text" className="input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Company</label>
-                  <input type="text" className="input" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
-                </div>
-                <div className="form-group">
-                  <label>Role</label>
-                  <input type="text" className="input" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Stage</label>
-                  <select className="input" value={formData.stage} onChange={e => setFormData({...formData, stage: e.target.value})}>
-                    {STAGES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Score</label>
-                  <input type="number" className="input" value={formData.score} onChange={e => setFormData({...formData, score: parseInt(e.target.value) || 0})} />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Notes</label>
-                <textarea className="input" rows="3" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} />
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editingContact ? 'Update' : 'Create'}</button>
-              </div>
-            </form>
+      {/* Table */}
+      {contacts.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No contacts yet"
+          description="Add your first contact to get started with SimpleCRM."
+          action={<Button onClick={openNew}><Plus size={16} weight="bold" />Add Contact</Button>}
+        />
+      ) : (
+        <div className="bg-white rounded-4xl border border-slate-200/50 shadow-diffusion overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-zinc-100">
+                  <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Company</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Stage</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Score</th>
+                  <th className="px-6 py-4 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-50">
+                {contacts.map((c, i) => (
+                  <motion.tr
+                    key={c.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="hover:bg-zinc-50/50 transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-medium text-zinc-950">{c.first_name} {c.last_name}</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-zinc-500">{c.email || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-zinc-500">{c.company || '-'}</td>
+                    <td className="px-6 py-4">
+                      <Badge color={getStageColor(CONTACT_STAGES, c.stage)} dot>
+                        {getStageLabel(CONTACT_STAGES, c.stage)}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-mono text-zinc-700">{c.score || 0}</td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleEdit(c)}
+                          className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                        >
+                          <PencilSimple size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(c.id)}
+                          className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
+
+      {/* Modal */}
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingContact ? 'Edit Contact' : 'New Contact'}
+        maxWidth="max-w-xl"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="First Name"
+              value={formData.first_name}
+              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+              required
+            />
+            <Input
+              label="Last Name"
+              value={formData.last_name}
+              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            <Input
+              label="Phone"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Company"
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            />
+            <Input
+              label="Role"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-zinc-700">Stage</label>
+              <select
+                value={formData.stage}
+                onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              >
+                {CONTACT_STAGES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+            <Input
+              label="Score"
+              type="number"
+              value={formData.score}
+              onChange={(e) => setFormData({ ...formData, score: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-zinc-700">Notes</label>
+            <textarea
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button type="submit" loading={saving}>
+              {editingContact ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

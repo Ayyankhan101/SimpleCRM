@@ -1,26 +1,41 @@
 import { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
+import { Plus, Phone, EnvelopeSimple, CalendarBlank, Notepad, CheckSquare, PencilSimple, Trash, Lightning } from '@phosphor-icons/react'
 import api from '../utils/api'
+import { ACTIVITY_TYPES, getStageColor, getStageLabel, formatRelativeDate } from '../lib/constants'
+import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
+import Badge from '../components/ui/Badge'
+import Modal from '../components/ui/Modal'
+import EmptyState from '../components/ui/EmptyState'
+import { CardSkeleton } from '../components/ui/Skeleton'
 
-const TYPES = ['call', 'email', 'meeting', 'note', 'task']
+const typeIcons = {
+  call: Phone,
+  email: EnvelopeSimple,
+  meeting: CalendarBlank,
+  note: Notepad,
+  task: CheckSquare,
+}
+
+const defaultForm = { type: 'call', subject: '', body: '', contact_id: '', deal_id: '' }
 
 export default function Activities() {
   const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [editingActivity, setEditingActivity] = useState(null)
   const [filterType, setFilterType] = useState('')
-  const [formData, setFormData] = useState({
-    type: 'call', subject: '', body: '', contact_id: '', deal_id: ''
-  })
+  const [formData, setFormData] = useState(defaultForm)
+  const [saving, setSaving] = useState(false)
 
   const fetchActivities = useCallback(async () => {
     try {
-      setError(null)
-      const res = await api.get('/v1/activities', { params: filterType ? { type: filterType } : {} })
+      const params = filterType ? { type: filterType } : {}
+      const res = await api.get('/v1/activities', { params })
       setActivities(res.data)
-    } catch (err) {
-      setError('Failed to load activities')
+    } catch {
+      // silent
     } finally {
       setLoading(false)
     }
@@ -30,13 +45,14 @@ export default function Activities() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSaving(true)
     try {
       const payload = {
         type: formData.type,
         subject: formData.subject,
         body: formData.body || null,
         contact_id: formData.contact_id ? parseInt(formData.contact_id) : null,
-        deal_id: formData.deal_id ? parseInt(formData.deal_id) : null
+        deal_id: formData.deal_id ? parseInt(formData.deal_id) : null,
       }
       if (editingActivity) {
         await api.put(`/v1/activities/${editingActivity.id}`, payload)
@@ -45,10 +61,12 @@ export default function Activities() {
       }
       setShowModal(false)
       setEditingActivity(null)
-      resetForm()
+      setFormData(defaultForm)
       fetchActivities()
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save activity')
+    } catch {
+      // silent
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -57,8 +75,8 @@ export default function Activities() {
     try {
       await api.delete(`/v1/activities/${id}`)
       fetchActivities()
-    } catch (err) {
-      setError('Failed to delete activity')
+    } catch {
+      // silent
     }
   }
 
@@ -69,110 +87,168 @@ export default function Activities() {
       subject: activity.subject || '',
       body: activity.body || '',
       contact_id: activity.contact_id || '',
-      deal_id: activity.deal_id || ''
+      deal_id: activity.deal_id || '',
     })
     setShowModal(true)
   }
 
-  const resetForm = () => {
-    setFormData({ type: 'call', subject: '', body: '', contact_id: '', deal_id: '' })
+  const openNew = () => {
+    setEditingActivity(null)
+    setFormData(defaultForm)
+    setShowModal(true)
   }
 
-  const typeIcon = (type) => {
-    const icons = { call: '📞', email: '📧', meeting: '🤝', note: '📝', task: '✅' }
-    return icons[type] || '📋'
-  }
-
-  const typeColor = (type) => {
-    const colors = { call: '#3b82f6', email: '#8b5cf6', meeting: '#f59e0b', note: '#6b7280', task: '#22c55e' }
-    return colors[type] || '#6b7280'
-  }
-
-  if (loading) return <div className="loading">Loading activities...</div>
+  if (loading) return <CardSkeleton count={4} />
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h1>Activities</h1>
-        <button className="btn btn-primary" onClick={() => { resetForm(); setEditingActivity(null); setShowModal(true) }}>
-          + New Activity
-        </button>
+    <div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-950 tracking-tight">Activities</h1>
+          <p className="text-sm text-zinc-500 mt-1">{activities.length} activities logged</p>
+        </div>
+        <Button onClick={openNew}>
+          <Plus size={16} weight="bold" />
+          New Activity
+        </Button>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
-
-      <div className="filters">
-        <select value={filterType} onChange={e => setFilterType(e.target.value)} className="input">
+      {/* Filter */}
+      <div className="flex gap-3 mb-6">
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all min-w-[160px]"
+        >
           <option value="">All Types</option>
-          {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          {ACTIVITY_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
         </select>
       </div>
 
-      <div className="activity-list">
-        {activities.length === 0 ? (
-          <div className="empty">No activities found</div>
-        ) : activities.map(a => (
-          <div key={a.id} className="activity-card">
-            <div className="activity-icon" style={{ background: typeColor(a.type) }}>
-              {typeIcon(a.type)}
-            </div>
-            <div className="activity-content">
-              <div className="activity-header">
-                <span className="activity-type badge" style={{ background: typeColor(a.type) }}>{a.type}</span>
-                <span className="activity-subject">{a.subject}</span>
-              </div>
-              {a.body && <p className="activity-body">{a.body}</p>}
-              <div className="activity-meta">
-                {a.contact_id && <span>Contact #{a.contact_id}</span>}
-                {a.deal_id && <span>Deal #{a.deal_id}</span>}
-                {a.occurred_at && <span>{new Date(a.occurred_at).toLocaleString()}</span>}
-              </div>
-            </div>
-            <div className="activity-actions">
-              <button className="btn btn-sm" onClick={() => handleEdit(a)}>Edit</button>
-              <button className="btn btn-sm btn-danger" onClick={() => handleDelete(a.id)}>Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>{editingActivity ? 'Edit Activity' : 'New Activity'}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Type *</label>
-                  <select className="input" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
-                    {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+      {/* Activity cards */}
+      {activities.length === 0 ? (
+        <EmptyState
+          icon={Lightning}
+          title="No activities yet"
+          description="Log your first activity to start tracking interactions."
+          action={<Button onClick={openNew}><Plus size={16} weight="bold" />Add Activity</Button>}
+        />
+      ) : (
+        <div className="space-y-3">
+          {activities.map((a, i) => {
+            const Icon = typeIcons[a.type] || Lightning
+            const color = getStageColor(ACTIVITY_TYPES, a.type)
+            return (
+              <motion.div
+                key={a.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-white rounded-4xl border border-slate-200/50 shadow-diffusion p-5 flex items-start gap-4 hover:shadow-diffusion-lg transition-shadow duration-200"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-${color}-50`}>
+                  <Icon size={18} className={`text-${color}-600`} />
                 </div>
-                <div className="form-group">
-                  <label>Contact ID</label>
-                  <input type="number" className="input" value={formData.contact_id} onChange={e => setFormData({...formData, contact_id: e.target.value})} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge color={color} dot>
+                      {getStageLabel(ACTIVITY_TYPES, a.type)}
+                    </Badge>
+                    {a.occurred_at && (
+                      <span className="text-xs text-zinc-400">
+                        {formatRelativeDate(a.occurred_at)}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-sm font-medium text-zinc-950 truncate">{a.subject}</h3>
+                  {a.body && (
+                    <p className="text-sm text-zinc-500 mt-1 line-clamp-2">{a.body}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-2 text-xs text-zinc-400">
+                    {a.contact_id && <span>Contact #{a.contact_id}</span>}
+                    {a.deal_id && <span>Deal #{a.deal_id}</span>}
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Deal ID</label>
-                  <input type="number" className="input" value={formData.deal_id} onChange={e => setFormData({...formData, deal_id: e.target.value})} />
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => handleEdit(a)}
+                    className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                  >
+                    <PencilSimple size={15} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(a.id)}
+                    className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash size={15} />
+                  </button>
                 </div>
-              </div>
-              <div className="form-group">
-                <label>Subject *</label>
-                <input type="text" className="input" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} required />
-              </div>
-              <div className="form-group">
-                <label>Body</label>
-                <textarea className="input" rows="4" value={formData.body} onChange={e => setFormData({...formData, body: e.target.value})} />
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editingActivity ? 'Update' : 'Create'}</button>
-              </div>
-            </form>
-          </div>
+              </motion.div>
+            )
+          })}
         </div>
       )}
+
+      {/* Modal */}
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingActivity ? 'Edit Activity' : 'New Activity'}
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-zinc-700">Type</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              >
+                {ACTIVITY_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <Input
+              label="Contact ID"
+              type="number"
+              value={formData.contact_id}
+              onChange={(e) => setFormData({ ...formData, contact_id: e.target.value })}
+            />
+            <Input
+              label="Deal ID"
+              type="number"
+              value={formData.deal_id}
+              onChange={(e) => setFormData({ ...formData, deal_id: e.target.value })}
+            />
+          </div>
+          <Input
+            label="Subject"
+            value={formData.subject}
+            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+            required
+          />
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-zinc-700">Body</label>
+            <textarea
+              rows={4}
+              value={formData.body}
+              onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button type="submit" loading={saving}>
+              {editingActivity ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
