@@ -8,13 +8,6 @@ const api = axios.create({
   }
 })
 
-api.interceptors.request.use(config => {
-  if (config.url && config.url.startsWith('/v1/') && !config.url.endsWith('/') && !config.url.includes('.')) {
-    config.url += '/'
-  }
-  return config
-})
-
 api.interceptors.response.use(
   response => response,
   error => {

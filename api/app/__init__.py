@@ -95,6 +95,7 @@ def create_app(config_class=Config):
     with app.app_context():
         db.create_all()
         seed_demo_data()
+        fix_bad_data()
 
     if os.environ.get('ENFORCE_HTTPS', '').lower() == 'true':
         from app.services.security import enforce_https
@@ -166,4 +167,18 @@ def seed_demo_data():
         print("Seeded demo data: 3 contacts, 3 deals, 3 activities")
     except Exception as e:
         print(f"Seed error: {e}")
+        db.session.rollback()
+
+
+def fix_bad_data():
+    """Fix known bad data from earlier seed versions."""
+    try:
+        from app.models import Contact
+        bad_stages = Contact.query.filter(Contact.stage.in_(['customer', 'churned'])).all()
+        for c in bad_stages:
+            c.stage = 'won' if c.stage == 'customer' else 'closed_lost'
+        if bad_stages:
+            db.session.commit()
+            print(f"Fixed {len(bad_stages)} contacts with invalid stages")
+    except Exception:
         db.session.rollback()
