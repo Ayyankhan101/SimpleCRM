@@ -17,7 +17,7 @@ def list_deals():
     stage = request.args.get('stage')
     query = Deal.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if stage:
-        query = query.filter_by(stage=stage)
+        query = query.filter(Deal.stage.ilike(stage))
     return query.order_by(Deal.created_at.desc()).all()
 
 

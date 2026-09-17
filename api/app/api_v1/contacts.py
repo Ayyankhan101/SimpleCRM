@@ -18,7 +18,7 @@ def list_contacts():
     company = request.args.get('company')
     query = Contact.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if stage:
-        query = query.filter_by(stage=stage)
+        query = query.filter(Contact.stage.ilike(stage))
     if company:
         query = query.filter(Contact.company.ilike(f'%{company}%'))
     return query.order_by(Contact.created_at.desc()).all()

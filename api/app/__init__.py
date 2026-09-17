@@ -173,12 +173,20 @@ def seed_demo_data():
 def fix_bad_data():
     """Fix known bad data from earlier seed versions."""
     try:
-        from app.models import Contact
-        bad_stages = Contact.query.filter(Contact.stage.in_(['customer', 'churned'])).all()
-        for c in bad_stages:
-            c.stage = 'closed_won' if c.stage == 'customer' else 'closed_lost'
-        if bad_stages:
+        from app.models import Contact, Deal
+        stage_map = {
+            'customer': 'closed_won', 'churned': 'closed_lost',
+            'won': 'closed_won', 'lost': 'closed_lost',
+        }
+        fixed = 0
+        for model in [Contact, Deal]:
+            for bad, good in stage_map.items():
+                items = model.query.filter_by(stage=bad).all()
+                for item in items:
+                    item.stage = good
+                    fixed += 1
+        if fixed:
             db.session.commit()
-            print(f"Fixed {len(bad_stages)} contacts with invalid stages")
+            print(f"Fixed {fixed} records with invalid stages")
     except Exception:
         db.session.rollback()
