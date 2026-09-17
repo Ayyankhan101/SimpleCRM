@@ -52,19 +52,19 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const [contactsRes, dealsRes, activitiesRes] = await Promise.all([
-        api.get('/contacts'),
-        api.get('/deals'),
-        api.get('/activities'),
+        api.get('/v1/contacts'),
+        api.get('/v1/deals'),
+        api.get('/v1/activities'),
       ])
 
-      const contacts = contactsRes.data.items || []
-      const deals = dealsRes.data.items || []
-      const activities = activitiesRes.data.items || []
+      const contacts = contactsRes.data || []
+      const deals = dealsRes.data || []
+      const activities = activitiesRes.data || []
 
       setStats({
-        contacts: contactsRes.data.total || 0,
-        deals: dealsRes.data.total || 0,
-        activities: activitiesRes.data.total || 0,
+        contacts: contacts.length,
+        deals: deals.length,
+        activities: activities.length,
       })
 
       const stageCounts = {}

@@ -18,7 +18,7 @@ const typeIcons = {
   task: CheckSquare,
 }
 
-const defaultForm = { type: 'call', subject: '', body: '', contact_id: '', deal_id: '' }
+const defaultForm = { type: 'call', subject: '', body: '', contact_id: '', deal_id: '', due_date: '' }
 
 export default function Activities() {
   const [activities, setActivities] = useState([])
@@ -53,6 +53,7 @@ export default function Activities() {
         body: formData.body || null,
         contact_id: formData.contact_id ? parseInt(formData.contact_id) : null,
         deal_id: formData.deal_id ? parseInt(formData.deal_id) : null,
+        due_date: formData.due_date || null,
       }
       if (editingActivity) {
         await api.put(`/v1/activities/${editingActivity.id}`, payload)
@@ -88,6 +89,7 @@ export default function Activities() {
       body: activity.body || '',
       contact_id: activity.contact_id || '',
       deal_id: activity.deal_id || '',
+      due_date: activity.due_date ? activity.due_date.split('T')[0] : '',
     })
     setShowModal(true)
   }
@@ -157,9 +159,9 @@ export default function Activities() {
                     <Badge color={color} dot>
                       {getStageLabel(ACTIVITY_TYPES, a.type)}
                     </Badge>
-                    {a.occurred_at && (
+                    {a.due_date && (
                       <span className="text-xs text-zinc-400">
-                        {formatRelativeDate(a.occurred_at)}
+                        {formatRelativeDate(a.due_date)}
                       </span>
                     )}
                   </div>
@@ -231,6 +233,12 @@ export default function Activities() {
             value={formData.subject}
             onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
             required
+          />
+          <Input
+            label="Due Date"
+            type="date"
+            value={formData.due_date}
+            onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
           />
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-zinc-700">Body</label>

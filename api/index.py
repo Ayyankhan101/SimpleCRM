@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 os.environ.setdefault('SECRET_KEY', os.environ.get('SECRET_KEY', 'vercel-dev-secret-key-change-in-production'))
 os.environ.setdefault('JWT_SECRET_KEY', os.environ.get('JWT_SECRET_KEY', 'vercel-dev-jwt-secret-key-change-in-production'))
 os.environ.setdefault('FLASK_ENV', 'production')
-os.environ.setdefault('DATABASE_URL', 'sqlite:///data.db')
 
 from app import create_app
 

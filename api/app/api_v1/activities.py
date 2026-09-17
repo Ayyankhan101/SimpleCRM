@@ -48,13 +48,15 @@ def create_activity(data):
 
 
 @activities_blp.route('/<int:activity_id>', methods=['PUT'])
+@activities_blp.arguments(ActivitySchema(only=('type', 'subject', 'body', 'outcome', 'due_date', 'contact_id', 'deal_id'), partial=True))
+@activities_blp.response(200, ActivitySchema)
 @activities_blp.doc(security=[{'Bearer': []}])
-@activities_blp.response(204)
 @login_required
-def complete_activity(activity_id):
-    """Mark an activity as completed."""
+def update_activity(data, activity_id):
+    """Update an existing activity."""
     activity = Activity.query.filter_by(id=activity_id, owner_id=current_user.id, deleted_at=None).first_or_404()
-    activity.completed = True
-    activity.completed_at = datetime.now(timezone.utc)
+    for key, value in data.items():
+        if hasattr(activity, key):
+            setattr(activity, key, value)
     db.session.commit()
-    return '', 204
+    return activity
