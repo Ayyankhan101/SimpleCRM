@@ -74,6 +74,28 @@ class ActivitySchema(Schema):
     created_at = fields.DateTime(dump_only=True)
 
 
+class ContactDetailSchema(Schema):
+    id = fields.Int(dump_only=True)
+    first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    last_name = fields.Str(validate=validate.Length(max=100))
+    email = fields.Email(allow_none=True)
+    phone = fields.Str(allow_none=True)
+    company = fields.Str(allow_none=True)
+    role = fields.Str(allow_none=True)
+    stage = fields.Str(validate=validate.OneOf([
+        'lead', 'prospect', 'qualified', 'proposal', 'negotiation',
+        'closed_won', 'closed_lost', 'churned'
+    ]))
+    score = fields.Int()
+    notes = fields.Str(allow_none=True)
+    owner_id = fields.Int()
+    org_id = fields.Int()
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    deals = fields.List(fields.Nested('DealSchema'))
+    activities = fields.List(fields.Nested('ActivitySchema'))
+
+
 class TagSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))

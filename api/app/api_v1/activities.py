@@ -48,7 +48,7 @@ def create_activity(data):
 
 
 @activities_blp.route('/<int:activity_id>', methods=['PUT'])
-@activities_blp.arguments(ActivitySchema(only=('type', 'subject', 'body', 'outcome', 'due_date', 'contact_id', 'deal_id'), partial=True))
+@activities_blp.arguments(ActivitySchema(only=('type', 'subject', 'body', 'outcome', 'due_date', 'contact_id', 'deal_id', 'completed'), partial=True))
 @activities_blp.response(200, ActivitySchema)
 @activities_blp.doc(security=[{'Bearer': []}])
 @login_required
@@ -58,6 +58,8 @@ def update_activity(data, activity_id):
     for key, value in data.items():
         if hasattr(activity, key):
             setattr(activity, key, value)
+    if 'completed' in data and data['completed'] and not activity.completed_at:
+        activity.completed_at = datetime.now(timezone.utc)
     db.session.commit()
     return activity
 

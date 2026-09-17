@@ -9,6 +9,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Contacts = lazy(() => import('./pages/Contacts'))
 const Deals = lazy(() => import('./pages/Deals'))
 const Activities = lazy(() => import('./pages/Activities'))
+const ContactDetail = lazy(() => import('./pages/ContactDetail'))
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -42,6 +43,7 @@ function App() {
         }>
           <Route index element={<Dashboard />} />
           <Route path="contacts" element={<Contacts />} />
+          <Route path="contacts/:id" element={<ContactDetail />} />
           <Route path="deals" element={<Deals />} />
           <Route path="activities" element={<Activities />} />
         </Route>

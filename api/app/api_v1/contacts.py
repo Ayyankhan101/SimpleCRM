@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 
-from flask import request
+from flask import jsonify, request
 from flask_login import current_user, login_required
 
-from app.models import Contact, db
-from app.schemas import ContactSchema
+from app.models import Contact, Deal, Activity, db
+from app.schemas import ContactSchema, ContactDetailSchema
 from app.api_v1 import contacts_blp
 
 
@@ -22,6 +22,26 @@ def list_contacts():
     if company:
         query = query.filter(Contact.company.ilike(f'%{company}%'))
     return query.order_by(Contact.created_at.desc()).all()
+
+
+@contacts_blp.route('/<int:contact_id>', methods=['GET'])
+@contacts_blp.doc(security=[{'Bearer': []}])
+@login_required
+def get_contact(contact_id):
+    """Get a single contact with linked deals and activities."""
+    contact = Contact.query.filter_by(
+        id=contact_id, owner_id=current_user.id, deleted_at=None
+    ).first_or_404()
+    deals = Deal.query.filter_by(
+        contact_id=contact.id, owner_id=current_user.id, deleted_at=None
+    ).order_by(Deal.created_at.desc()).all()
+    activities = Activity.query.filter_by(
+        contact_id=contact.id, owner_id=current_user.id, deleted_at=None
+    ).order_by(Activity.created_at.desc()).all()
+    result = ContactDetailSchema().dump(contact)
+    result['deals'] = [d.to_dict() for d in deals]
+    result['activities'] = [a.to_dict() for a in activities]
+    return jsonify(result)
 
 
 @contacts_blp.route('/', methods=['POST'])

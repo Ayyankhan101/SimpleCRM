@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, MagnifyingGlass, Users, PencilSimple, Trash } from '@phosphor-icons/react'
 import api from '../utils/api'
@@ -16,6 +17,7 @@ const defaultForm = {
 }
 
 export default function Contacts() {
+  const navigate = useNavigate()
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -173,7 +175,12 @@ export default function Contacts() {
                     className="hover:bg-zinc-50/50 transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <span className="text-sm font-medium text-zinc-950">{c.first_name} {c.last_name}</span>
+                      <button
+                        onClick={() => navigate(`/contacts/${c.id}`)}
+                        className="text-sm font-medium text-zinc-950 hover:text-emerald-600 transition-colors text-left"
+                      >
+                        {c.first_name} {c.last_name}
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-500">{c.email || '-'}</td>
                     <td className="px-6 py-4 text-sm text-zinc-500">{c.company || '-'}</td>
