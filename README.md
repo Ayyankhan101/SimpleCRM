@@ -7,11 +7,13 @@ A simple CRM for small businesses. Contacts, deals, tasks — that's it. Built w
 ![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-private-red.svg)
 
+**Live:** https://frontend-navy-psi-33.vercel.app
+
 ## Quick Start
 
 ```bash
-git clone <repository-url>
-cd Data-Analysis-App
+git clone https://github.com/Ayyankhan101/SimpleCRM.git
+cd SimpleCRM
 ./start.sh
 ```
 
@@ -29,12 +31,12 @@ Open **http://localhost:5173**, register a new account, start adding contacts.
 - **Contacts** — Track leads, prospects, customers with stages, scores, notes
 - **Deals** — Pipeline view with stages, values, probability tracking
 - **Activities** — Log calls, emails, meetings; set due dates
-- **Dashboard** — 3 stat cards, pipeline chart, upcoming tasks
+- **Dashboard** — Stat cards, pipeline chart, upcoming tasks
 - **Auth** — Register/login, Google OAuth, role-based access (owner/admin/member)
 - **Multi-tenant** — Organization support with plans (free/pro/enterprise)
-- **Audit Log** — Track all create/update/delete actions
-- **Rate Limiting** — 200 req/min, 50 req/sec
-- **CSRF Protection** — Secure cookie-based auth
+- **Stage Filters** — Filter contacts/deals by pipeline stage
+- **Search** — Find contacts by name/email/company
+- **Responsive** — Works on desktop and mobile
 
 ## Pricing
 
@@ -65,6 +67,9 @@ Open **http://localhost:5173**, register a new account, start adding contacts.
 | React Router 6 | Routing |
 | Axios | HTTP client |
 | Recharts | Data visualization |
+| Tailwind CSS | Styling |
+| Framer Motion | Animations |
+| Phosphor Icons | Icon library |
 
 ## API Endpoints
 
@@ -79,39 +84,37 @@ Open **http://localhost:5173**, register a new account, start adding contacts.
 ### Contacts
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/contacts` | List contacts (paginated) |
-| POST | `/api/contacts` | Create contact |
-| GET | `/api/contacts/<id>` | Get contact |
-| PUT | `/api/contacts/<id>` | Update contact |
-| DELETE | `/api/contacts/<id>` | Delete contact |
+| GET | `/api/v1/contacts/` | List contacts (filter by stage) |
+| POST | `/api/v1/contacts/` | Create contact |
+| PUT | `/api/v1/contacts/<id>` | Update contact |
+| DELETE | `/api/v1/contacts/<id>` | Soft-delete contact |
 
 ### Deals
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/deals` | List deals (paginated) |
-| POST | `/api/deals` | Create deal |
-| GET | `/api/deals/<id>` | Get deal |
-| PUT | `/api/deals/<id>` | Update deal |
-| DELETE | `/api/deals/<id>` | Delete deal |
+| GET | `/api/v1/deals/` | List deals (filter by stage) |
+| POST | `/api/v1/deals/` | Create deal |
+| PUT | `/api/v1/deals/<id>` | Update deal |
+| DELETE | `/api/v1/deals/<id>` | Soft-delete deal |
 
 ### Activities
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/activities` | List activities (paginated) |
-| POST | `/api/activities` | Create activity |
-| GET | `/api/activities/<id>` | Get activity |
-| PUT | `/api/activities/<id>` | Update activity |
-| DELETE | `/api/activities/<id>` | Delete activity |
+| GET | `/api/v1/activities/` | List activities (filter by type) |
+| POST | `/api/v1/activities/` | Create activity |
+| PUT | `/api/v1/activities/<id>` | Update activity |
+| DELETE | `/api/v1/activities/<id>` | Soft-delete activity |
 
 ## Project Structure
 
 ```
-Data-Analysis-App/
+SimpleCRM/
 ├── start.sh                 # One-command startup
-├── backend/
+├── api/                     # Backend (Flask)
 │   ├── app/
-│   │   ├── __init__.py      # App factory
-│   │   ├── models.py        # User, Contact, Deal, Activity, Tag, AuditLog
+│   │   ├── __init__.py      # App factory + seed data
+│   │   ├── models.py        # User, Contact, Deal, Activity
+│   │   ├── schemas.py       # Marshmallow serialization
 │   │   ├── routes/
 │   │   │   ├── auth.py      # Authentication
 │   │   │   └── health.py    # Health check
@@ -136,9 +139,17 @@ Data-Analysis-App/
 │   │   │   ├── Login.jsx
 │   │   │   └── Register.jsx
 │   │   ├── components/
-│   │   │   └── Layout.jsx   # Sidebar nav
+│   │   │   ├── Layout.jsx   # Sidebar nav
+│   │   │   ├── Modal.jsx    # Reusable modal
+│   │   │   └── ui/          # Button, Input, Badge
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── lib/
+│   │   │   └── constants.js # Stages, colors, formatters
 │   │   └── utils/api.js     # Axios config
+│   ├── vercel.json
 │   └── package.json
+├── vercel.json               # Root deploy config
 └── README.md
 ```
 
@@ -167,27 +178,19 @@ FRONTEND_URL=http://localhost:5173
 ./start.sh --test
 ```
 
-**Backend tests (54 tests):**
+**Backend tests:**
 ```bash
-cd backend
+cd api
 source venv/bin/activate
-pytest tests/test_auth.py tests/test_crm.py -v
-```
-
-**E2E tests:**
-```bash
-cd backend
-source venv/bin/activate
-pytest e2e_test.py -v
+pytest tests/ -v
 ```
 
 ## Deployment
 
-### Render
-- Configuration in `render.yaml`
-
 ### Vercel
-- Configuration in `vercel.json`
+- Root `vercel.json` handles both API and frontend
+- SPA routing configured for client-side navigation
+- API routes proxy to Python serverless functions
 
 ### Production Variables
 ```bash
@@ -207,7 +210,7 @@ kill <pid>
 
 **Reset database:**
 ```bash
-cd backend && rm -f simplecrm.db && cd .. && ./start.sh
+cd api && rm -f simplecrm.db && cd .. && ./start.sh
 ```
 
 **Frontend build fails:**
