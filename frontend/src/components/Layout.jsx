@@ -103,7 +103,7 @@ export default function Layout() {
       {/* Mobile sidebar */}
       <AnimatePresence>
         {mobileOpen && (
-          <>
+          <div key="mobile-sidebar">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -126,7 +126,7 @@ export default function Layout() {
               </button>
               <SidebarContent user={user} onLogout={handleLogout} onNavClick={() => setMobileOpen(false)} />
             </motion.aside>
-          </>
+          </div>
         )}
       </AnimatePresence>
 
