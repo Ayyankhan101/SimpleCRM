@@ -60,3 +60,15 @@ def update_activity(data, activity_id):
             setattr(activity, key, value)
     db.session.commit()
     return activity
+
+
+@activities_blp.route('/<int:activity_id>', methods=['DELETE'])
+@activities_blp.response(204)
+@activities_blp.doc(security=[{'Bearer': []}])
+@login_required
+def delete_activity(activity_id):
+    """Soft-delete an activity."""
+    activity = Activity.query.filter_by(id=activity_id, owner_id=current_user.id, deleted_at=None).first_or_404()
+    activity.deleted_at = datetime.now(timezone.utc)
+    db.session.commit()
+    return '', 204

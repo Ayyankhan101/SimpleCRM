@@ -129,7 +129,7 @@ def seed_demo_data():
         contacts_data = [
             {'first_name': 'John', 'last_name': 'Doe', 'email': 'john@example.com', 'company': 'Acme Corp', 'stage': 'lead'},
             {'first_name': 'Jane', 'last_name': 'Smith', 'email': 'jane@example.com', 'company': 'Tech Co', 'stage': 'prospect'},
-            {'first_name': 'Bob', 'last_name': 'Wilson', 'email': 'bob@example.com', 'company': 'Design Studio', 'stage': 'won'},
+            {'first_name': 'Bob', 'last_name': 'Wilson', 'email': 'bob@example.com', 'company': 'Design Studio', 'stage': 'closed_won'},
         ]
 
         for c_data in contacts_data:
@@ -176,7 +176,7 @@ def fix_bad_data():
         from app.models import Contact
         bad_stages = Contact.query.filter(Contact.stage.in_(['customer', 'churned'])).all()
         for c in bad_stages:
-            c.stage = 'won' if c.stage == 'customer' else 'closed_lost'
+            c.stage = 'closed_won' if c.stage == 'customer' else 'closed_lost'
         if bad_stages:
             db.session.commit()
             print(f"Fixed {len(bad_stages)} contacts with invalid stages")
