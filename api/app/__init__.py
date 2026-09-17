@@ -47,8 +47,12 @@ def create_app(config_class=Config):
     csrf.init_app(app)
     cache.init_app(app)
     frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+    vercel_url = os.environ.get('VERCEL_URL', '')
+    allowed_origins = [frontend_url, "http://localhost:5173", "http://localhost:3000"]
+    if vercel_url:
+        allowed_origins.append(f"https://{vercel_url}")
     CORS(app,
-         origins=[frontend_url, "http://localhost:5173", "http://localhost:3000"],
+         origins=allowed_origins,
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -124,7 +128,7 @@ def seed_demo_data():
         contacts_data = [
             {'first_name': 'John', 'last_name': 'Doe', 'email': 'john@example.com', 'company': 'Acme Corp', 'stage': 'lead'},
             {'first_name': 'Jane', 'last_name': 'Smith', 'email': 'jane@example.com', 'company': 'Tech Co', 'stage': 'prospect'},
-            {'first_name': 'Bob', 'last_name': 'Wilson', 'email': 'bob@example.com', 'company': 'Design Studio', 'stage': 'customer'},
+            {'first_name': 'Bob', 'last_name': 'Wilson', 'email': 'bob@example.com', 'company': 'Design Studio', 'stage': 'won'},
         ]
 
         for c_data in contacts_data:

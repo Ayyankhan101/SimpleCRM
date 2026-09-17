@@ -91,7 +91,7 @@ class Contact(db.Model):
     role = db.Column(db.String(100))
     address = db.Column(db.Text)
     website = db.Column(db.String(200))
-    stage = db.Column(db.String(20), default='lead')  # lead/prospect/customer/churned
+    stage = db.Column(db.String(20), default='lead')  # lead/prospect/proposal/negotiation/closed_won/closed_lost
     score = db.Column(db.Integer, default=0)  # 0-100
     tags = db.Column(db.Text)  # JSON array
     custom_fields = db.Column(db.Text)  # JSON object
