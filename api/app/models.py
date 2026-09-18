@@ -249,7 +249,8 @@ class Activity(db.Model):
         due = self.due_date
         if due.tzinfo is not None:
             due = due.replace(tzinfo=None)
-        return due < datetime.utcnow()
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        return due < today
 
     @property
     def is_due_today(self):
