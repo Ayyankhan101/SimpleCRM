@@ -158,12 +158,17 @@ def seed_demo_data():
             deal = Deal(**d_data, owner_id=user.id, org_id=org.id)
             db.session.add(deal)
 
-        # Create demo activities
+        # Create demo activities with realistic due dates
         from app.models import Activity
+        from datetime import timedelta
+        now = datetime.utcnow()
         activities_data = [
-            {'type': 'call', 'subject': 'Follow up with John', 'due_date': datetime.now(timezone.utc)},
-            {'type': 'email', 'subject': 'Send proposal to Jane', 'due_date': datetime.now(timezone.utc)},
-            {'type': 'meeting', 'subject': 'Kickoff with Bob', 'completed': True, 'completed_at': datetime.now(timezone.utc)},
+            {'type': 'call', 'subject': 'Follow up with John about contract', 'due_date': now - timedelta(days=2)},
+            {'type': 'email', 'subject': 'Send proposal to Jane', 'due_date': now - timedelta(hours=3)},
+            {'type': 'meeting', 'subject': 'Kickoff with Bob', 'completed': True, 'completed_at': now},
+            {'type': 'task', 'subject': 'Prepare Q4 report', 'due_date': now.replace(hour=17, minute=0, second=0, microsecond=0)},
+            {'type': 'follow_up', 'subject': 'Check in with Acme Corp', 'due_date': now + timedelta(days=3)},
+            {'type': 'call', 'subject': 'Demo call with Tech Co', 'due_date': now + timedelta(days=7)},
         ]
 
         for a_data in activities_data:
@@ -171,7 +176,7 @@ def seed_demo_data():
             db.session.add(activity)
 
         db.session.commit()
-        print("Seeded demo data: 3 contacts, 3 deals, 3 activities")
+        print("Seeded demo data: 3 contacts, 3 deals, 6 activities")
     except Exception as e:
         print(f"Seed error: {e}")
         db.session.rollback()
