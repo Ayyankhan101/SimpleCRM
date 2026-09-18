@@ -120,33 +120,39 @@ export default function Layout() {
         <SidebarContent user={user} onLogout={handleLogout} />
       </aside>
 
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {mobileOpen && (
-          <div key="mobile-sidebar">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-40 lg:hidden"
+          <motion.div
+            key="sidebar-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile sidebar panel */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.aside
+            key="sidebar-panel"
+            initial={{ x: -280 }}
+            animate={{ x: 0 }}
+            exit={{ x: -280 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-zinc-900 shadow-diffusion-lg z-50 lg:hidden flex flex-col"
+          >
+            <button
               onClick={() => setMobileOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-zinc-900 shadow-diffusion-lg z-50 lg:hidden flex flex-col"
+              className="absolute top-4 right-4 p-2 rounded-xl text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
             >
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="absolute top-4 right-4 p-2 rounded-xl text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <X size={20} />
-              </button>
-              <SidebarContent user={user} onLogout={handleLogout} onNavClick={() => setMobileOpen(false)} />
-            </motion.aside>
-          </div>
+              <X size={20} />
+            </button>
+            <SidebarContent user={user} onLogout={handleLogout} onNavClick={() => setMobileOpen(false)} />
+          </motion.aside>
         )}
       </AnimatePresence>
 
