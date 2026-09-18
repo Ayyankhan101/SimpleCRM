@@ -253,6 +253,17 @@ class Activity(db.Model):
             contact_name = f'{self.contact.first_name} {self.contact.last_name}' if self.contact else None
         except Exception:
             contact_name = None
+
+        now = datetime.now(timezone.utc)
+        is_overdue = False
+        is_due_today = False
+        if self.due_date and not self.completed:
+            due = self.due_date
+            if due.tzinfo is None:
+                due = due.replace(tzinfo=timezone.utc)
+            is_overdue = due < now
+            is_due_today = due.date() == now.date()
+
         return {
             'id': self.id,
             'type': self.type,
@@ -267,6 +278,8 @@ class Activity(db.Model):
             'org_id': self.org_id,
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'completed': self.completed,
+            'is_overdue': is_overdue,
+            'is_due_today': is_due_today,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

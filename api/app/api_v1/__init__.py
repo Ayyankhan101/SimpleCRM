@@ -3,6 +3,7 @@ from flask import jsonify
 from flask_login import login_required, current_user
 from app.models import Contact, Deal, Activity, db
 from sqlalchemy import func
+from datetime import datetime, timezone
 
 contacts_blp = Blueprint('contacts', 'Contacts', url_prefix='/api/v1/contacts', description='Contact management')
 deals_blp = Blueprint('deals', 'Deals', url_prefix='/api/v1/deals', description='Deal pipeline')
@@ -27,24 +28,47 @@ def get_stats():
     )
     pipeline = [{'stage': row[0], 'count': row[1]} for row in pipeline_rows]
 
-    upcoming = (
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start.replace(hour=23, minute=59, second=59)
+
+    base_filter = [
+        Activity.owner_id == current_user.id,
+        Activity.deleted_at.is_(None),
+        Activity.completed == False,
+        Activity.due_date.isnot(None),
+    ]
+
+    overdue = (
         db.session.query(Activity)
-        .filter(
-            Activity.owner_id == current_user.id,
-            Activity.deleted_at.is_(None),
-            Activity.completed == False,
-            Activity.due_date.isnot(None),
-        )
+        .filter(*base_filter, Activity.due_date < today_start)
         .order_by(Activity.due_date.asc())
         .limit(5)
         .all()
     )
-    upcoming_activities = [a.to_dict() for a in upcoming]
+
+    due_today = (
+        db.session.query(Activity)
+        .filter(*base_filter, Activity.due_date >= today_start, Activity.due_date <= today_end)
+        .order_by(Activity.due_date.asc())
+        .limit(5)
+        .all()
+    )
+
+    upcoming = (
+        db.session.query(Activity)
+        .filter(*base_filter, Activity.due_date > today_end)
+        .order_by(Activity.due_date.asc())
+        .limit(5)
+        .all()
+    )
 
     return jsonify({
         'contacts': contact_count,
         'deals': deal_count,
         'activities': activity_count,
         'pipeline': pipeline,
-        'upcoming_activities': upcoming_activities,
+        'overdue_activities': [a.to_dict() for a in overdue],
+        'due_today_activities': [a.to_dict() for a in due_today],
+        'upcoming_activities': [a.to_dict() for a in upcoming],
     })

@@ -13,14 +13,26 @@ from app.api_v1 import activities_blp
 @activities_blp.response(200, ActivitySchema(many=True))
 @login_required
 def list_activities():
-    """List activities, optionally filtered by type or deal."""
+    """List activities, optionally filtered by type, deal, or due status."""
     activity_type = request.args.get('type')
     deal_id = request.args.get('deal_id', type=int)
+    due_filter = request.args.get('due')  # overdue, today, upcoming
     query = Activity.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if activity_type:
         query = query.filter_by(type=activity_type)
     if deal_id:
         query = query.filter_by(deal_id=deal_id)
+    if due_filter:
+        now = datetime.now(timezone.utc)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start.replace(hour=23, minute=59, second=59)
+        query = query.filter(Activity.completed == False, Activity.due_date.isnot(None))
+        if due_filter == 'overdue':
+            query = query.filter(Activity.due_date < today_start)
+        elif due_filter == 'today':
+            query = query.filter(Activity.due_date >= today_start, Activity.due_date <= today_end)
+        elif due_filter == 'upcoming':
+            query = query.filter(Activity.due_date > today_end)
     return query.order_by(Activity.created_at.desc()).all()
 
 

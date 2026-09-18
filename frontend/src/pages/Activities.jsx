@@ -188,7 +188,9 @@ export default function Activities() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className={`bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5 flex items-start gap-4 hover:shadow-diffusion-lg transition-shadow duration-200 ${a.completed ? 'opacity-60' : ''}`}
+                className={`bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5 flex items-start gap-4 hover:shadow-diffusion-lg transition-shadow duration-200 border-l-4 ${
+                  a.is_overdue ? 'border-l-red-500' : a.is_due_today ? 'border-l-amber-500' : 'border-l-transparent'
+                } ${a.completed ? 'opacity-60' : ''}`}
               >
                 <button
                   onClick={() => handleToggleComplete(a)}
@@ -208,6 +210,12 @@ export default function Activities() {
                     <Badge color={colorKey} dot>
                       {getStageLabel(ACTIVITY_TYPES, a.type)}
                     </Badge>
+                    {a.is_overdue && !a.completed && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 rounded-full">OVERDUE</span>
+                    )}
+                    {a.is_due_today && !a.completed && !a.is_overdue && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 rounded-full">DUE TODAY</span>
+                    )}
                     {a.due_date && (
                       <span className="text-xs text-zinc-400 dark:text-zinc-500">
                         {formatRelativeDate(a.due_date)}

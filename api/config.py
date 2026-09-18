@@ -20,6 +20,10 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{INSTANCE_DIR / "data_analytics.db"}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,  # handle Neon scale-to-zero reconnection
+        'pool_recycle': 300,    # recycle connections every 5 min
+    }
 
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
 

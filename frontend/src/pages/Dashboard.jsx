@@ -39,9 +39,28 @@ const item = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
 }
 
+function ActivityRow({ activity, border }) {
+  const typeColor = getStageColor(ACTIVITY_TYPES, activity.type)
+  return (
+    <div className={`flex items-center gap-3 p-3 rounded-xl border-l-2 ${border} hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors`}>
+      <Badge color={typeColor} dot>
+        {getStageLabel(ACTIVITY_TYPES, activity.type)}
+      </Badge>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50 truncate">{activity.subject}</p>
+      </div>
+      <span className="text-xs text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
+        {formatRelativeDate(activity.due_date)}
+      </span>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState({ contacts: 0, deals: 0, activities: 0 })
   const [pipeline, setPipeline] = useState([])
+  const [overdueActivities, setOverdueActivities] = useState([])
+  const [dueTodayActivities, setDueTodayActivities] = useState([])
   const [upcomingActivities, setUpcomingActivities] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -61,6 +80,8 @@ export default function Dashboard() {
       })
 
       setPipeline(data.pipeline || [])
+      setOverdueActivities(data.overdue_activities || [])
+      setDueTodayActivities(data.due_today_activities || [])
       setUpcomingActivities(data.upcoming_activities || [])
     } catch (error) {
       console.error('Dashboard error:', error)
@@ -139,32 +160,53 @@ export default function Dashboard() {
           )}
         </motion.div>
 
-        {/* Upcoming activities — 2 cols */}
+        {/* Activities panel — 2 cols */}
         <motion.div variants={item} className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-8">
-          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-6">Upcoming Activities</h3>
-          {upcomingActivities.length === 0 ? (
+          {overdueActivities.length === 0 && dueTodayActivities.length === 0 && upcomingActivities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <CalendarBlank size={28} className="text-zinc-300 dark:text-zinc-600 mb-3" />
               <p className="text-sm text-zinc-400 dark:text-zinc-500">No upcoming activities</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {upcomingActivities.map((activity) => {
-                const typeColor = getStageColor(ACTIVITY_TYPES, activity.type)
-                return (
-                  <div key={activity.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                    <Badge color={typeColor} dot>
-                      {getStageLabel(ACTIVITY_TYPES, activity.type)}
-                    </Badge>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50 truncate">{activity.subject}</p>
-                    </div>
-                    <span className="text-xs text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
-                      {formatRelativeDate(activity.due_date)}
-                    </span>
+            <div className="space-y-5">
+              {overdueActivities.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">Overdue</h4>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 rounded-full">{overdueActivities.length}</span>
                   </div>
-                )
-              })}
+                  <div className="space-y-2">
+                    {overdueActivities.map((activity) => (
+                      <ActivityRow key={activity.id} activity={activity} border="border-l-red-500" />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {dueTodayActivities.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Due Today</h4>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 rounded-full">{dueTodayActivities.length}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {dueTodayActivities.map((activity) => (
+                      <ActivityRow key={activity.id} activity={activity} border="border-l-amber-500" />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {upcomingActivities.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Upcoming</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {upcomingActivities.map((activity) => (
+                      <ActivityRow key={activity.id} activity={activity} border="" />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </motion.div>
