@@ -25,7 +25,7 @@ class ContactSchema(Schema):
     id = fields.Int(dump_only=True)
     first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     last_name = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email(allow_none=True)
+    email = fields.Str(allow_none=True)
     phone = fields.Str(allow_none=True)
     company = fields.Str(allow_none=True)
     role = fields.Str(allow_none=True)
@@ -41,9 +41,12 @@ class ContactSchema(Schema):
     updated_at = fields.DateTime(dump_only=True)
 
     @pre_load
-    def clean_email(self, data, **kwargs):
+    def clean_fields(self, data, **kwargs):
         if data.get('email') == '':
             data['email'] = None
+        for key in ('phone', 'company', 'role', 'notes'):
+            if data.get(key) == '':
+                data[key] = None
         return data
 
 
@@ -84,7 +87,7 @@ class ContactDetailSchema(Schema):
     id = fields.Int(dump_only=True)
     first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     last_name = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email(allow_none=True)
+    email = fields.Str(allow_none=True)
     phone = fields.Str(allow_none=True)
     company = fields.Str(allow_none=True)
     role = fields.Str(allow_none=True)
@@ -102,7 +105,7 @@ class ContactDetailSchema(Schema):
     activities = fields.List(fields.Nested('ActivitySchema'))
 
     @pre_load
-    def clean_email(self, data, **kwargs):
+    def clean_fields(self, data, **kwargs):
         if data.get('email') == '':
             data['email'] = None
         return data
