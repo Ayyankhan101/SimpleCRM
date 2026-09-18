@@ -77,6 +77,7 @@ def create_app(config_class=Config):
     from app.api_v1.deals import deals_blp
     from app.api_v1.activities import activities_blp
     from app.api_v1 import stats_blp
+    from app.api_v1 import import_contacts  # noqa: F401 — registers routes on contacts_blp
     api.register_blueprint(contacts_blp)
     api.register_blueprint(deals_blp)
     api.register_blueprint(activities_blp)
