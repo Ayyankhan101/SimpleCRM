@@ -114,6 +114,8 @@ def create_app(config_class=Config):
 def seed_demo_data():
     try:
         if User.query.first():
+            # Ensure demo activities with due dates exist
+            _ensure_activity_due_dates()
             return
     except Exception:
         return
@@ -180,6 +182,33 @@ def seed_demo_data():
     except Exception as e:
         print(f"Seed error: {e}")
         db.session.rollback()
+
+
+def _ensure_activity_due_dates():
+    """Add demo activities with due dates if user has none."""
+    from app.models import Activity
+    from datetime import timedelta
+    user = User.query.first()
+    if not user:
+        return
+    has_due = Activity.query.filter(
+        Activity.owner_id == user.id,
+        Activity.due_date.isnot(None),
+        Activity.deleted_at.is_(None),
+    ).first()
+    if has_due:
+        return
+    now = datetime.utcnow()
+    demo_activities = [
+        Activity(type='call', subject='Follow up with John about contract', due_date=now - timedelta(days=2), owner_id=user.id, org_id=user.org_id),
+        Activity(type='email', subject='Send proposal to Jane', due_date=now - timedelta(hours=3), owner_id=user.id, org_id=user.org_id),
+        Activity(type='task', subject='Prepare Q4 report', due_date=now.replace(hour=17, minute=0, second=0, microsecond=0), owner_id=user.id, org_id=user.org_id),
+        Activity(type='follow_up', subject='Check in with Acme Corp', due_date=now + timedelta(days=3), owner_id=user.id, org_id=user.org_id),
+        Activity(type='call', subject='Demo call with Tech Co', due_date=now + timedelta(days=7), owner_id=user.id, org_id=user.org_id),
+    ]
+    db.session.add_all(demo_activities)
+    db.session.commit()
+    print("Added 5 demo activities with due dates")
 
 
 def fix_bad_data():
