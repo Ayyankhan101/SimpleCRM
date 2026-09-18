@@ -70,8 +70,8 @@ export default function Deals() {
     try {
       await api.delete(`/v1/deals/${id}`)
       fetchDeals()
-    } catch {
-      // silent
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete deal')
     }
   }
 

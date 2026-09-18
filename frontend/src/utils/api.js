@@ -8,15 +8,19 @@ const api = axios.create({
   }
 })
 
-let isRedirecting = false
+let lastRedirect = 0
 
 api.interceptors.response.use(
-  response => response,
+  response => {
+    lastRedirect = 0
+    return response
+  },
   error => {
-    if (error.response?.status === 401 && !isRedirecting) {
+    if (error.response?.status === 401) {
+      const now = Date.now()
       const path = window.location.pathname
-      if (path !== '/login' && path !== '/register') {
-        isRedirecting = true
+      if (path !== '/login' && path !== '/register' && now - lastRedirect > 2000) {
+        lastRedirect = now
         window.location.href = '/login'
       }
     }

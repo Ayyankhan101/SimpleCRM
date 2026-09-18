@@ -184,7 +184,7 @@ class Deal(db.Model):
         return {
             'id': self.id,
             'title': self.title,
-            'value': self.value,
+            'value': round(self.value, 2) if self.value else 0,
             'currency': self.currency,
             'stage': self.stage,
             'probability': self.probability,
@@ -243,6 +243,16 @@ class Activity(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
+        deal_title = None
+        try:
+            deal_title = self.deal.title if self.deal else None
+        except Exception:
+            deal_title = None
+        contact_name = None
+        try:
+            contact_name = f'{self.contact.first_name} {self.contact.last_name}' if self.contact else None
+        except Exception:
+            contact_name = None
         return {
             'id': self.id,
             'type': self.type,
@@ -250,9 +260,9 @@ class Activity(db.Model):
             'body': self.body,
             'outcome': self.outcome,
             'deal_id': self.deal_id,
-            'deal_title': self.deal.title if self.deal else None,
+            'deal_title': deal_title,
             'contact_id': self.contact_id,
-            'contact_name': f'{self.contact.first_name} {self.contact.last_name}' if self.contact else None,
+            'contact_name': contact_name,
             'owner_id': self.owner_id,
             'org_id': self.org_id,
             'due_date': self.due_date.isoformat() if self.due_date else None,

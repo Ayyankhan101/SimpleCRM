@@ -78,8 +78,8 @@ export default function Contacts() {
     try {
       await api.delete(`/v1/contacts/${id}`)
       fetchContacts()
-    } catch {
-      // error handled silently
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete contact')
     }
   }
 

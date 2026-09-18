@@ -50,7 +50,7 @@ export function formatRelativeDate(dateStr) {
   const date = new Date(dateStr)
   const now = new Date()
   const diffMs = date - now
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
 
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Tomorrow'

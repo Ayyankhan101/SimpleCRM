@@ -49,8 +49,8 @@ export default function ContactDetail() {
     try {
       await api.delete(`/v1/contacts/${id}`)
       navigate('/contacts')
-    } catch {
-      // silent
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete contact')
     }
   }
 
@@ -93,7 +93,14 @@ export default function ContactDetail() {
     )
   }
 
-  if (!contact) return null
+  if (!contact) return (
+    <div className="flex flex-col items-center justify-center py-24">
+      <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-4">Contact not found</p>
+      <a href="/contacts" className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
+        Back to Contacts
+      </a>
+    </div>
+  )
 
   const totalDealValue = (contact.deals || []).reduce((sum, d) => sum + (d.value || 0), 0)
   const wonDealValue = (contact.deals || [])

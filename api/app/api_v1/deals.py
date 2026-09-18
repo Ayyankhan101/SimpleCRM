@@ -55,10 +55,11 @@ def create_deal(data):
 def update_deal(data, deal_id):
     """Update an existing deal."""
     deal = Deal.query.filter_by(id=deal_id, owner_id=current_user.id, deleted_at=None).first_or_404()
+    allowed_fields = {'title', 'value', 'currency', 'stage', 'probability', 'expected_close_date', 'contact_id'}
     for key, value in data.items():
         if key == 'notes':
             deal.set_notes(value)
-        elif hasattr(deal, key):
+        elif key in allowed_fields and hasattr(deal, key):
             setattr(deal, key, value)
     deal.updated_at = datetime.now(timezone.utc)
     db.session.commit()

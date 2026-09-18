@@ -55,11 +55,15 @@ def create_activity(data):
 def update_activity(data, activity_id):
     """Update an existing activity."""
     activity = Activity.query.filter_by(id=activity_id, owner_id=current_user.id, deleted_at=None).first_or_404()
+    allowed_fields = {'type', 'subject', 'body', 'outcome', 'deal_id', 'contact_id', 'due_date', 'completed'}
     for key, value in data.items():
-        if hasattr(activity, key):
+        if key in allowed_fields and hasattr(activity, key):
             setattr(activity, key, value)
-    if 'completed' in data and data['completed'] and not activity.completed_at:
-        activity.completed_at = datetime.now(timezone.utc)
+    if 'completed' in data:
+        if data['completed'] and not activity.completed_at:
+            activity.completed_at = datetime.now(timezone.utc)
+        elif not data['completed']:
+            activity.completed_at = None
     db.session.commit()
     return activity
 

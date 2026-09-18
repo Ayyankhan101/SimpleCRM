@@ -31,12 +31,12 @@ class ContactSchema(Schema):
     role = fields.Str(allow_none=True)
     stage = fields.Str(validate=validate.OneOf([
         'lead', 'prospect', 'qualified', 'proposal', 'negotiation',
-        'closed_won', 'closed_lost', 'churned'
+        'closed_won', 'closed_lost'
     ]))
     score = fields.Int()
     notes = fields.Str(allow_none=True)
-    owner_id = fields.Int()
-    org_id = fields.Int()
+    owner_id = fields.Int(dump_only=True)
+    org_id = fields.Int(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
 
@@ -52,8 +52,8 @@ class DealSchema(Schema):
     probability = fields.Int(validate=validate.Range(min=0, max=100))
     expected_close_date = fields.Date(allow_none=True)
     contact_id = fields.Int(allow_none=True)
-    owner_id = fields.Int()
-    org_id = fields.Int()
+    owner_id = fields.Int(dump_only=True)
+    org_id = fields.Int(dump_only=True)
     notes = fields.Str(allow_none=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
@@ -61,14 +61,14 @@ class DealSchema(Schema):
 
 class ActivitySchema(Schema):
     id = fields.Int(dump_only=True)
-    type = fields.Str(required=True, validate=validate.Length(min=1, max=50))
+    type = fields.Str(required=True, validate=[validate.Length(min=1, max=50), validate.OneOf(['call', 'email', 'meeting', 'note', 'task', 'follow_up'])])
     subject = fields.Str(required=True, validate=validate.Length(min=1, max=200))
     body = fields.Str(allow_none=True)
     outcome = fields.Str(allow_none=True)
     deal_id = fields.Int(allow_none=True)
     contact_id = fields.Int(allow_none=True)
-    owner_id = fields.Int()
-    org_id = fields.Int()
+    owner_id = fields.Int(dump_only=True)
+    org_id = fields.Int(dump_only=True)
     due_date = fields.Date(allow_none=True)
     completed = fields.Bool()
     created_at = fields.DateTime(dump_only=True)
@@ -84,12 +84,12 @@ class ContactDetailSchema(Schema):
     role = fields.Str(allow_none=True)
     stage = fields.Str(validate=validate.OneOf([
         'lead', 'prospect', 'qualified', 'proposal', 'negotiation',
-        'closed_won', 'closed_lost', 'churned'
+        'closed_won', 'closed_lost'
     ]))
     score = fields.Int()
     notes = fields.Str(allow_none=True)
-    owner_id = fields.Int()
-    org_id = fields.Int()
+    owner_id = fields.Int(dump_only=True)
+    org_id = fields.Int(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
     deals = fields.List(fields.Nested('DealSchema'))

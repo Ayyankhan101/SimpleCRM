@@ -88,8 +88,8 @@ export default function Activities() {
     try {
       await api.delete(`/v1/activities/${id}`)
       fetchActivities()
-    } catch {
-      // silent
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete activity')
     }
   }
 

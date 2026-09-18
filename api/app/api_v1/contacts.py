@@ -16,11 +16,22 @@ def list_contacts():
     """List contacts with optional filtering."""
     stage = request.args.get('stage')
     company = request.args.get('company')
+    search = request.args.get('search')
     query = Contact.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if stage:
         query = query.filter(Contact.stage.ilike(stage))
     if company:
         query = query.filter(Contact.company.ilike(f'%{company}%'))
+    if search:
+        q = f'%{search}%'
+        query = query.filter(
+            db.or_(
+                Contact.first_name.ilike(q),
+                Contact.last_name.ilike(q),
+                Contact.email.ilike(q),
+                Contact.company.ilike(q),
+            )
+        )
     return query.order_by(Contact.created_at.desc()).all()
 
 
@@ -77,8 +88,9 @@ def create_contact(data):
 def update_contact(data, contact_id):
     """Update an existing contact."""
     contact = Contact.query.filter_by(id=contact_id, owner_id=current_user.id, deleted_at=None).first_or_404()
+    allowed_fields = {'first_name', 'last_name', 'email', 'phone', 'company', 'role', 'stage', 'score', 'notes'}
     for key, value in data.items():
-        if hasattr(contact, key):
+        if key in allowed_fields and hasattr(contact, key):
             setattr(contact, key, value)
     contact.updated_at = datetime.now(timezone.utc)
     db.session.commit()

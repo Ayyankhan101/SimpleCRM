@@ -56,10 +56,14 @@ def create_app(config_class=Config):
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         expose_headers=["Content-Type"],
+         expose_headers=["Content-Type", "Set-Cookie"],
          max_age=600)
 
     login_manager.login_view = 'auth.login'
+
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        return jsonify({'error': 'Unauthorized'}), 401
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -72,12 +76,14 @@ def create_app(config_class=Config):
     from app.api_v1.contacts import contacts_blp
     from app.api_v1.deals import deals_blp
     from app.api_v1.activities import activities_blp
+    from app.api_v1 import stats_blp
     api.register_blueprint(contacts_blp)
     api.register_blueprint(deals_blp)
     api.register_blueprint(activities_blp)
+    api.register_blueprint(stats_blp)
 
     # Exempt ALL API blueprints from CSRF — REST API uses SameSite cookies
-    for bp_obj in [auth.bp, health.bp, contacts_blp, deals_blp, activities_blp]:
+    for bp_obj in [auth.bp, health.bp, contacts_blp, deals_blp, activities_blp, stats_blp]:
         csrf.exempt(bp_obj)
 
     @app.errorhandler(404)

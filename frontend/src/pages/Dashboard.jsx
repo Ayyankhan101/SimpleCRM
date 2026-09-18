@@ -51,34 +51,17 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [contactsRes, dealsRes, activitiesRes] = await Promise.all([
-        api.get('/v1/contacts'),
-        api.get('/v1/deals'),
-        api.get('/v1/activities'),
-      ])
-
-      const contacts = contactsRes.data || []
-      const deals = dealsRes.data || []
-      const activities = activitiesRes.data || []
+      const statsRes = await api.get('/v1/stats')
+      const data = statsRes.data
 
       setStats({
-        contacts: contacts.length,
-        deals: deals.length,
-        activities: activities.length,
+        contacts: data.contacts || 0,
+        deals: data.deals || 0,
+        activities: data.activities || 0,
       })
 
-      const stageCounts = {}
-      deals.forEach((d) => {
-        stageCounts[d.stage] = (stageCounts[d.stage] || 0) + 1
-      })
-      setPipeline(Object.entries(stageCounts).map(([stage, count]) => ({ stage, count })))
-
-      setUpcomingActivities(
-        activities
-          .filter((a) => !a.completed && a.due_date)
-          .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
-          .slice(0, 5)
-      )
+      setPipeline(data.pipeline || [])
+      setUpcomingActivities(data.upcoming_activities || [])
     } catch (error) {
       console.error('Dashboard error:', error)
     } finally {
