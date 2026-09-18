@@ -26,7 +26,7 @@ def list_activities():
         now = datetime.utcnow()
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start.replace(hour=23, minute=59, second=59)
-        query = query.filter(Activity.completed == 0, Activity.due_date.isnot(None))
+        query = query.filter(Activity.completed == False, Activity.due_date.isnot(None))
         if due_filter == 'overdue':
             query = query.filter(Activity.due_date < today_start)
         elif due_filter == 'today':
