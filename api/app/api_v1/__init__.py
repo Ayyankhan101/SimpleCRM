@@ -35,7 +35,7 @@ def get_stats():
     base_filter = [
         Activity.owner_id == current_user.id,
         Activity.deleted_at.is_(None),
-        Activity.completed.is_(False),
+        Activity.completed == 0,
         Activity.due_date.isnot(None),
     ]
 

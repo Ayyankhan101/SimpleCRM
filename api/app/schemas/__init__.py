@@ -80,6 +80,8 @@ class ActivitySchema(Schema):
     org_id = fields.Int(dump_only=True)
     due_date = fields.Date(allow_none=True)
     completed = fields.Bool()
+    is_overdue = fields.Bool(dump_only=True)
+    is_due_today = fields.Bool(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
 
 
