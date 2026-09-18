@@ -49,7 +49,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/auth/callback" element={<Login />} />
-        <Route path="*" element={<NotFound />} />
         <Route path="/" element={
           <PrivateRoute>
             <Layout />
@@ -61,6 +60,7 @@ function App() {
           <Route path="deals" element={<Deals />} />
           <Route path="pipeline" element={<Pipeline />} />
           <Route path="activities" element={<Activities />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </Suspense>

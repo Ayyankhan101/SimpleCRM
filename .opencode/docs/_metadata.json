@@ -1,26 +1,4 @@
 {
-  "documents": {
-    "frontend-navy-psi-33_vercel_app.md": {
-      "url": "https://frontend-navy-psi-33.vercel.app",
-      "title": "Data Analytics App",
-      "fetchedAt": "2026-09-17T01:16:58.392Z",
-      "expiresAt": "2026-09-18T01:16:58.392Z",
-      "size": 113
-    },
-    "vercel_com_docs_storage_vercel-postgres.md": {
-      "url": "https://vercel.com/docs/storage/vercel-postgres",
-      "title": "Postgres on Vercel",
-      "fetchedAt": "2026-09-17T01:31:32.424Z",
-      "expiresAt": "2026-09-18T01:31:32.424Z",
-      "size": 3964
-    },
-    "vercel_com_marketplace.md": {
-      "url": "https://vercel.com/marketplace?category=storage&search=postgres",
-      "title": "Vercel Marketplace for Storage",
-      "fetchedAt": "2026-09-17T01:31:39.164Z",
-      "expiresAt": "2026-09-18T01:31:39.164Z",
-      "size": 149
-    }
-  },
-  "lastUpdated": "2026-09-17T11:43:53.153Z"
+  "documents": {},
+  "lastUpdated": "2026-09-18T01:43:53.189Z"
 }
