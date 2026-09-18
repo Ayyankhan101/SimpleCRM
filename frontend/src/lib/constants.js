@@ -57,5 +57,5 @@ export function formatRelativeDate(dateStr) {
   if (diffDays === -1) return 'Yesterday'
   if (diffDays > 0 && diffDays <= 7) return `In ${diffDays} days`
   if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }

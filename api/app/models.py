@@ -111,7 +111,7 @@ class Contact(db.Model):
             'id': self.id,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'full_name': f'{self.first_name} {self.last_name}',
+            'full_name': f'{self.first_name} {self.last_name}'.strip() if self.last_name else self.first_name,
             'email': self.email,
             'phone': self.phone,
             'company': self.company,
@@ -203,8 +203,11 @@ class Deal(db.Model):
     def get_notes(self):
         if self.notes:
             import json
-            return json.loads(self.notes)
-        return {}
+            try:
+                return json.loads(self.notes)
+            except (json.JSONDecodeError, TypeError):
+                return self.notes
+        return ''
 
     def set_notes(self, notes_dict):
         import json

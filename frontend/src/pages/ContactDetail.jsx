@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, PencilSimple, Trash, Plus, CurrencyCircleDollar, Lightning, EnvelopeSimple, Phone, Buildings, CalendarBlank } from '@phosphor-icons/react'
+import { ArrowLeft, PencilSimple, Trash, Plus, CurrencyCircleDollar, Lightning, EnvelopeSimple, Phone, Buildings, CalendarBlank, Check, X } from '@phosphor-icons/react'
 import api from '../utils/api'
 import { CONTACT_STAGES, DEAL_STAGES, ACTIVITY_TYPES, getStageColor, getStageLabel, formatCurrency, formatRelativeDate } from '../lib/constants'
 import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
 import Badge from '../components/ui/Badge'
+import Modal from '../components/ui/Modal'
 
 const container = {
   hidden: { opacity: 0 },
@@ -22,6 +24,10 @@ export default function ContactDetail() {
   const navigate = useNavigate()
   const [contact, setContact] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState({})
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetchContact()
@@ -45,6 +51,37 @@ export default function ContactDetail() {
       navigate('/contacts')
     } catch {
       // silent
+    }
+  }
+
+  const openEdit = () => {
+    setFormData({
+      first_name: contact.first_name || '',
+      last_name: contact.last_name || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      company: contact.company || '',
+      role: contact.role || '',
+      stage: contact.stage || 'lead',
+      score: contact.score || 0,
+      notes: contact.notes || '',
+    })
+    setEditing(true)
+    setError('')
+  }
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      await api.put(`/v1/contacts/${id}`, formData)
+      await fetchContact()
+      setEditing(false)
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -76,12 +113,12 @@ export default function ContactDetail() {
           Contacts
         </Link>
         <div className="flex items-center gap-2">
-          <Link
-            to={`/contacts`}
+          <button
+            onClick={openEdit}
             className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
           >
             <PencilSimple size={16} />
-          </Link>
+          </button>
           <button
             onClick={handleDelete}
             className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
@@ -178,10 +215,9 @@ export default function ContactDetail() {
           ) : (
             <div className="space-y-3">
               {contact.deals.map((deal) => (
-                <Link
+                <div
                   key={deal.id}
-                  to="/deals"
-                  className="block bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5 hover:border-emerald-200 dark:hover:border-emerald-800 transition-colors"
+                  className="block bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{deal.title}</span>
@@ -198,7 +234,7 @@ export default function ContactDetail() {
                       </span>
                     )}
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
@@ -249,6 +285,95 @@ export default function ContactDetail() {
           )}
         </motion.div>
       </div>
+
+      {/* Edit Modal */}
+      <Modal
+        open={editing}
+        onClose={() => setEditing(false)}
+        title="Edit Contact"
+        maxWidth="max-w-xl"
+      >
+        <form onSubmit={handleSave} className="space-y-4">
+          {error && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="First Name"
+              value={formData.first_name}
+              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+              required
+            />
+            <Input
+              label="Last Name"
+              value={formData.last_name}
+              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            <Input
+              label="Phone"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Company"
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            />
+            <Input
+              label="Role"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Stage</label>
+              <select
+                value={formData.stage}
+                onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-950 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              >
+                {CONTACT_STAGES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+            <Input
+              label="Score"
+              type="number"
+              value={formData.score}
+              onChange={(e) => setFormData({ ...formData, score: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Notes</label>
+            <textarea
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-950 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button type="submit" loading={saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </motion.div>
   )
 }

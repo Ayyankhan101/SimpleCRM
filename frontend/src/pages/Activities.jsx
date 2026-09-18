@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Phone, EnvelopeSimple, CalendarBlank, Notepad, CheckSquare, PencilSimple, Trash, Lightning } from '@phosphor-icons/react'
+import { Plus, Phone, EnvelopeSimple, CalendarBlank, Notepad, CheckSquare, PencilSimple, Trash, Lightning, Check } from '@phosphor-icons/react'
 import api from '../utils/api'
 import { ACTIVITY_TYPES, getStageColor, getStageLabel, formatRelativeDate } from '../lib/constants'
 import Button from '../components/ui/Button'
@@ -8,7 +8,8 @@ import Input from '../components/ui/Input'
 import Badge from '../components/ui/Badge'
 import Modal from '../components/ui/Modal'
 import EmptyState from '../components/ui/EmptyState'
-import { CardSkeleton } from '../components/ui/Skeleton'
+import ContactPicker from '../components/ContactPicker'
+import DealPicker from '../components/DealPicker'
 
 const typeIcons = {
   call: Phone,
@@ -16,6 +17,15 @@ const typeIcons = {
   meeting: CalendarBlank,
   note: Notepad,
   task: CheckSquare,
+}
+
+const typeColors = {
+  zinc: { bg: 'bg-zinc-50 dark:bg-zinc-900/30', text: 'text-zinc-600 dark:text-zinc-400' },
+  sky: { bg: 'bg-sky-50 dark:bg-sky-900/30', text: 'text-sky-600 dark:text-sky-400' },
+  amber: { bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' },
+  orange: { bg: 'bg-orange-50 dark:bg-orange-900/30', text: 'text-orange-600 dark:text-orange-400' },
+  emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400' },
+  red: { bg: 'bg-red-50 dark:bg-red-900/30', text: 'text-red-600 dark:text-red-400' },
 }
 
 const defaultForm = { type: 'call', subject: '', body: '', contact_id: '', deal_id: '', due_date: '' }
@@ -28,6 +38,7 @@ export default function Activities() {
   const [filterType, setFilterType] = useState('')
   const [formData, setFormData] = useState(defaultForm)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const fetchActivities = useCallback(async () => {
     try {
@@ -46,6 +57,7 @@ export default function Activities() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
+    setError('')
     try {
       const payload = {
         type: formData.type,
@@ -64,8 +76,8 @@ export default function Activities() {
       setEditingActivity(null)
       setFormData(defaultForm)
       fetchActivities()
-    } catch {
-      // silent
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save activity')
     } finally {
       setSaving(false)
     }
@@ -75,6 +87,15 @@ export default function Activities() {
     if (!confirm('Delete this activity?')) return
     try {
       await api.delete(`/v1/activities/${id}`)
+      fetchActivities()
+    } catch {
+      // silent
+    }
+  }
+
+  const handleToggleComplete = async (activity) => {
+    try {
+      await api.put(`/v1/activities/${activity.id}`, { completed: !activity.completed })
       fetchActivities()
     } catch {
       // silent
@@ -92,15 +113,31 @@ export default function Activities() {
       due_date: activity.due_date ? activity.due_date.split('T')[0] : '',
     })
     setShowModal(true)
+    setError('')
   }
 
   const openNew = () => {
     setEditingActivity(null)
     setFormData(defaultForm)
     setShowModal(true)
+    setError('')
   }
 
-  if (loading) return <CardSkeleton count={4} />
+  if (loading) return (
+    <div className="space-y-4">
+      {[1,2,3].map(i => (
+        <div key={i} className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-zinc-100 dark:bg-zinc-800 rounded w-1/3" />
+              <div className="h-3 bg-zinc-100 dark:bg-zinc-800 rounded w-1/2" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <div>
@@ -142,21 +179,32 @@ export default function Activities() {
         <div className="space-y-3">
           {activities.map((a, i) => {
             const Icon = typeIcons[a.type] || Lightning
-            const color = getStageColor(ACTIVITY_TYPES, a.type)
+            const colorKey = getStageColor(ACTIVITY_TYPES, a.type)
+            const colors = typeColors[colorKey] || typeColors.zinc
             return (
               <motion.div
                 key={a.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5 flex items-start gap-4 hover:shadow-diffusion-lg transition-shadow duration-200"
+                className={`bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5 flex items-start gap-4 hover:shadow-diffusion-lg transition-shadow duration-200 ${a.completed ? 'opacity-60' : ''}`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-${color}-50 dark:bg-${color}-900/30`}>
-                  <Icon size={18} className={`text-${color}-600 dark:text-${color}-400`} />
+                <button
+                  onClick={() => handleToggleComplete(a)}
+                  className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                    a.completed
+                      ? 'bg-emerald-500 border-emerald-500 text-white'
+                      : 'border-zinc-300 dark:border-zinc-600 hover:border-emerald-400 dark:hover:border-emerald-500'
+                  }`}
+                >
+                  {a.completed && <Check size={12} weight="bold" />}
+                </button>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
+                  <Icon size={18} className={colors.text} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge color={color} dot>
+                    <Badge color={colorKey} dot>
                       {getStageLabel(ACTIVITY_TYPES, a.type)}
                     </Badge>
                     {a.due_date && (
@@ -165,13 +213,13 @@ export default function Activities() {
                       </span>
                     )}
                   </div>
-                  <h3 className="text-sm font-medium text-zinc-950 dark:text-zinc-50 truncate">{a.subject}</h3>
+                  <h3 className={`text-sm font-medium text-zinc-950 dark:text-zinc-50 truncate ${a.completed ? 'line-through' : ''}`}>{a.subject}</h3>
                   {a.body && (
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">{a.body}</p>
                   )}
                   <div className="flex items-center gap-3 mt-2 text-xs text-zinc-400 dark:text-zinc-500">
-                    {a.contact_id && <span>Contact #{a.contact_id}</span>}
-                    {a.deal_id && <span>Deal #{a.deal_id}</span>}
+                    {a.contact_name && <span>Contact: {a.contact_name}</span>}
+                    {a.deal_title && <span>Deal: {a.deal_title}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -202,31 +250,22 @@ export default function Activities() {
         maxWidth="max-w-lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Type</label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-950 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-              >
-                {ACTIVITY_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
+          {error && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
+              {error}
             </div>
-            <Input
-              label="Contact ID"
-              type="number"
-              value={formData.contact_id}
-              onChange={(e) => setFormData({ ...formData, contact_id: e.target.value })}
-            />
-            <Input
-              label="Deal ID"
-              type="number"
-              value={formData.deal_id}
-              onChange={(e) => setFormData({ ...formData, deal_id: e.target.value })}
-            />
+          )}
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Type</label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-950 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+            >
+              {ACTIVITY_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
           </div>
           <Input
             label="Subject"
@@ -239,6 +278,14 @@ export default function Activities() {
             type="date"
             value={formData.due_date}
             onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+          />
+          <ContactPicker
+            value={formData.contact_id}
+            onChange={(id) => setFormData({ ...formData, contact_id: id || '' })}
+          />
+          <DealPicker
+            value={formData.deal_id}
+            onChange={(id) => setFormData({ ...formData, deal_id: id || '' })}
           />
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Body</label>

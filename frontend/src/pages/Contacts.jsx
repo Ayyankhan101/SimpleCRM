@@ -26,6 +26,7 @@ export default function Contacts() {
   const [search, setSearch] = useState('')
   const [formData, setFormData] = useState(defaultForm)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -54,6 +55,7 @@ export default function Contacts() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
+    setError('')
     try {
       if (editingContact) {
         await api.put(`/v1/contacts/${editingContact.id}`, formData)
@@ -64,8 +66,8 @@ export default function Contacts() {
       setEditingContact(null)
       setFormData(defaultForm)
       fetchContacts()
-    } catch {
-      // error handled silently
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save contact')
     } finally {
       setSaving(false)
     }
@@ -101,6 +103,7 @@ export default function Contacts() {
     setEditingContact(null)
     setFormData(defaultForm)
     setShowModal(true)
+    setError('')
   }
 
   if (loading) return <TableSkeleton rows={5} cols={5} />
@@ -222,6 +225,11 @@ export default function Contacts() {
         maxWidth="max-w-xl"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="First Name"

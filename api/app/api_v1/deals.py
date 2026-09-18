@@ -28,6 +28,7 @@ def list_deals():
 @login_required
 def create_deal(data):
     """Create a new deal."""
+    notes = data.get('notes')
     deal = Deal(
         title=data['title'],
         value=data['value'],
@@ -36,10 +37,11 @@ def create_deal(data):
         probability=data.get('probability', 10),
         expected_close_date=data.get('expected_close_date'),
         contact_id=data.get('contact_id'),
-        notes=data.get('notes'),
         owner_id=current_user.id,
         org_id=current_user.org_id
     )
+    if notes:
+        deal.set_notes(notes)
     db.session.add(deal)
     db.session.commit()
     return deal
@@ -54,7 +56,9 @@ def update_deal(data, deal_id):
     """Update an existing deal."""
     deal = Deal.query.filter_by(id=deal_id, owner_id=current_user.id, deleted_at=None).first_or_404()
     for key, value in data.items():
-        if hasattr(deal, key):
+        if key == 'notes':
+            deal.set_notes(value)
+        elif hasattr(deal, key):
             setattr(deal, key, value)
     deal.updated_at = datetime.now(timezone.utc)
     db.session.commit()

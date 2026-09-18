@@ -21,6 +21,7 @@ export default function Deals() {
   const [filterStage, setFilterStage] = useState('')
   const [formData, setFormData] = useState(defaultForm)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const fetchDeals = useCallback(async () => {
     try {
@@ -39,6 +40,7 @@ export default function Deals() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
+    setError('')
     try {
       const payload = {
         title: formData.title,
@@ -56,8 +58,8 @@ export default function Deals() {
       setEditingDeal(null)
       setFormData(defaultForm)
       fetchDeals()
-    } catch {
-      // silent
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save deal')
     } finally {
       setSaving(false)
     }
@@ -89,6 +91,7 @@ export default function Deals() {
     setEditingDeal(null)
     setFormData(defaultForm)
     setShowModal(true)
+    setError('')
   }
 
   if (loading) return <TableSkeleton rows={5} cols={5} />
@@ -212,6 +215,11 @@ export default function Deals() {
         maxWidth="max-w-lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
           <Input
             label="Title"
             value={formData.title}

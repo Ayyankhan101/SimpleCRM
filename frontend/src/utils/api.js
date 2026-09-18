@@ -8,11 +8,17 @@ const api = axios.create({
   }
 })
 
+let isRedirecting = false
+
 api.interceptors.response.use(
   response => response,
   error => {
-    if (error.response?.status === 401) {
-      window.location.href = '/login'
+    if (error.response?.status === 401 && !isRedirecting) {
+      const path = window.location.pathname
+      if (path !== '/login' && path !== '/register') {
+        isRedirecting = true
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
