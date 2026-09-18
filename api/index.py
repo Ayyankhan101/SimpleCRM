@@ -17,4 +17,3 @@ flask_app = create_app()
 def app(environ, start_response):
     """WSGI handler for Vercel."""
     return flask_app(environ, start_response)
-# redeploy
