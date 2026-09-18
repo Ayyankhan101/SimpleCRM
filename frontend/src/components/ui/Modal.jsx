@@ -19,39 +19,45 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
   }, [open, handleKeyDown])
 
   return (
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <>
+      <AnimatePresence>
+        {open && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-sm"
             onClick={onClose}
           />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 8 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={`relative w-full ${maxWidth} bg-white dark:bg-zinc-900 rounded-4xl shadow-diffusion-lg border border-slate-200/50 dark:border-zinc-700/50 overflow-hidden`}
-          >
-            <div className="flex items-center justify-between px-8 pt-6 pb-2">
-              <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{title}</h2>
-              <button
-                onClick={onClose}
-                className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <X size={18} weight="bold" />
-              </button>
-            </div>
-            <div className="px-8 pb-6 pt-2">
-              {children}
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className={`relative w-full ${maxWidth} bg-white dark:bg-zinc-900 rounded-4xl shadow-diffusion-lg border border-slate-200/50 dark:border-zinc-700/50 overflow-hidden pointer-events-auto`}
+            >
+              <div className="flex items-center justify-between px-8 pt-6 pb-2">
+                <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{title}</h2>
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <X size={18} weight="bold" />
+                </button>
+              </div>
+              <div className="px-8 pb-6 pt-2">
+                {children}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

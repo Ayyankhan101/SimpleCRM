@@ -21,6 +21,7 @@ const typeIcons = {
 
 const typeColors = {
   zinc: { bg: 'bg-zinc-50 dark:bg-zinc-900/30', text: 'text-zinc-600 dark:text-zinc-400' },
+  blue: { bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' },
   sky: { bg: 'bg-sky-50 dark:bg-sky-900/30', text: 'text-sky-600 dark:text-sky-400' },
   amber: { bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' },
   orange: { bg: 'bg-orange-50 dark:bg-orange-900/30', text: 'text-orange-600 dark:text-orange-400' },
