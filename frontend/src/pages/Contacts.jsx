@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, MagnifyingGlass, Users, PencilSimple, Trash } from '@phosphor-icons/react'
@@ -10,6 +10,7 @@ import Badge from '../components/ui/Badge'
 import Modal from '../components/ui/Modal'
 import EmptyState from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
+import ImportPreview from '../components/ImportPreview'
 
 const defaultForm = {
   first_name: '', last_name: '', email: '', phone: '',
@@ -27,6 +28,9 @@ export default function Contacts() {
   const [formData, setFormData] = useState(defaultForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [showImport, setShowImport] = useState(false)
+  const [importFile, setImportFile] = useState(null)
+  const fileInputRef = useRef(null)
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -106,16 +110,42 @@ export default function Contacts() {
     setError('')
   }
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImportFile(file)
+      setShowImport(true)
+    }
+    e.target.value = ''
+  }
+
+  const handleImportComplete = (result) => {
+    setShowImport(false)
+    setImportFile(null)
+    fetchContacts()
+    alert(`Import complete: ${result.created} created, ${result.skipped} skipped`)
+  }
+
   if (loading) return <TableSkeleton rows={5} cols={5} />
 
   return (
     <div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight">Contacts</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{contacts.length} total contacts</p>
         </div>
+        <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
+          Import CSV
+        </Button>
         <Button onClick={openNew}>
           <Plus size={16} weight="bold" />
           New Contact
@@ -312,6 +342,14 @@ export default function Contacts() {
           </div>
         </form>
       </Modal>
+
+      {showImport && importFile && (
+        <ImportPreview
+          file={importFile}
+          onClose={() => { setShowImport(false); setImportFile(null) }}
+          onComplete={handleImportComplete}
+        />
+      )}
     </div>
   )
 }
