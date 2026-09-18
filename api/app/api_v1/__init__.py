@@ -28,14 +28,14 @@ def get_stats():
     )
     pipeline = [{'stage': row[0], 'count': row[1]} for row in pipeline_rows]
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start.replace(hour=23, minute=59, second=59)
 
     base_filter = [
         Activity.owner_id == current_user.id,
         Activity.deleted_at.is_(None),
-        Activity.completed == False,
+        Activity.completed.is_(False),
         Activity.due_date.isnot(None),
     ]
 

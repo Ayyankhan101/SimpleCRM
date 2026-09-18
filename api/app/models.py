@@ -254,13 +254,13 @@ class Activity(db.Model):
         except Exception:
             contact_name = None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         is_overdue = False
         is_due_today = False
         if self.due_date and not self.completed:
             due = self.due_date
-            if due.tzinfo is None:
-                due = due.replace(tzinfo=timezone.utc)
+            if due.tzinfo is not None:
+                due = due.replace(tzinfo=None)
             is_overdue = due < now
             is_due_today = due.date() == now.date()
 
