@@ -22,6 +22,7 @@ export const ACTIVITY_TYPES = [
   { value: 'meeting', label: 'Meeting', color: 'amber' },
   { value: 'note', label: 'Note', color: 'zinc' },
   { value: 'task', label: 'Task', color: 'emerald' },
+  { value: 'follow_up', label: 'Follow Up', color: 'red' },
 ]
 
 export function getStageColor(stages, value) {

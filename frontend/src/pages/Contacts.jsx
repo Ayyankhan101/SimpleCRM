@@ -233,12 +233,14 @@ export default function Contacts() {
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="First Name"
+              name="first_name"
               value={formData.first_name}
               onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
               required
             />
             <Input
               label="Last Name"
+              name="last_name"
               value={formData.last_name}
               onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
             />
@@ -246,12 +248,14 @@ export default function Contacts() {
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Email"
+              name="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
             <Input
               label="Phone"
+              name="phone"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             />
@@ -259,11 +263,13 @@ export default function Contacts() {
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Company"
+              name="company"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
             />
             <Input
               label="Role"
+              name="role"
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
             />
@@ -283,6 +289,7 @@ export default function Contacts() {
             </div>
             <Input
               label="Score"
+              name="score"
               type="number"
               value={formData.score}
               onChange={(e) => setFormData({ ...formData, score: parseInt(e.target.value) || 0 })}

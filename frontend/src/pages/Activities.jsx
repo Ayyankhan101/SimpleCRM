@@ -269,12 +269,14 @@ export default function Activities() {
           </div>
           <Input
             label="Subject"
+            name="subject"
             value={formData.subject}
             onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
             required
           />
           <Input
             label="Due Date"
+            name="due_date"
             type="date"
             value={formData.due_date}
             onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}

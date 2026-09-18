@@ -222,6 +222,7 @@ export default function Deals() {
           )}
           <Input
             label="Title"
+            name="title"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
@@ -229,6 +230,7 @@ export default function Deals() {
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Value"
+              name="value"
               type="number"
               value={formData.value}
               onChange={(e) => setFormData({ ...formData, value: e.target.value })}
