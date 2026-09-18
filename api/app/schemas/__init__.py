@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, pre_load, validate
 
 
 class OrganizationSchema(Schema):
@@ -25,7 +25,7 @@ class ContactSchema(Schema):
     id = fields.Int(dump_only=True)
     first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     last_name = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email(allow_none=True, allow_blank=True)
+    email = fields.Email(allow_none=True)
     phone = fields.Str(allow_none=True)
     company = fields.Str(allow_none=True)
     role = fields.Str(allow_none=True)
@@ -39,6 +39,12 @@ class ContactSchema(Schema):
     org_id = fields.Int(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
+
+    @pre_load
+    def clean_email(self, data, **kwargs):
+        if data.get('email') == '':
+            data['email'] = None
+        return data
 
 
 class DealSchema(Schema):
@@ -78,7 +84,7 @@ class ContactDetailSchema(Schema):
     id = fields.Int(dump_only=True)
     first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     last_name = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email(allow_none=True, allow_blank=True)
+    email = fields.Email(allow_none=True)
     phone = fields.Str(allow_none=True)
     company = fields.Str(allow_none=True)
     role = fields.Str(allow_none=True)
@@ -94,6 +100,12 @@ class ContactDetailSchema(Schema):
     updated_at = fields.DateTime(dump_only=True)
     deals = fields.List(fields.Nested('DealSchema'))
     activities = fields.List(fields.Nested('ActivitySchema'))
+
+    @pre_load
+    def clean_email(self, data, **kwargs):
+        if data.get('email') == '':
+            data['email'] = None
+        return data
 
 
 class TagSchema(Schema):
