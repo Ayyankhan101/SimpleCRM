@@ -33,6 +33,7 @@ class Config:
 
     WTF_CSRF_ENABLED = True
     CORS_HEADERS = 'Content-Type'
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB
 
 
 class ProductionConfig(Config):
