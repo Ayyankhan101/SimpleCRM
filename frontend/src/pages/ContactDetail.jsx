@@ -28,6 +28,10 @@ export default function ContactDetail() {
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({})
   const [error, setError] = useState('')
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [emailForm, setEmailForm] = useState({ subject: '', body: '' })
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
   useEffect(() => {
     fetchContact()
@@ -41,6 +45,29 @@ export default function ContactDetail() {
       navigate('/contacts')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSendEmail = async () => {
+    if (!emailForm.subject.trim() || !emailForm.body.trim()) {
+      setEmailError('Subject and body required')
+      return
+    }
+    setSendingEmail(true)
+    setEmailError('')
+    try {
+      await api.post('/v1/emails/send', {
+        contact_id: contact.id,
+        subject: emailForm.subject,
+        body: emailForm.body,
+      })
+      setShowEmailModal(false)
+      setEmailForm({ subject: '', body: '' })
+      fetchContact()
+    } catch (err) {
+      setEmailError(err.response?.data?.error || 'Failed to send')
+    } finally {
+      setSendingEmail(false)
     }
   }
 
@@ -120,6 +147,12 @@ export default function ContactDetail() {
           Contacts
         </Link>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowEmailModal(true)}
+            className="p-2 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors"
+          >
+            <EnvelopeSimple size={16} />
+          </button>
           <button
             onClick={openEdit}
             className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
@@ -292,6 +325,48 @@ export default function ContactDetail() {
           )}
         </motion.div>
       </div>
+
+      {/* Email Modal */}
+      <Modal
+        open={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        title="Send Email"
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">To</label>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{contact.email || 'No email address'}</p>
+          </div>
+          <Input
+            label="Subject"
+            value={emailForm.subject}
+            onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
+            placeholder="Follow up on proposal"
+          />
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Body</label>
+            <textarea
+              rows={5}
+              value={emailForm.body}
+              onChange={(e) => setEmailForm({ ...emailForm, body: e.target.value })}
+              placeholder="Write your email..."
+              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-950 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+            />
+          </div>
+          {emailError && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
+              {emailError}
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setShowEmailModal(false)}>Cancel</Button>
+            <Button type="button" onClick={handleSendEmail} loading={sendingEmail}>
+              {sendingEmail ? 'Sending...' : 'Send Email'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Edit Modal */}
       <Modal
