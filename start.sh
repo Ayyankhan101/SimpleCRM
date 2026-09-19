@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# Data Analysis App — One-Command Startup
+# SimpleCRM — One-Command Startup
 # Usage:
 #   ./start.sh          Local dev (Flask + Vite)
 #   ./start.sh --docker Production (docker-compose)
@@ -20,7 +20,7 @@ NC='\033[0m'
 banner() {
     echo ""
     echo -e "${CYAN}${BOLD}╔══════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}${BOLD}║       Data Analysis App                  ║${NC}"
+    echo -e "${CYAN}${BOLD}║       SimpleCRM                         ║${NC}"
     echo -e "${CYAN}${BOLD}╚══════════════════════════════════════════╝${NC}"
     echo ""
 }
