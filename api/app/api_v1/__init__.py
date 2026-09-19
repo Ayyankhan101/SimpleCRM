@@ -59,6 +59,54 @@ def get_stats():
     )
     pipeline = [{'stage': row[0], 'count': row[1]} for row in pipeline_rows]
 
+    # Revenue trend: closed_won deals grouped by month
+    revenue_rows = (
+        db.session.query(
+            func.date_trunc('month', Deal.actual_close_date),
+            func.sum(Deal.value)
+        )
+        .filter(
+            Deal.owner_id == current_user.id,
+            Deal.stage == 'closed_won',
+            Deal.deleted_at.is_(None),
+            Deal.actual_close_date.isnot(None),
+        )
+        .group_by(func.date_trunc('month', Deal.actual_close_date))
+        .order_by(func.date_trunc('month', Deal.actual_close_date))
+        .all()
+    )
+    revenue_trend = [
+        {'month': row[0].strftime('%b %Y'), 'value': float(row[1] or 0)}
+        for row in revenue_rows
+    ]
+
+    # Email engagement
+    email_total = db.session.query(func.count(Activity.id)).filter(
+        Activity.owner_id == current_user.id,
+        Activity.type == 'email',
+        Activity.deleted_at.is_(None),
+    ).scalar() or 0
+    email_opened = db.session.query(func.count(Activity.id)).filter(
+        Activity.owner_id == current_user.id,
+        Activity.type == 'email',
+        Activity.email_opened_at.isnot(None),
+    ).scalar() or 0
+    email_clicked = db.session.query(func.count(Activity.id)).filter(
+        Activity.owner_id == current_user.id,
+        Activity.type == 'email',
+        Activity.email_clicked_at.isnot(None),
+    ).scalar() or 0
+    email_engagement = {'total': email_total, 'opened': email_opened, 'clicked': email_clicked}
+
+    # Activity breakdown by type
+    activity_rows = (
+        db.session.query(Activity.type, func.count(Activity.id))
+        .filter(Activity.owner_id == current_user.id, Activity.deleted_at.is_(None))
+        .group_by(Activity.type)
+        .all()
+    )
+    activity_breakdown = [{'type': row[0], 'count': row[1]} for row in activity_rows]
+
     overdue, due_today, upcoming = _get_activity_lists(current_user.id, limit=5)
 
     return jsonify({
@@ -66,6 +114,9 @@ def get_stats():
         'deals': deal_count,
         'activities': activity_count,
         'pipeline': pipeline,
+        'revenue_trend': revenue_trend,
+        'email_engagement': email_engagement,
+        'activity_breakdown': activity_breakdown,
         'overdue_activities': [a.to_dict() for a in overdue],
         'due_today_activities': [a.to_dict() for a in due_today],
         'upcoming_activities': [a.to_dict() for a in upcoming],

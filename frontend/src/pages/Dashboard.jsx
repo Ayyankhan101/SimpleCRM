@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { Users, CurrencyCircleDollar, Lightning, ArrowRight, CalendarBlank, EnvelopeSimple } from '@phosphor-icons/react'
 import api from '../utils/api'
 import { DEAL_STAGES, ACTIVITY_TYPES, getStageColor, getStageLabel, formatRelativeDate } from '../lib/constants'
@@ -59,6 +59,9 @@ function ActivityRow({ activity, border }) {
 export default function Dashboard() {
   const [stats, setStats] = useState({ contacts: 0, deals: 0, activities: 0 })
   const [pipeline, setPipeline] = useState([])
+  const [revenueTrend, setRevenueTrend] = useState([])
+  const [emailEngagement, setEmailEngagement] = useState({ total: 0, opened: 0, clicked: 0 })
+  const [activityBreakdown, setActivityBreakdown] = useState([])
   const [overdueActivities, setOverdueActivities] = useState([])
   const [dueTodayActivities, setDueTodayActivities] = useState([])
   const [upcomingActivities, setUpcomingActivities] = useState([])
@@ -99,6 +102,9 @@ export default function Dashboard() {
       })
 
       setPipeline(data.pipeline || [])
+      setRevenueTrend(data.revenue_trend || [])
+      setEmailEngagement(data.email_engagement || { total: 0, opened: 0, clicked: 0 })
+      setActivityBreakdown(data.activity_breakdown || [])
       setOverdueActivities(data.overdue_activities || [])
       setDueTodayActivities(data.due_today_activities || [])
       setUpcomingActivities(data.upcoming_activities || [])
@@ -161,6 +167,109 @@ export default function Dashboard() {
             </div>
           </Link>
         ))}
+      </motion.div>
+
+      {/* Analytics row: Revenue + Email + Activity breakdown */}
+      <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Revenue Trend */}
+        <div className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-6">
+          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4">Revenue Trend</h3>
+          {revenueTrend.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={revenueTrend}>
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  formatter={(v) => [`$${v.toLocaleString()}`, 'Revenue']}
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #e4e4e7', fontSize: '13px' }}
+                />
+                <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[180px] text-sm text-zinc-400">No closed deals yet</div>
+          )}
+        </div>
+
+        {/* Email Engagement */}
+        <div className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-6">
+          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4">Email Engagement</h3>
+          {emailEngagement.total > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <div className="text-2xl font-bold font-mono text-zinc-950 dark:text-zinc-50">{emailEngagement.total}</div>
+                  <div className="text-[10px] text-zinc-400 uppercase tracking-wider mt-1">Sent</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{emailEngagement.opened}</div>
+                  <div className="text-[10px] text-zinc-400 uppercase tracking-wider mt-1">Opened</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">{emailEngagement.clicked}</div>
+                  <div className="text-[10px] text-zinc-400 uppercase tracking-wider mt-1">Clicked</div>
+                </div>
+              </div>
+              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex justify-between text-xs text-zinc-500">
+                  <span>Open rate</span>
+                  <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">{Math.round((emailEngagement.opened / emailEngagement.total) * 100)}%</span>
+                </div>
+                <div className="flex justify-between text-xs text-zinc-500 mt-1">
+                  <span>Click rate</span>
+                  <span className="font-mono font-medium text-blue-600 dark:text-blue-400">{Math.round((emailEngagement.clicked / emailEngagement.total) * 100)}%</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[180px] text-sm text-zinc-400">No emails sent yet</div>
+          )}
+        </div>
+
+        {/* Activity Breakdown */}
+        <div className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-6">
+          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4">Activity Breakdown</h3>
+          {activityBreakdown.length > 0 ? (
+            <div className="flex items-center gap-6">
+              <ResponsiveContainer width={120} height={120}>
+                <PieChart>
+                  <Pie
+                    data={activityBreakdown}
+                    dataKey="count"
+                    nameKey="type"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={50}
+                    innerRadius={25}
+                    strokeWidth={0}
+                  >
+                    {activityBreakdown.map((entry, i) => {
+                      const colors = { call: '#3b82f6', email: '#10b981', meeting: '#f59e0b', note: '#8b5cf6', task: '#ef4444', follow_up: '#ec4899' }
+                      return <Cell key={i} fill={colors[entry.type] || '#71717a'} />
+                    })}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #e4e4e7', fontSize: '13px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex-1 space-y-2">
+                {activityBreakdown.map((entry) => {
+                  const colors = { call: 'bg-blue-500', email: 'bg-emerald-500', meeting: 'bg-amber-500', note: 'bg-violet-500', task: 'bg-red-500', follow_up: 'bg-pink-500' }
+                  return (
+                    <div key={entry.type} className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${colors[entry.type] || 'bg-zinc-400'}`} />
+                      <span className="text-xs text-zinc-600 dark:text-zinc-400 flex-1 capitalize">{entry.type.replace('_', ' ')}</span>
+                      <span className="text-xs font-mono font-medium text-zinc-950 dark:text-zinc-50">{entry.count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[120px] text-sm text-zinc-400">No activities yet</div>
+          )}
+        </div>
       </motion.div>
 
       {/* Bento grid: 2fr 1fr */}
