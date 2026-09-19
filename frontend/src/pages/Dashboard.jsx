@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Users, CurrencyCircleDollar, Lightning, ArrowRight, CalendarBlank } from '@phosphor-icons/react'
+import { Users, CurrencyCircleDollar, Lightning, ArrowRight, CalendarBlank, EnvelopeSimple } from '@phosphor-icons/react'
 import api from '../utils/api'
 import { DEAL_STAGES, ACTIVITY_TYPES, getStageColor, getStageLabel, formatRelativeDate } from '../lib/constants'
 import { StatSkeleton } from '../components/ui/Skeleton'
@@ -63,10 +63,29 @@ export default function Dashboard() {
   const [dueTodayActivities, setDueTodayActivities] = useState([])
   const [upcomingActivities, setUpcomingActivities] = useState([])
   const [loading, setLoading] = useState(true)
+  const [reminderStatus, setReminderStatus] = useState(null)
+  const [sendingReminder, setSendingReminder] = useState(false)
 
   useEffect(() => {
     fetchDashboardData()
+    checkReminders()
   }, [])
+
+  const checkReminders = async () => {
+    try {
+      const res = await api.get('/v1/reminders/check')
+      setReminderStatus(res.data)
+    } catch {}
+  }
+
+  const sendDigest = async () => {
+    setSendingReminder(true)
+    try {
+      await api.post('/v1/reminders/digest')
+      setReminderStatus(prev => ({ ...prev, should_send_digest: false, last_digest_sent: new Date().toISOString() }))
+    } catch {}
+    setSendingReminder(false)
+  }
 
   const fetchDashboardData = async () => {
     try {
@@ -104,6 +123,26 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight">Dashboard</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Overview of your CRM</p>
       </motion.div>
+
+      {/* Email reminder banner */}
+      {reminderStatus?.email_configured && reminderStatus?.should_send_digest && (
+        <motion.div variants={item}
+          className="mb-6 flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl">
+          <EnvelopeSimple size={20} className="text-amber-600 dark:text-amber-400 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              {reminderStatus.overdue + reminderStatus.due_today} activit{(reminderStatus.overdue + reminderStatus.due_today) === 1 ? 'y' : 'ies'} need attention
+            </p>
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              {reminderStatus.overdue} overdue, {reminderStatus.due_today} due today
+            </p>
+          </div>
+          <button onClick={sendDigest} disabled={sendingReminder}
+            className="px-3 py-1.5 text-xs font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors whitespace-nowrap">
+            {sendingReminder ? 'Sending...' : 'Email Digest'}
+          </button>
+        </motion.div>
+      )}
 
       {/* Stats — border-top grouping, no cards */}
       <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-3 gap-0 mb-8">

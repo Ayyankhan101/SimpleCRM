@@ -48,6 +48,7 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     role = db.Column(db.String(20), default='member')  # owner/admin/member
     org_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)
+    last_digest_sent_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                            onupdate=lambda: datetime.now(timezone.utc))
