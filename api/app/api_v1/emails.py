@@ -47,8 +47,8 @@ def send_contact_email():
       <div style="line-height:1.6;">{safe_body}</div>
     </div>"""
 
-    sent = send_email(contact.email, safe_subject, html_content)
-    if not sent:
+    resend_id = send_email(contact.email, safe_subject, html_content)
+    if not resend_id:
         return jsonify({'error': 'Failed to send email'}), 500
 
     activity = Activity(
@@ -61,6 +61,7 @@ def send_contact_email():
         org_id=current_user.org_id,
         completed=True,
         completed_at=datetime.now(timezone.utc),
+        resend_email_id=resend_id,
     )
     db.session.add(activity)
     db.session.commit()

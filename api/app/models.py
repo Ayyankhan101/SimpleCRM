@@ -228,6 +228,7 @@ class Activity(db.Model):
         Index('idx_activities_contact', 'contact_id'),
         Index('idx_activities_deal', 'deal_id'),
         Index('idx_activities_owner_due', 'owner_id', 'due_date'),
+        Index('idx_activities_resend_id', 'resend_email_id'),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -242,6 +243,9 @@ class Activity(db.Model):
     due_date = db.Column(db.DateTime, nullable=True)
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
+    resend_email_id = db.Column(db.String(36), nullable=True)
+    email_opened_at = db.Column(db.DateTime, nullable=True)
+    email_clicked_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     deleted_at = db.Column(db.DateTime, nullable=True)
 
@@ -293,6 +297,9 @@ class Activity(db.Model):
             'is_overdue': self.is_overdue,
             'is_due_today': self.is_due_today,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'resend_email_id': self.resend_email_id,
+            'email_opened_at': self.email_opened_at.isoformat() if self.email_opened_at else None,
+            'email_clicked_at': self.email_clicked_at.isoformat() if self.email_clicked_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 

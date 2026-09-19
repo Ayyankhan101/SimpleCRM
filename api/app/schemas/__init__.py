@@ -82,6 +82,9 @@ class ActivitySchema(Schema):
     completed = fields.Bool()
     is_overdue = fields.Bool(dump_only=True)
     is_due_today = fields.Bool(dump_only=True)
+    resend_email_id = fields.Str(dump_only=True)
+    email_opened_at = fields.DateTime(dump_only=True)
+    email_clicked_at = fields.DateTime(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
 
 

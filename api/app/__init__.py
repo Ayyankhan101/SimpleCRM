@@ -83,6 +83,7 @@ def create_app(config_class=Config):
     from app.api_v1 import stats_blp
     from app.api_v1.reminders import reminders_blp
     from app.api_v1.emails import emails_blp
+    from app.api_v1.webhooks import webhooks_blp
     from app.api_v1 import import_contacts  # noqa: F401 — registers routes on contacts_blp
     api.register_blueprint(contacts_blp)
     api.register_blueprint(deals_blp)
@@ -90,9 +91,10 @@ def create_app(config_class=Config):
     api.register_blueprint(stats_blp)
     api.register_blueprint(reminders_blp)
     api.register_blueprint(emails_blp)
+    api.register_blueprint(webhooks_blp)
 
     # Exempt ALL API blueprints from CSRF — REST API uses SameSite cookies
-    for bp_obj in [auth.bp, health.bp, contacts_blp, deals_blp, activities_blp, stats_blp, reminders_blp, emails_blp]:
+    for bp_obj in [auth.bp, health.bp, contacts_blp, deals_blp, activities_blp, stats_blp, reminders_blp, emails_blp, webhooks_blp]:
         csrf.exempt(bp_obj)
 
     @app.errorhandler(404)

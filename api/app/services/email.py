@@ -18,18 +18,19 @@ def is_configured():
 def send_email(to, subject, html):
     if not RESEND_API_KEY:
         logger.warning("RESEND_API_KEY not set, skipping email")
-        return False
+        return None
     try:
         import resend
         resend.api_key = RESEND_API_KEY
         recipient = 'delivered@resend.dev' if TEST_MODE else to
         params = {"from": FROM_EMAIL, "to": recipient, "subject": subject, "html": html}
         result = resend.Emails.send(params)
-        logger.info(f"Email sent to {recipient} (original: {to}): {result}")
-        return True
+        email_id = result.get('id') if isinstance(result, dict) else getattr(result, 'id', None)
+        logger.info(f"Email sent to {recipient} (original: {to}): id={email_id}")
+        return email_id
     except Exception as e:
         logger.error(f"Email send failed: {e}")
-        return False
+        return None
 
 
 def send_activity_reminder(to, activity):

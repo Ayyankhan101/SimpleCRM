@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Phone, EnvelopeSimple, CalendarBlank, Notepad, CheckSquare, PencilSimple, Trash, Lightning, Check } from '@phosphor-icons/react'
+import { Plus, Phone, EnvelopeSimple, CalendarBlank, Notepad, CheckSquare, PencilSimple, Trash, Lightning, Check, Eye, CursorClick } from '@phosphor-icons/react'
 import api from '../utils/api'
 import { ACTIVITY_TYPES, getStageColor, getStageLabel, formatRelativeDate } from '../lib/constants'
 import Button from '../components/ui/Button'
@@ -229,6 +229,18 @@ export default function Activities() {
                   <div className="flex items-center gap-3 mt-2 text-xs text-zinc-400 dark:text-zinc-500">
                     {a.contact_name && <span>Contact: {a.contact_name}</span>}
                     {a.deal_title && <span>Deal: {a.deal_title}</span>}
+                    {a.type === 'email' && a.email_opened_at && (
+                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <Eye size={12} />
+                        Opened
+                      </span>
+                    )}
+                    {a.type === 'email' && a.email_clicked_at && (
+                      <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                        <CursorClick size={12} />
+                        Clicked
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">

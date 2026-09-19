@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, PencilSimple, Trash, Plus, CurrencyCircleDollar, Lightning, EnvelopeSimple, Phone, Buildings, CalendarBlank, Check, X } from '@phosphor-icons/react'
+import { ArrowLeft, PencilSimple, Trash, Plus, CurrencyCircleDollar, Lightning, EnvelopeSimple, Phone, Buildings, CalendarBlank, Check, X, Eye, CursorClick } from '@phosphor-icons/react'
 import api from '../utils/api'
 import { CONTACT_STAGES, DEAL_STAGES, ACTIVITY_TYPES, getStageColor, getStageLabel, formatCurrency, formatRelativeDate } from '../lib/constants'
 import Button from '../components/ui/Button'
@@ -317,6 +317,22 @@ export default function ContactDetail() {
                     </p>
                     {activity.deal_title && (
                       <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Deal: {activity.deal_title}</p>
+                    )}
+                    {activity.type === 'email' && (activity.email_opened_at || activity.email_clicked_at) && (
+                      <div className="flex items-center gap-3 mt-2">
+                        {activity.email_opened_at && (
+                          <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                            <Eye size={12} />
+                            Opened {formatRelativeDate(activity.email_opened_at)}
+                          </span>
+                        )}
+                        {activity.email_clicked_at && (
+                          <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                            <CursorClick size={12} />
+                            Clicked {formatRelativeDate(activity.email_clicked_at)}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 )
