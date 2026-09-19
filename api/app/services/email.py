@@ -6,7 +6,8 @@ from flask import current_app
 logger = logging.getLogger(__name__)
 
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
-FROM_EMAIL = os.environ.get('FROM_EMAIL', 'reminders@simplecrm.app')
+FROM_EMAIL = os.environ.get('FROM_EMAIL', 'onboarding@resend.dev')
+TEST_MODE = os.environ.get('RESEND_TEST_MODE', 'true').lower() == 'true'
 
 
 def is_configured():
@@ -20,9 +21,10 @@ def send_email(to, subject, html):
     try:
         import resend
         resend.api_key = RESEND_API_KEY
-        params = {"from": FROM_EMAIL, "to": to, "subject": subject, "html": html}
+        recipient = 'delivered@resend.dev' if TEST_MODE else to
+        params = {"from": FROM_EMAIL, "to": recipient, "subject": subject, "html": html}
         result = resend.Emails.send(params)
-        logger.info(f"Email sent to {to}: {result}")
+        logger.info(f"Email sent to {recipient} (original: {to}): {result}")
         return True
     except Exception as e:
         logger.error(f"Email send failed: {e}")
