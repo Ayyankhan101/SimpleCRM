@@ -16,10 +16,11 @@ from app.models import User, db
 
 migrate = Migrate()
 login_manager = LoginManager()
+_rate_limit_store = os.environ.get('DATABASE_URL', 'memory://')
 limiter = Limiter(
     get_remote_address,
     default_limits=["200 per minute", "50 per second"],
-    storage_uri="memory://"
+    storage_uri=_rate_limit_store
 )
 csrf = CSRFProtect()
 cache = Cache(config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 30})
