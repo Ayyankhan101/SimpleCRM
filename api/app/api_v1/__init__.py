@@ -3,8 +3,6 @@ from flask import jsonify
 from flask_login import login_required, current_user
 from app.models import Contact, Deal, Activity, db
 from sqlalchemy import func
-from datetime import datetime
-
 from datetime import datetime, timedelta
 
 contacts_blp = Blueprint('contacts', 'Contacts', url_prefix='/api/v1/contacts', description='Contact management')

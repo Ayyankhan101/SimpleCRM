@@ -13,7 +13,7 @@ const Activities = lazy(() => import('./pages/Activities'))
 const ContactDetail = lazy(() => import('./pages/ContactDetail'))
 
 function OAuthCallback() {
-  const { checkAuth, user } = useAuth()
+  const { checkAuth } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
