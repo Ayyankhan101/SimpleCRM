@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 
@@ -11,6 +11,21 @@ const Deals = lazy(() => import('./pages/Deals'))
 const Pipeline = lazy(() => import('./pages/Pipeline'))
 const Activities = lazy(() => import('./pages/Activities'))
 const ContactDetail = lazy(() => import('./pages/ContactDetail'))
+
+function OAuthCallback() {
+  const { checkAuth, user } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    checkAuth().then(() => navigate('/', { replace: true }))
+  }, [])
+
+  return (
+    <div className="flex items-center justify-center min-h-[100dvh] bg-zinc-50">
+      <div className="text-sm text-zinc-400">Signing in...</div>
+    </div>
+  )
+}
 
 function NotFound() {
   return (
@@ -48,7 +63,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/auth/callback" element={<Login />} />
+        <Route path="/auth/callback" element={<OAuthCallback />} />
         <Route path="/" element={
           <PrivateRoute>
             <Layout />

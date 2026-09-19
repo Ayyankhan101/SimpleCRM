@@ -5,6 +5,8 @@ from app.models import Contact, Deal, Activity, db
 from sqlalchemy import func
 from datetime import datetime
 
+from datetime import datetime, timedelta
+
 contacts_blp = Blueprint('contacts', 'Contacts', url_prefix='/api/v1/contacts', description='Contact management')
 deals_blp = Blueprint('deals', 'Deals', url_prefix='/api/v1/deals', description='Deal pipeline')
 activities_blp = Blueprint('activities', 'Activities', url_prefix='/api/v1/activities', description='Activity tracking')
@@ -23,22 +25,22 @@ def _activity_base_filter(user_id):
 def _get_activity_counts(user_id):
     now = datetime.utcnow()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = today_start.replace(hour=23, minute=59, second=59)
+    tomorrow_start = today_start + timedelta(days=1)
     base = _activity_base_filter(user_id)
     overdue = Activity.query.filter(*base, Activity.due_date < today_start).count()
-    due_today = Activity.query.filter(*base, Activity.due_date >= today_start, Activity.due_date <= today_end).count()
-    upcoming = Activity.query.filter(*base, Activity.due_date > today_end).count()
+    due_today = Activity.query.filter(*base, Activity.due_date >= today_start, Activity.due_date < tomorrow_start).count()
+    upcoming = Activity.query.filter(*base, Activity.due_date >= tomorrow_start).count()
     return overdue, due_today, upcoming
 
 
 def _get_activity_lists(user_id, limit=5):
     now = datetime.utcnow()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = today_start.replace(hour=23, minute=59, second=59)
+    tomorrow_start = today_start + timedelta(days=1)
     base = _activity_base_filter(user_id)
     overdue = Activity.query.filter(*base, Activity.due_date < today_start).order_by(Activity.due_date.asc()).limit(limit).all()
-    due_today = Activity.query.filter(*base, Activity.due_date >= today_start, Activity.due_date <= today_end).order_by(Activity.due_date.asc()).limit(limit).all()
-    upcoming = Activity.query.filter(*base, Activity.due_date > today_end).order_by(Activity.due_date.asc()).limit(limit).all()
+    due_today = Activity.query.filter(*base, Activity.due_date >= today_start, Activity.due_date < tomorrow_start).order_by(Activity.due_date.asc()).limit(limit).all()
+    upcoming = Activity.query.filter(*base, Activity.due_date >= tomorrow_start).order_by(Activity.due_date.asc()).limit(limit).all()
     return overdue, due_today, upcoming
 
 

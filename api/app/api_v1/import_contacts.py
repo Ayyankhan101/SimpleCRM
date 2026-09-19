@@ -202,7 +202,7 @@ def execute_import():
     for i, row in enumerate(rows):
         cleaned, row_errors, _ = validate_row(row, i + 2)
         if row_errors:
-            skipped += len(row_errors)
+            skipped += 1
             continue
 
         if cleaned.get('email'):

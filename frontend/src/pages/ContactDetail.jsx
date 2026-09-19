@@ -236,7 +236,7 @@ export default function ContactDetail() {
                     <span className="font-mono font-semibold text-zinc-950 dark:text-zinc-50">{formatCurrency(deal.value)}</span>
                     {deal.expected_close_date && (
                       <span className="flex items-center gap-1 text-xs text-zinc-500">
-                        <CalendarDots size={12} />
+                        <CalendarBlank size={12} />
                         {formatRelativeDate(deal.expected_close_date)}
                       </span>
                     )}

@@ -187,14 +187,14 @@ class Deal(db.Model):
         return {
             'id': self.id,
             'title': self.title,
-            'value': round(self.value, 2) if self.value else 0,
+            'value': round(self.value, 2) if self.value is not None else 0,
             'currency': self.currency,
             'stage': self.stage,
             'probability': self.probability,
             'expected_close_date': self.expected_close_date.isoformat() if self.expected_close_date else None,
             'actual_close_date': self.actual_close_date.isoformat() if self.actual_close_date else None,
             'contact_id': self.contact_id,
-            'contact_name': f'{self.contact.first_name} {self.contact.last_name}' if self.contact else None,
+            'contact_name': f'{self.contact.first_name} {self.contact.last_name or ""}'.strip() if self.contact else None,
             'owner_id': self.owner_id,
             'org_id': self.org_id,
             'notes': self.get_notes(),
@@ -353,5 +353,8 @@ class AuditLog(db.Model):
     def get_changes(self):
         if self.changes:
             import json
-            return json.loads(self.changes)
+            try:
+                return json.loads(self.changes)
+            except (json.JSONDecodeError, TypeError):
+                return {}
         return {}

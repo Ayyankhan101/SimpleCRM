@@ -4,9 +4,11 @@ import sys
 # Add the api directory to Python path
 sys.path.insert(0, os.path.dirname(__file__))
 
-# Set environment variables BEFORE importing app
-os.environ.setdefault('SECRET_KEY', os.environ.get('SECRET_KEY', 'vercel-dev-secret-key-change-in-production'))
-os.environ.setdefault('JWT_SECRET_KEY', os.environ.get('JWT_SECRET_KEY', 'vercel-dev-jwt-secret-key-change-in-production'))
+# Ensure critical secrets are set (Config.py will raise ValueError if missing)
+if not os.environ.get('SECRET_KEY'):
+    raise RuntimeError("SECRET_KEY environment variable is required")
+if not os.environ.get('JWT_SECRET_KEY'):
+    raise RuntimeError("JWT_SECRET_KEY environment variable is required")
 os.environ.setdefault('FLASK_ENV', 'production')
 
 from app import create_app

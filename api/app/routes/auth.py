@@ -43,6 +43,9 @@ def register():
     user.set_password(data['password'])
 
     slug = user.username.lower().replace(' ', '-')
+    existing_slug = Organization.query.filter_by(slug=slug).first()
+    if existing_slug:
+        slug = f"{slug}-{secrets.token_hex(3)}"
     org = Organization(name=f"{user.username}'s Workspace", slug=slug)
     db.session.add(org)
     db.session.flush()
@@ -165,11 +168,20 @@ def google_callback():
         if user:
             user.google_id = userinfo['id']
         else:
+            username = userinfo.get('name', userinfo['email'].split('@')[0])
             user = User(
                 email=userinfo['email'],
-                username=userinfo.get('name', userinfo['email'].split('@')[0]),
+                username=username,
                 google_id=userinfo['id']
             )
+            slug = username.lower().replace(' ', '-')
+            existing_slug = Organization.query.filter_by(slug=slug).first()
+            if existing_slug:
+                slug = f"{slug}-{secrets.token_hex(3)}"
+            org = Organization(name=f"{username}'s Workspace", slug=slug)
+            db.session.add(org)
+            db.session.flush()
+            user.org_id = org.id
             db.session.add(user)
 
     db.session.commit()

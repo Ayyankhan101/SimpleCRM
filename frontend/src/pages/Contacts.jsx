@@ -141,7 +141,7 @@ export default function Contacts() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight">Contacts</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{contacts.length} total contacts</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{search ? `${contacts.length} matching contacts` : `${contacts.length} total contacts`}</p>
         </div>
         <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
           Import CSV
