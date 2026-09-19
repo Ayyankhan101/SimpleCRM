@@ -11,6 +11,37 @@ activities_blp = Blueprint('activities', 'Activities', url_prefix='/api/v1/activ
 stats_blp = Blueprint('stats', 'Stats', url_prefix='/api/v1/stats', description='Dashboard statistics')
 
 
+def _activity_base_filter(user_id):
+    return [
+        Activity.owner_id == user_id,
+        Activity.deleted_at.is_(None),
+        Activity.completed == False,
+        Activity.due_date.isnot(None),
+    ]
+
+
+def _get_activity_counts(user_id):
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start.replace(hour=23, minute=59, second=59)
+    base = _activity_base_filter(user_id)
+    overdue = Activity.query.filter(*base, Activity.due_date < today_start).count()
+    due_today = Activity.query.filter(*base, Activity.due_date >= today_start, Activity.due_date <= today_end).count()
+    upcoming = Activity.query.filter(*base, Activity.due_date > today_end).count()
+    return overdue, due_today, upcoming
+
+
+def _get_activity_lists(user_id, limit=5):
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start.replace(hour=23, minute=59, second=59)
+    base = _activity_base_filter(user_id)
+    overdue = Activity.query.filter(*base, Activity.due_date < today_start).order_by(Activity.due_date.asc()).limit(limit).all()
+    due_today = Activity.query.filter(*base, Activity.due_date >= today_start, Activity.due_date <= today_end).order_by(Activity.due_date.asc()).limit(limit).all()
+    upcoming = Activity.query.filter(*base, Activity.due_date > today_end).order_by(Activity.due_date.asc()).limit(limit).all()
+    return overdue, due_today, upcoming
+
+
 @stats_blp.route('', methods=['GET'])
 @login_required
 def get_stats():
@@ -28,40 +59,7 @@ def get_stats():
     )
     pipeline = [{'stage': row[0], 'count': row[1]} for row in pipeline_rows]
 
-    now = datetime.utcnow()
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = today_start.replace(hour=23, minute=59, second=59)
-
-    base_filter = [
-        Activity.owner_id == current_user.id,
-        Activity.deleted_at.is_(None),
-        Activity.completed == False,
-        Activity.due_date.isnot(None),
-    ]
-
-    overdue = (
-        db.session.query(Activity)
-        .filter(*base_filter, Activity.due_date < today_start)
-        .order_by(Activity.due_date.asc())
-        .limit(5)
-        .all()
-    )
-
-    due_today = (
-        db.session.query(Activity)
-        .filter(*base_filter, Activity.due_date >= today_start, Activity.due_date <= today_end)
-        .order_by(Activity.due_date.asc())
-        .limit(5)
-        .all()
-    )
-
-    upcoming = (
-        db.session.query(Activity)
-        .filter(*base_filter, Activity.due_date > today_end)
-        .order_by(Activity.due_date.asc())
-        .limit(5)
-        .all()
-    )
+    overdue, due_today, upcoming = _get_activity_lists(current_user.id, limit=5)
 
     return jsonify({
         'contacts': contact_count,

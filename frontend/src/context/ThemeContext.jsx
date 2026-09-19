@@ -31,7 +31,8 @@ export function ThemeProvider({ children }) {
   }
 
   const toggleTheme = () => {
-    setTheme(resolved === 'dark' ? 'light' : 'dark')
+    const cycle = { system: 'light', light: 'dark', dark: 'system' }
+    setTheme(cycle[theme] || 'system')
   }
 
   useEffect(() => {

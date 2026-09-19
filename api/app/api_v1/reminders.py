@@ -4,6 +4,7 @@ from flask import jsonify
 from flask_login import current_user, login_required
 from app.models import Activity, db
 from app.services.email import send_daily_digest, is_configured
+from app.api_v1 import _activity_base_filter, _get_activity_counts
 
 reminders_blp = Blueprint('reminders', 'Reminders', url_prefix='/api/v1/reminders', description='Activity reminders')
 
@@ -18,12 +19,7 @@ def send_digest():
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
     today_end = today_start.replace(hour=23, minute=59, second=59)
 
-    base_filter = [
-        Activity.owner_id == current_user.id,
-        Activity.deleted_at.is_(None),
-        Activity.completed == False,
-        Activity.due_date.isnot(None),
-    ]
+    base_filter = _activity_base_filter(current_user.id)
 
     overdue = Activity.query.filter(*base_filter, Activity.due_date < today_start).order_by(Activity.due_date.asc()).all()
     due_today = Activity.query.filter(*base_filter, Activity.due_date >= today_start, Activity.due_date <= today_end).order_by(Activity.due_date.asc()).all()
@@ -52,20 +48,10 @@ def send_digest():
 @reminders_blp.route('/check', methods=['GET'])
 @login_required
 def check_reminders():
+    overdue, due_today, upcoming = _get_activity_counts(current_user.id)
+
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
-    today_end = today_start.replace(hour=23, minute=59, second=59)
-
-    base_filter = [
-        Activity.owner_id == current_user.id,
-        Activity.deleted_at.is_(None),
-        Activity.completed == False,
-        Activity.due_date.isnot(None),
-    ]
-
-    overdue = Activity.query.filter(*base_filter, Activity.due_date < today_start).count()
-    due_today = Activity.query.filter(*base_filter, Activity.due_date >= today_start, Activity.due_date <= today_end).count()
-    upcoming = Activity.query.filter(*base_filter, Activity.due_date > today_end).limit(10).count()
 
     last_sent = current_user.last_digest_sent_at
     should_send = (overdue + due_today) > 0 and (
