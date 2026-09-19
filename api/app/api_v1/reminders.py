@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from flask import Blueprint, jsonify
+from flask_smorest import Blueprint
+from flask import jsonify
 from flask_login import current_user, login_required
 from app.models import Activity, db
 from app.services.email import send_daily_digest, is_configured
