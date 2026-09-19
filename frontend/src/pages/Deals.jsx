@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, CurrencyCircleDollar, PencilSimple, Trash } from '@phosphor-icons/react'
+import { Plus, CurrencyCircleDollar, PencilSimple, Trash, EnvelopeSimple } from '@phosphor-icons/react'
 import api from '../utils/api'
 import { DEAL_STAGES, getStageColor, getStageLabel, formatCurrency } from '../lib/constants'
 import Button from '../components/ui/Button'
@@ -22,6 +22,12 @@ export default function Deals() {
   const [formData, setFormData] = useState(defaultForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [emailDeal, setEmailDeal] = useState(null)
+  const [emailContact, setEmailContact] = useState(null)
+  const [emailForm, setEmailForm] = useState({ subject: '', body: '' })
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
   const fetchDeals = useCallback(async () => {
     try {
@@ -92,6 +98,51 @@ export default function Deals() {
     setFormData(defaultForm)
     setShowModal(true)
     setError('')
+  }
+
+  const openEmail = async (deal) => {
+    if (!deal.contact_id) {
+      alert('No contact linked to this deal. Add a contact first.')
+      return
+    }
+    setEmailDeal(deal)
+    setEmailForm({ subject: '', body: '' })
+    setEmailError('')
+    setEmailContact(null)
+    setShowEmailModal(true)
+    try {
+      const res = await api.get(`/v1/contacts/${deal.contact_id}`)
+      setEmailContact(res.data)
+    } catch {
+      setEmailContact({ first_name: 'Unknown', email: null })
+    }
+  }
+
+  const handleSendEmail = async () => {
+    if (!emailForm.subject.trim() || !emailForm.body.trim()) {
+      setEmailError('Subject and body required')
+      return
+    }
+    if (!emailContact?.email) {
+      setEmailError('Contact has no email address')
+      return
+    }
+    setSendingEmail(true)
+    setEmailError('')
+    try {
+      await api.post('/v1/emails/send', {
+        contact_id: emailDeal.contact_id,
+        deal_id: emailDeal.id,
+        subject: emailForm.subject,
+        body: emailForm.body,
+      })
+      setShowEmailModal(false)
+      setEmailForm({ subject: '', body: '' })
+    } catch (err) {
+      setEmailError(err.response?.data?.error || 'Failed to send')
+    } finally {
+      setSendingEmail(false)
+    }
   }
 
   if (loading) return <TableSkeleton rows={5} cols={5} />
@@ -186,6 +237,12 @@ export default function Deals() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
+                          onClick={() => openEmail(d)}
+                          className="p-2 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors"
+                        >
+                          <EnvelopeSimple size={15} />
+                        </button>
+                        <button
                           onClick={() => handleEdit(d)}
                           className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
                         >
@@ -268,6 +325,60 @@ export default function Deals() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Email Modal */}
+      <Modal
+        open={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        title="Send Email"
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">To</label>
+            {emailContact ? (
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                {emailContact.first_name} {emailContact.last_name} &lt;{emailContact.email || 'no email'}&gt;
+              </p>
+            ) : (
+              <p className="text-sm text-zinc-400">Loading contact...</p>
+            )}
+          </div>
+          {emailDeal && (
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Deal</label>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">{emailDeal.title}</p>
+            </div>
+          )}
+          <Input
+            label="Subject"
+            value={emailForm.subject}
+            onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
+            placeholder="Follow up on proposal"
+          />
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Body</label>
+            <textarea
+              rows={5}
+              value={emailForm.body}
+              onChange={(e) => setEmailForm({ ...emailForm, body: e.target.value })}
+              placeholder="Write your email..."
+              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-950 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+            />
+          </div>
+          {emailError && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
+              {emailError}
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setShowEmailModal(false)}>Cancel</Button>
+            <Button type="button" onClick={handleSendEmail} loading={sendingEmail}>
+              {sendingEmail ? 'Sending...' : 'Send Email'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
