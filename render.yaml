@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: simplecrm-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///data.db
+      - key: FLASK_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+        value: https://simplecrm-frontend.vercel.app

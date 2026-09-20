@@ -1,18 +1,20 @@
-import pytest
 import os
+
+import pytest
+
 os.environ['SECRET_KEY'] = 'test-secret-key-for-testing'
+os.environ['JWT_SECRET_KEY'] = 'test-jwt-secret-key-for-testing'
 os.environ['FLASK_ENV'] = 'testing'
 
-from app import create_app
+from app import create_app, limiter
 from app.models import db as _db
-from app import limiter
+from config import TestingConfig
 
 
 @pytest.fixture(scope='session')
 def app():
-    app = create_app()
+    app = create_app(config_class=TestingConfig)
     app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['WTF_CSRF_ENABLED'] = False
     limiter.enabled = False
     return app
@@ -37,7 +39,7 @@ def auth_client(client, db):
     """Client with authenticated user via session cookie."""
     client.post('/api/auth/register', json={
         'email': 'test@example.com',
-        'password': 'password123',
+        'password': 'Password123',
         'username': 'testuser'
     })
     return client

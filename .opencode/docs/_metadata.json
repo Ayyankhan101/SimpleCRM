@@ -1,0 +1,40 @@
+{
+  "documents": {
+    "www_hostinger_com_tutorials_dns-records.md": {
+      "url": "https://www.hostinger.com/tutorials/dns-records",
+      "title": "Hostinger Tutorials",
+      "fetchedAt": "2026-09-19T07:34:29.388Z",
+      "expiresAt": "2026-09-20T07:34:29.388Z",
+      "size": 15147
+    },
+    "resend_com_docs_dashboard_webhooks_introduction.md": {
+      "url": "https://resend.com/docs/dashboard/webhooks/introduction",
+      "title": "Managing Webhooks - Resend",
+      "fetchedAt": "2026-09-19T11:21:58.309Z",
+      "expiresAt": "2026-09-20T11:21:58.309Z",
+      "size": 7699
+    },
+    "resend_com_docs_webhooks_event-types.md": {
+      "url": "https://resend.com/docs/webhooks/event-types",
+      "title": "Event Types - Resend",
+      "fetchedAt": "2026-09-19T11:22:08.342Z",
+      "expiresAt": "2026-09-20T11:22:08.342Z",
+      "size": 3698
+    },
+    "resend_com_docs_webhooks_emails_opened.md": {
+      "url": "https://resend.com/docs/webhooks/emails/opened",
+      "title": "email.opened - Resend",
+      "fetchedAt": "2026-09-19T11:22:19.101Z",
+      "expiresAt": "2026-09-20T11:22:19.101Z",
+      "size": 2414
+    },
+    "resend_com_docs_api-reference_emails_send-email.md": {
+      "url": "https://resend.com/docs/api-reference/emails/send-email",
+      "title": "Send Email - Resend",
+      "fetchedAt": "2026-09-19T11:22:52.547Z",
+      "expiresAt": "2026-09-20T11:22:52.547Z",
+      "size": 15155
+    }
+  },
+  "lastUpdated": "2026-09-19T17:31:49.874Z"
+}

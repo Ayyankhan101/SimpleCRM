@@ -90,7 +90,7 @@ describe('Login', () => {
       await user.click(screen.getByRole('button', { name: /login/i }))
     })
 
-    expect(api.post).toHaveBeenCalledWith('/api/auth/login', {
+    expect(api.post).toHaveBeenCalledWith('/auth/login', {
       email: 'test@test.com',
       password: 'password123'
     })

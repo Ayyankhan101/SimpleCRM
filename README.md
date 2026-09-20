@@ -1,505 +1,312 @@
-# Data Analysis App
+# SimpleCRM
 
-A full-stack web application for data analytics and visualization, built with Flask (backend) and React (frontend). This platform enables users to manage, analyze, and visualize data through interactive dashboards and comprehensive analytics tools.
+Stop paying for features you'll never use.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+A simple CRM for small businesses. Contacts, deals, activities — that's it. Built with Flask + React.
+
+![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-private-red.svg)
 
-## 📋 Table of Contents
+**Live:** https://frontend-navy-psi-33.vercel.app
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Running the Application](#running-the-application)
-- [API Documentation](#api-documentation)
-- [Project Structure](#project-structure)
-- [Demo Data](#demo-data)
-- [Deployment](#deployment)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
+## Quick Start
 
----
+```bash
+git clone https://github.com/Ayyankhan101/SimpleCRM.git
+cd SimpleCRM
+./start.sh
+```
 
-## ✨ Features
+Open **http://localhost:5173**, register a new account, start adding contacts.
 
-### Backend Features
-- **User Authentication**: Secure user registration and login system with Flask-Login
-- **RESTful API**: Well-structured API endpoints for data operations
-- **Database Management**: SQLAlchemy ORM with PostgreSQL/SQLite support
-- **Data Analytics**: Pandas-powered data processing and analysis
-- **Data Visualization**: Matplotlib integration for chart generation
-- **Database Migrations**: Flask-Migrate for schema version control
-- **CORS Support**: Cross-origin resource sharing for frontend integration
+**Other modes:**
+```bash
+./start.sh --docker   # PostgreSQL stack
+./start.sh --test     # Run tests
+./start.sh --help     # Show all options
+```
 
-### Frontend Features
-- **Modern UI**: React 18 with Vite for fast development and builds
-- **Routing**: React Router for seamless navigation
-- **HTTP Client**: Axios for API communication
-- **Data Visualization**: D3.js for interactive charts and graphs
-- **Responsive Design**: Mobile-friendly interface
-- **Component Architecture**: Modular and reusable components
+## Features
 
-### Core Functionality
-- **Dashboard**: Overview of analytics and key metrics
-- **Data Management**: CRUD operations for data entries
-- **Categories**: Organize data into customizable categories
-- **Analytics**: Advanced data analysis and reporting
-- **Multi-region Support**: Track data by country and region
+- **Contacts** — Track leads, prospects, customers with stages, scores, notes
+- **Deals** — Pipeline view with stages, values, probability tracking
+- **Pipeline** — Kanban drag-and-drop board for deal management
+- **Activities** — Log calls, emails, meetings, tasks, follow-ups with due dates
+- **Dashboard** — Stat cards, pipeline chart, revenue trend, email engagement, activity breakdown
+- **Email Integration** — Send emails from contacts/deals, track opens and clicks via Resend
+- **CSV Import** — Preview and bulk import contacts from CSV files
+- **Activity Reminders** — Email digest for overdue and due-today activities (Resend)
+- **Auth** — Register/login, Google OAuth, role-based access (owner/admin/member)
+- **Multi-tenant** — Organization support with plans (free/pro/enterprise)
+- **Dark Mode** — Toggle between light, dark, and system themes
+- **Stage Filters** — Filter contacts/deals by pipeline stage
+- **Search** — Find contacts by name/email/company
+- **Responsive** — Works on desktop and mobile
 
----
+## Pricing
 
-## 🛠 Tech Stack
+| Plan | Users | Contacts | Price |
+|------|-------|----------|-------|
+| Free | 1 | 100 | $0/mo |
+| Pro | 3 | Unlimited | $10/mo |
+| Business | 10 | Unlimited | $25/mo |
+
+## Tech Stack
 
 ### Backend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Python | 3.x | Programming language |
-| Flask | 3.0.0 | Web framework |
-| SQLAlchemy | 2.0.23 | Database ORM |
-| Flask-SQLAlchemy | 3.1.1 | Flask SQLAlchemy integration |
-| Flask-Migrate | 4.0.5 | Database migrations |
-| Flask-Cors | 4.0.0 | CORS support |
-| Flask-Login | 0.6.3 | User session management |
-| Flask-Bcrypt | 1.0.1 | Password hashing |
-| Pandas | 2.1.4 | Data analysis |
-| Matplotlib | 3.8.2 | Data visualization |
-| Gunicorn | 21.2.0 | Production WSGI server |
-| psycopg2-binary | 2.9.9 | PostgreSQL adapter |
+| Technology | Purpose |
+|------------|---------|
+| Python 3.13 | Programming language |
+| Flask 3.0 | Web framework |
+| SQLAlchemy 2.0 | Database ORM |
+| Flask-Smorest 0.47 | REST API |
+| Marshmallow 4.3 | Serialization |
+| Flask-Login | Session management |
+| Flask-Limiter | Rate limiting |
+| Neon Postgres | Production database (serverless) |
+| Resend | Transactional email (reminders, digests) |
 
 ### Frontend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 18.2.0 | UI library |
-| Vite | 5.0.8 | Build tool |
-| React Router | 6.21.0 | Routing |
-| Axios | 1.6.2 | HTTP client |
-| D3.js | 7.8.5 | Data visualization |
+| Technology | Purpose |
+|------------|---------|
+| React 18 | UI library |
+| Vite 5 | Build tool |
+| React Router 6 | Routing |
+| Axios | HTTP client |
+| Recharts | Data visualization |
+| Tailwind CSS | Styling |
+| Framer Motion | Animations |
+| Phosphor Icons | Icon library |
 
----
+## API Endpoints
 
-## 📦 Prerequisites
-
-Before installation, ensure you have the following:
-
-- **Python 3.8+** installed
-- **Node.js 18+** and **npm** installed
-- **Git** for version control
-- **PostgreSQL** (optional, for production; SQLite works for development)
-
----
-
-## 🚀 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd Data-Analysis-App
-```
-
-### 2. Install Backend Dependencies
-
-```bash
-cd backend
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 3. Install Frontend Dependencies
-
-```bash
-cd ../frontend
-npm install
-```
-
-### 4. Install Root Dependencies
-
-```bash
-cd ..
-npm install
-```
-
----
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-Copy the example environment file and configure:
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-Edit `.env` with your configuration:
-
-```bash
-# Application secret key (change in production)
-SECRET_KEY=your-secret-key-change-in-production
-
-# Database configuration
-DATABASE_URL=sqlite:///data_analytics.db
-# For PostgreSQL:
-# DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-
-# Google OAuth (optional)
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:5000/auth/google/callback
-
-# Frontend URL
-FRONTEND_URL=http://localhost:5173
-```
-
----
-
-## ▶️ Running the Application
-
-### Development Mode
-
-**Option 1: Run both backend and frontend concurrently**
-
-```bash
-# From the root directory
-npm run dev
-```
-
-**Option 2: Run separately**
-
-```bash
-# Terminal 1 - Backend
-cd backend
-python run.py
-
-# Terminal 2 - Frontend
-cd frontend
-npm run dev
-```
-
-### Access the Application
-
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:5000
-- **Health Check**: http://localhost:5000/api/health
-
-### Demo Credentials
-
-The application seeds demo data on first run:
-
-- **Email**: demo@example.com
-- **Username**: demo
-- **Password**: demo123
-
----
-
-## 📡 API Documentation
-
-### Base URL
-
-```
-http://localhost:5000/api
-```
-
-### Endpoints
-
-#### Authentication
-
+### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/auth/register` | Register new user |
 | POST | `/api/auth/login` | User login |
 | POST | `/api/auth/logout` | User logout |
 | GET | `/api/auth/me` | Get current user |
-| GET | `/api/auth/google` | Google OAuth login |
-| GET | `/api/auth/google/callback` | Google OAuth callback |
 
-#### Data Entries
-
+### Contacts
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/data` | Get all data entries |
-| GET | `/api/data/<id>` | Get specific entry |
-| POST | `/api/data` | Create new entry |
-| PUT | `/api/data/<id>` | Update entry |
-| DELETE | `/api/data/<id>` | Delete entry |
+| GET | `/api/v1/contacts/` | List contacts (filter by stage, search) |
+| POST | `/api/v1/contacts/` | Create contact |
+| PUT | `/api/v1/contacts/<id>` | Update contact |
+| DELETE | `/api/v1/contacts/<id>` | Soft-delete contact |
+| POST | `/api/v1/contacts/import/preview` | Preview CSV import |
+| POST | `/api/v1/contacts/import` | Import contacts from CSV |
 
-#### Categories
-
+### Deals
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/categories` | Get all categories |
-| GET | `/api/categories/<id>` | Get specific category |
-| POST | `/api/categories` | Create category |
-| PUT | `/api/categories/<id>` | Update category |
-| DELETE | `/api/categories/<id>` | Delete category |
+| GET | `/api/v1/deals/` | List deals (filter by stage) |
+| POST | `/api/v1/deals/` | Create deal |
+| PUT | `/api/v1/deals/<id>` | Update deal |
+| DELETE | `/api/v1/deals/<id>` | Soft-delete deal |
 
-#### Analytics
-
+### Activities
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/analytics/summary` | Get analytics summary |
-| GET | `/api/analytics/trends` | Get trend data |
-| GET | `/api/analytics/comparison` | Compare data sets |
+| GET | `/api/v1/activities/` | List activities (filter by type, due date) |
+| POST | `/api/v1/activities/` | Create activity |
+| PUT | `/api/v1/activities/<id>` | Update activity (including completion toggle) |
+| DELETE | `/api/v1/activities/<id>` | Soft-delete activity |
 
-### Response Format
+### Dashboard & Reminders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/stats` | Dashboard statistics (counts, pipeline, activity lists) |
+| GET | `/api/v1/reminders/check` | Check overdue/due-today counts |
+| POST | `/api/v1/reminders/digest` | Send email digest of pending activities |
 
-```json
-{
-  "success": true,
-  "data": {},
-  "message": "Operation successful"
-}
-```
+### Email & Webhooks
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/emails/send` | Send email via Resend |
+| POST | `/api/v1/webhooks/resend` | Receive Resend webhook events (open/click) |
 
-### Error Response
-
-```json
-{
-  "success": false,
-  "error": "Error message"
-}
-```
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-Data-Analysis-App/
-├── backend/                    # Flask backend application
+SimpleCRM/
+├── start.sh                 # One-command startup
+├── api/                     # Backend (Flask)
 │   ├── app/
-│   │   ├── __init__.py        # App factory & initialization
-│   │   ├── models.py          # Database models
+│   │   ├── __init__.py      # App factory + seed data + stats endpoint
+│   │   ├── models.py        # User, Organization, Contact, Deal, Activity, AuditLog
+│   │   ├── schemas/         # Marshmallow serialization
 │   │   ├── routes/
-│   │   │   ├── auth.py        # Authentication routes
-│   │   │   ├── data.py        # Data entry routes
-│   │   │   ├── categories.py  # Category routes
-│   │   │   └── analytics.py   # Analytics routes
-│   │   ├── models/            # Additional models
-│   │   ├── services/          # Business logic services
-│   │   └── utils/             # Utility functions
-│   ├── config.py              # Configuration classes
-│   ├── run.py                 # Application entry point
-│   ├── requirements.txt       # Python dependencies
-│   ├── .env                   # Environment variables
-│   └── .env.example           # Environment template
-│
-├── frontend/                   # React frontend application
+│   │   │   ├── auth.py      # Authentication + Google OAuth
+│   │   │   └── health.py    # Health check
+│   │   ├── api_v1/
+│   │   │   ├── __init__.py  # Blueprint definitions + shared activity helpers
+│   │   │   ├── contacts.py  # Contact CRUD + search + stage filter
+│   │   │   ├── deals.py     # Deal CRUD + stage filter
+│   │   │   ├── activities.py # Activity CRUD + due date filter
+│   │   │   ├── emails.py    # Send email via Resend
+│   │   │   ├── import_contacts.py # CSV preview + import
+│   │   │   ├── reminders.py # Activity reminder check + email digest
+│   │   │   └── webhooks.py  # Resend webhook handler (open/click)
+│   │   └── services/
+│   │       ├── email.py     # Resend email service
+│   │       ├── rbac.py      # Role-based access
+│   │       └── security.py  # Input sanitization
+│   ├── config.py            # Config with Neon Postgres + Resend
+│   ├── index.py             # Vercel WSGI entry point
+│   └── requirements.txt     # Python dependencies
+├── frontend/
 │   ├── src/
-│   │   ├── App.jsx            # Main application component
-│   │   ├── main.jsx           # Entry point
-│   │   ├── index.css          # Global styles
-│   │   ├── components/
-│   │   │   └── Layout.jsx     # Layout component
+│   │   ├── App.jsx          # Routes + OAuth callback
 │   │   ├── pages/
-│   │   │   ├── Dashboard.jsx  # Dashboard page
-│   │   │   ├── DataEntries.jsx # Data management page
-│   │   │   ├── Categories.jsx # Categories page
-│   │   │   ├── Login.jsx      # Login page
-│   │   │   └── Register.jsx   # Registration page
-│   │   ├── context/           # React context providers
-│   │   ├── hooks/             # Custom React hooks
-│   │   └── utils/             # Utility functions
-│   ├── public/                # Static assets
-│   ├── index.html             # HTML template
-│   ├── vite.config.js         # Vite configuration
-│   └── package.json           # Node dependencies
-│
-├── package.json               # Root package.json (concurrent runs)
-└── README.md                  # Project documentation
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Contacts.jsx
+│   │   │   ├── ContactDetail.jsx
+│   │   │   ├── Deals.jsx
+│   │   │   ├── Pipeline.jsx
+│   │   │   ├── Activities.jsx
+│   │   │   ├── Login.jsx
+│   │   │   └── Register.jsx
+│   │   ├── components/
+│   │   │   ├── Layout.jsx   # Sidebar nav + theme toggle
+│   │   │   ├── ContactPicker.jsx
+│   │   │   ├── DealPicker.jsx
+│   │   │   ├── ImportPreview.jsx
+│   │   │   └── ui/          # Button, Input, Badge, Modal, Skeleton
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── ThemeContext.jsx
+│   │   ├── lib/
+│   │   │   └── constants.js # Stages, colors, formatters
+│   │   └── utils/
+│   │       └── api.js       # Axios config
+│   ├── vercel.json
+│   └── package.json
+├── vercel.json               # Root deploy config
+└── README.md
 ```
 
----
-
-## 📊 Demo Data
-
-The application automatically seeds demo data on first run:
-
-### Demo Categories
-- **COVID-19**: Pandemic tracking data
-- **Healthcare**: Healthcare statistics
-- **Economy**: Economic indicators
-- **Demographics**: Population data
-
-### Sample Data
-- 500+ COVID-19 data entries
-- 20 countries across all regions
-- Date range: January 2020 - December 2021
-- Metrics: confirmed cases, deaths, recoveries, active cases
-
----
-
-## 🚢 Deployment
-
-### Backend Deployment
-
-#### Using Gunicorn (Production)
-
-```bash
-cd backend
-gunicorn -w 4 -b 0.0.0.0:5000 run:app
-```
-
-#### Platform-Specific
-
-**Render**
-- Configuration in `render.yaml`
-- Procfile included for deployment
-
-**Heroku**
-- Procfile included
-- Set environment variables in dashboard
-
-### Frontend Deployment
-
-#### Build for Production
-
-```bash
-cd frontend
-npm run build
-```
-
-#### Vercel
-- Configuration in `vercel.json`
-- Deploy with Vercel CLI or Git integration
-
-### Environment Variables for Production
-
-Ensure these are set in your production environment:
-
-```bash
-SECRET_KEY=<strong-random-key>
-DATABASE_URL=postgresql://user:password@host:port/database
-GOOGLE_CLIENT_ID=<your-google-client-id>
-GOOGLE_CLIENT_SECRET=<your-google-client-secret>
-FRONTEND_URL=https://your-domain.com
-```
-
----
-
-## 👨‍💻 Development
-
-### Running Tests
-
-**Backend tests:**
-```bash
-cd backend
-SECRET_KEY=test-secret pytest tests/ -v
-
-# With coverage
-SECRET_KEY=test-secret pytest tests/ -v --cov=app --cov-report=html
-```
-
-**Frontend tests:**
-```bash
-cd frontend
-npm test
-```
-
-### Code Style
-
-**Backend linting:**
-```bash
-pip install ruff
-ruff check backend/
-ruff format backend/
-```
-
-### Database Migrations
-
-```bash
-# Create a new migration
-cd backend
-flask db migrate -m "Description of changes"
-
-# Apply migrations
-flask db upgrade
-
-# Rollback migrations
-flask db downgrade
-```
-
-### Docker
-
-```bash
-# Build and run all services
-docker-compose up --build
-
-# Run in background
-docker-compose up -d
-
-# Stop services
-docker-compose down
-```
+## Configuration
 
 ### Environment Variables
 
-Required for production:
+**Required:**
 ```bash
-SECRET_KEY=<strong-random-key>
-DATABASE_URL=postgresql://user:password@host:port/database
-FLASK_ENV=production
+SECRET_KEY=<random-key>
+JWT_SECRET_KEY=<random-key>
+DATABASE_URL=postgresql://user:pass@host:port/db
 FRONTEND_URL=https://your-domain.com
 ```
 
----
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Backend won't start**
+**Optional (email reminders):**
 ```bash
-# Check if virtual environment is activated
-# Verify dependencies are installed
-pip install -r requirements.txt
-
-# Check if port 5000 is in use
-lsof -i :5000
+RESEND_API_KEY=re_...
+FROM_EMAIL=onboarding@resend.dev    # test mode
+RESEND_TEST_MODE=false              # emails go to real addresses
 ```
 
-**Frontend build fails**
+**Optional (Google OAuth):**
 ```bash
-# Clear node_modules and reinstall
-cd frontend
-rm -rf node_modules package-lock.json
-npm install
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
 ```
 
-**Database errors**
+### Production (Vercel)
+
+Set environment variables in Vercel dashboard:
 ```bash
-# Reset the database (development only)
-cd backend
-rm instance/data_analytics.db
-python run.py
+npx vercel env add SECRET_KEY production
+npx vercel env add JWT_SECRET_KEY production
+npx vercel env add DATABASE_URL production
+npx vercel env add FRONTEND_URL production
 ```
 
-**CORS errors**
-- Ensure `FRONTEND_URL` is set correctly in backend `.env`
-- Verify CORS is enabled in `app/__init__.py`
+## Database
+
+### Neon Postgres (Production)
+```bash
+# Install Neon CLI
+npm i -g neon@latest
+
+# Login
+neon login
+
+# Get connection string
+neon connection-string --project-id <your-project-id>
+```
+
+Set `DATABASE_URL` in Vercel with the Neon connection string (includes `?sslmode=require`).
+
+### SQLite (Development)
+Falls back to SQLite automatically if `DATABASE_URL` is not set.
+
+## Testing
+
+```bash
+./start.sh --test
+```
+
+**Test coverage (76 tests):**
+- Login/logout/register flows
+- Contact CRUD + search + stage filters
+- Deal CRUD + pipeline stages
+- Activity CRUD + completion toggle + due date filters
+- CSV import preview + import
+- Dark mode persistence
+- 404 page + deep linking
+- Sidebar navigation + mobile responsive
+
+## Deployment
+
+### Vercel
+- Root `vercel.json` handles both API and frontend
+- SPA routing configured for client-side navigation
+- API routes proxy to Python serverless functions
+- **Deploy from project root:** `npx vercel --prod --yes`
+
+### Production Variables
+```bash
+SECRET_KEY=<random-key>
+JWT_SECRET_KEY=<random-key>
+DATABASE_URL=postgresql://neondb_owner:...@ep-...neon.tech/neondb?sslmode=require
+FRONTEND_URL=https://frontend-navy-psi-33.vercel.app
+RESEND_API_KEY=re_...
+FROM_EMAIL=onboarding@resend.dev
+RESEND_TEST_MODE=true
+```
+
+## Troubleshooting
+
+**Port in use:**
+```bash
+lsof -i :5000  # or :5173
+kill <pid>
+```
+
+**Reset database:**
+```bash
+cd api && rm -f simplecrm.db && cd .. && ./start.sh
+```
+
+**Frontend build fails:**
+```bash
+cd frontend && rm -rf node_modules && npm install
+```
+
+**Vercel deploy fails:**
+```bash
+# Re-authenticate
+npx vercel login
+
+# Deploy from project root (not frontend/)
+npx vercel --prod --yes
+```
+
+## License
+
+Private and proprietary.
 
 ---
 
-## 📄 License
-
-This project is private and proprietary.
-
----
-
-## 🤝 Support
-
-For issues and questions:
-- Check the troubleshooting section
-- Review API documentation
-- Contact the development team
-
----
-
-*Last updated: February 2026*
+*Last updated: September 2026*

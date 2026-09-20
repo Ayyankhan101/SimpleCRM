@@ -1,48 +1,78 @@
 import os
-import json
-import pandas as pd
 from datetime import datetime, timezone
+
+from config import Config
 from flask import Flask, jsonify
+from flask_caching import Cache
 from flask_cors import CORS
-from flask_migrate import Migrate
-from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from config import Config
-from app.models import db, User, Category, DataEntry
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_smorest import Api
+from flask_wtf.csrf import CSRFProtect
+
+from app.models import User, db
 
 migrate = Migrate()
 login_manager = LoginManager()
-limiter = Limiter(get_remote_address)
+limiter = Limiter(
+    get_remote_address,
+    default_limits=["200 per minute", "50 per second"],
+    storage_uri="memory://"
+)
+csrf = CSRFProtect()
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 30})
+api = Api()
 
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    app.config['API_TITLE'] = 'SimpleCRM API'
+    app.config['API_VERSION'] = 'v1'
+    app.config['OPENAPI_VERSION'] = '3.0.3'
+    app.config['OPENAPI_URL_PREFIX'] = '/api/docs'
+    app.config['OPENAPI_SWAGGER_UI_URL'] = '/swagger-ui'
+    app.config['OPENAPI_SWAGGER_UI_VERSION'] = '5.17.14'
 
     db.init_app(app)
+    api.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    limiter.init_app(app)
+    csrf.init_app(app)
+    cache.init_app(app)
+    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
     CORS(app,
-         origins=["http://localhost:5173", "http://localhost:3000"],
+         origins=[frontend_url, "http://localhost:5173", "http://localhost:3000"],
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
          expose_headers=["Content-Type"],
          max_age=600)
-    
+
     login_manager.login_view = 'auth.login'
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    from app.routes import auth, data, categories, analytics
+    from app.routes import auth, health
     app.register_blueprint(auth.bp)
-    app.register_blueprint(data.bp)
-    app.register_blueprint(categories.bp)
-    app.register_blueprint(analytics.bp)
+    app.register_blueprint(health.bp)
+
+    from app.api_v1.contacts import contacts_blp
+    from app.api_v1.deals import deals_blp
+    from app.api_v1.activities import activities_blp
+    from app.api_v1.stats import stats_blp
+    api.register_blueprint(contacts_blp)
+    api.register_blueprint(deals_blp)
+    api.register_blueprint(activities_blp)
+    api.register_blueprint(stats_blp)
+
+    # Exempt ALL API blueprints from CSRF — REST API uses SameSite cookies
+    for bp_obj in [auth.bp, health.bp, contacts_blp, deals_blp, activities_blp, stats_blp]:
+        csrf.exempt(bp_obj)
 
     @app.errorhandler(404)
     def not_found(e):
@@ -56,102 +86,79 @@ def create_app(config_class=Config):
     def internal_error(e):
         return jsonify({'error': 'Internal server error'}), 500
 
-    @app.route('/api/health')
-    def health():
-        return {'status': 'ok', 'timestamp': datetime.now(timezone.utc).isoformat()}
-
     with app.app_context():
         db.create_all()
-        if os.environ.get('FLASK_ENV') != 'production':
+        if os.environ.get('FLASK_ENV') not in ('testing', 'production'):
             seed_demo_data()
+
+    if os.environ.get('ENFORCE_HTTPS', '').lower() == 'true':
+        from app.services.security import enforce_https
+        enforce_https(app)
+
     return app
 
 
 def seed_demo_data():
-    if User.query.first():
+    try:
+        if User.query.first():
+            return
+    except Exception:
         return
-    
-    print("Seeding demo data...")
-    
-    user = User(email='demo@example.com', username='demo')
-    user.set_password('demo123')
-    db.session.add(user)
-    db.session.flush()
-    
-    categories_data = [
-        {'name': 'COVID-19', 'description': 'COVID-19 pandemic data', 'color': '#EF4444', 'icon': 'virus'},
-        {'name': 'Healthcare', 'description': 'Healthcare statistics', 'color': '#10B981', 'icon': 'heart'},
-        {'name': 'Economy', 'description': 'Economic indicators', 'color': '#F59E0B', 'icon': 'chart-line'},
-        {'name': 'Demographics', 'description': 'Population demographics', 'color': '#8B5CF6', 'icon': 'users'},
-    ]
-    
-    for cat_data in categories_data:
-        category = Category(**cat_data, user_id=user.id)
-        db.session.add(category)
-    
-    db.session.flush()
-    
-    covid_category = Category.query.filter_by(name='COVID-19', user_id=user.id).first()
-    
-    countries = [
-        {'country': 'USA', 'region': 'North America', 'population': 331000000},
-        {'country': 'India', 'region': 'Asia', 'population': 1380000000},
-        {'country': 'Brazil', 'region': 'South America', 'population': 212000000},
-        {'country': 'France', 'region': 'Europe', 'population': 67000000},
-        {'country': 'Germany', 'region': 'Europe', 'population': 83000000},
-        {'country': 'UK', 'region': 'Europe', 'population': 67000000},
-        {'country': 'Italy', 'region': 'Europe', 'population': 60000000},
-        {'country': 'Spain', 'region': 'Europe', 'population': 47000000},
-        {'country': 'Argentina', 'region': 'South America', 'population': 45000000},
-        {'country': 'Russia', 'region': 'Europe', 'population': 144000000},
-        {'country': 'Mexico', 'region': 'North America', 'population': 128000000},
-        {'country': 'Japan', 'region': 'Asia', 'population': 126000000},
-        {'country': 'South Africa', 'region': 'Africa', 'population': 59000000},
-        {'country': 'Canada', 'region': 'North America', 'population': 38000000},
-        {'country': 'Australia', 'region': 'Oceania', 'population': 25000000},
-        {'country': 'China', 'region': 'Asia', 'population': 1400000000},
-        {'country': 'Indonesia', 'region': 'Asia', 'population': 273000000},
-        {'country': 'Pakistan', 'region': 'Asia', 'population': 220000000},
-        {'country': 'Nigeria', 'region': 'Africa', 'population': 206000000},
-        {'country': 'Bangladesh', 'region': 'Asia', 'population': 164000000},
-    ]
-    
-    import random
-    random.seed(42)
-    
-    base_date = datetime(2020, 1, 1)
-    entries = []
-    
-    for i in range(500):
-        country_data = random.choice(countries)
-        days_offset = random.randint(0, 730)
-        entry_date = base_date + pd.Timedelta(days=days_offset)
-        
-        confirmed = random.randint(100, 5000000) if days_offset > 60 else random.randint(10, 1000)
-        deaths = int(confirmed * random.uniform(0.01, 0.05))
-        recovered = int(confirmed * random.uniform(0.6, 0.9))
-        active = confirmed - deaths - recovered
-        
-        entry = DataEntry(
-            title=f"COVID-19 Data - {country_data['country']} - {entry_date.strftime('%Y-%m-%d')}",
-            date=entry_date.date(),
-            country=country_data['country'],
-            region=country_data['region'],
-            confirmed_cases=confirmed,
-            deaths=deaths,
-            recovered=recovered,
-            active_cases=active,
-            population=country_data['population'],
-            category_id=covid_category.id,
-            user_id=user.id,
-            values_json=json.dumps({
-                'tests': random.randint(1000, 10000000),
-                'hospitalizations': random.randint(10, 50000),
-                'icu_admissions': random.randint(1, 5000)
-            })
-        )
-        entries.append(entry)
-    
-    db.session.add_all(entries)
-    db.session.commit()
-    print(f"Seeded {len(entries)} demo data entries!")
+
+    try:
+        print("Seeding demo data...")
+
+        from app.models import Organization
+        org = Organization(name='Demo Company', slug='demo-company', plan='free')
+        db.session.add(org)
+        db.session.flush()
+
+        user = User(email='demo@example.com', username='demo', org_id=org.id)
+        user.set_password('demo123')
+        db.session.add(user)
+        db.session.flush()
+
+        # Create demo contacts
+        from app.models import Contact
+        contacts_data = [
+            {'first_name': 'John', 'last_name': 'Doe', 'email': 'john@example.com', 'company': 'Acme Corp', 'stage': 'lead'},
+            {'first_name': 'Jane', 'last_name': 'Smith', 'email': 'jane@example.com', 'company': 'Tech Co', 'stage': 'prospect'},
+            {'first_name': 'Bob', 'last_name': 'Wilson', 'email': 'bob@example.com', 'company': 'Design Studio', 'stage': 'customer'},
+        ]
+
+        for c_data in contacts_data:
+            contact = Contact(**c_data, owner_id=user.id, org_id=org.id)
+            db.session.add(contact)
+
+        db.session.flush()
+
+        # Create demo deals
+        from app.models import Deal
+        contacts = Contact.query.filter_by(owner_id=user.id).all()
+        deals_data = [
+            {'title': 'Website Redesign', 'value': 15000, 'stage': 'proposal', 'contact_id': contacts[0].id},
+            {'title': 'Mobile App', 'value': 25000, 'stage': 'lead', 'contact_id': contacts[1].id},
+            {'title': 'Brand Identity', 'value': 8000, 'stage': 'closed_won', 'contact_id': contacts[2].id},
+        ]
+
+        for d_data in deals_data:
+            deal = Deal(**d_data, owner_id=user.id, org_id=org.id)
+            db.session.add(deal)
+
+        # Create demo activities
+        from app.models import Activity
+        activities_data = [
+            {'type': 'call', 'subject': 'Follow up with John', 'due_date': datetime.now(timezone.utc)},
+            {'type': 'email', 'subject': 'Send proposal to Jane', 'due_date': datetime.now(timezone.utc)},
+            {'type': 'meeting', 'subject': 'Kickoff with Bob', 'completed': True, 'completed_at': datetime.now(timezone.utc)},
+        ]
+
+        for a_data in activities_data:
+            activity = Activity(**a_data, owner_id=user.id, org_id=org.id)
+            db.session.add(activity)
+
+        db.session.commit()
+        print("Seeded demo data: 3 contacts, 3 deals, 3 activities")
+    except Exception as e:
+        print(f"Seed error: {e}")
+        db.session.rollback()

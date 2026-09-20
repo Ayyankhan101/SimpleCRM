@@ -1,23 +1,43 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { TrendUp, Envelope, User, LockKey, ArrowRight, Check, X } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
+import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
+
+const passwordRules = [
+  { test: (p) => p.length >= 8, label: 'At least 8 characters' },
+  { test: (p) => /[A-Z]/.test(p), label: 'One uppercase letter' },
+  { test: (p) => /[a-z]/.test(p), label: 'One lowercase letter' },
+  { test: (p) => /[0-9]/.test(p), label: 'One number' },
+]
 
 export default function Register() {
-  const [email, setEmail] = useState('')
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [form, setForm] = useState({ email: '', username: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
 
+  const update = (field) => (e) => setForm({ ...form, [field]: e.target.value })
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
 
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+    if (!passwordRules.every((r) => r.test(form.password))) {
+      setError('Password does not meet requirements')
+      return
+    }
+
+    setLoading(true)
     try {
-      await register(email, password, username)
+      await register(form.email, form.password, form.username)
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed')
@@ -27,57 +47,139 @@ export default function Register() {
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-title">Create Account</h1>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="register-email" className="form-label">Email</label>
-            <input
-              id="register-email"
+    <div className="min-h-[100dvh] flex">
+      {/* Left panel — branding (always dark) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-carga-neutral relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-carga-tertiary rounded-full blur-[128px]" />
+          <div className="absolute bottom-1/3 right-1/3 w-64 h-64 bg-carga-tertiary rounded-full blur-[96px]" />
+        </div>
+        <div className="relative z-10 flex flex-col justify-center px-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-11 h-11 rounded-2xl bg-carga-tertiary flex items-center justify-center">
+                <TrendUp size={22} className="text-carga-secondary" weight="bold" />
+              </div>
+              <span className="text-xl font-bold text-carga-primary tracking-tight font-display">SimpleCRM</span>
+            </div>
+            <h1 className="text-4xl font-bold text-carga-primary tracking-tight leading-tight mb-4 font-display">
+              Simple CRM for
+              <br />
+              small businesses.
+            </h1>
+            <p className="text-lg text-carga-primary/50 max-w-md leading-relaxed font-mono">
+              Free for 1 user and 100 contacts. Upgrade when you're ready.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-carga-primary dark:bg-carga-neutral">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-sm"
+        >
+          <div className="lg:hidden flex items-center gap-2 mb-10">
+            <div className="w-9 h-9 rounded-xl bg-carga-tertiary flex items-center justify-center">
+              <TrendUp size={18} className="text-carga-secondary" weight="bold" />
+            </div>
+            <span className="text-lg font-bold text-carga-secondary dark:text-carga-primary font-display">SimpleCRM</span>
+          </div>
+
+          <h2 className="text-2xl font-bold text-carga-secondary dark:text-carga-primary tracking-tight mb-1 font-display">Create account</h2>
+          <p className="text-sm text-carga-secondary/50 dark:text-carga-primary/50 mb-8 font-mono">Start your free trial</p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Email"
               type="email"
-              className="form-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              icon={<Envelope size={18} className="text-carga-secondary/50 dark:text-carga-primary/50" />}
+              value={form.email}
+              onChange={update('email')}
               required
             />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="register-username" className="form-label">Username</label>
-            <input
-              id="register-username"
-              type="text"
-              className="form-input"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+            <Input
+              label="Username"
+              placeholder="Choose a username"
+              icon={<User size={18} className="text-carga-secondary/50 dark:text-carga-primary/50" />}
+              value={form.username}
+              onChange={update('username')}
               required
             />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="register-password" className="form-label">Password</label>
-            <input
-              id="register-password"
+            <Input
+              label="Password"
               type="password"
-              className="form-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password"
+              icon={<LockKey size={18} className="text-carga-secondary/50 dark:text-carga-primary/50" />}
+              value={form.password}
+              onChange={update('password')}
               required
             />
-          </div>
-          
-          {error && <div className="error-message">{error}</div>}
-          
-          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Sign Up'}
-          </button>
-        </form>
-        
-        <p className="auth-footer">
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
+
+            {/* Password rules */}
+            {form.password && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-1.5"
+              >
+                {passwordRules.map(({ test, label }) => (
+                  <div key={label} className="flex items-center gap-2 text-xs">
+                    {test(form.password) ? (
+                      <Check size={14} className="text-carga-tertiary" weight="bold" />
+                    ) : (
+                      <X size={14} className="text-carga-secondary/30 dark:text-carga-primary/30" />
+                    )}
+                    <span className={test(form.password) ? 'text-carga-tertiary' : 'text-carga-secondary/50 dark:text-carga-primary/50'}>
+                      {label}
+                    </span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+
+            <Input
+              label="Confirm password"
+              type="password"
+              placeholder="Repeat your password"
+              icon={<LockKey size={18} className="text-carga-secondary/50 dark:text-carga-primary/50" />}
+              value={form.confirmPassword}
+              onChange={update('confirmPassword')}
+              required
+            />
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400"
+                style={{ borderRadius: 0 }}
+              >
+                {error}
+              </motion.div>
+            )}
+
+            <Button type="submit" loading={loading} className="w-full">
+              Create account
+              <ArrowRight size={16} weight="bold" />
+            </Button>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-carga-secondary/50 dark:text-carga-primary/50 font-mono">
+            Already have an account?{' '}
+            <Link to="/login" className="font-medium text-carga-secondary dark:text-carga-primary hover:opacity-70 transition-opacity font-display">
+              Sign in
+            </Link>
+          </p>
+        </motion.div>
       </div>
     </div>
   )

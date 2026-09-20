@@ -10,8 +10,8 @@ vi.mock('../utils/api')
 
 const mockEntries = {
   entries: [
-    { id: 1, title: 'Entry 1', date: '2024-01-15', country: 'USA', confirmed_cases: 100, deaths: 5, recovered: 90, category_id: 1, category: { id: 1, name: 'COVID-19', color: '#EF4444' } },
-    { id: 2, title: 'Entry 2', date: '2024-01-16', country: 'India', confirmed_cases: 200, deaths: 10, recovered: 180, category_id: 1, category: { id: 1, name: 'COVID-19', color: '#EF4444' } }
+    { id: 1, title: 'Entry 1', date: '2024-01-15', group_name: 'USA', metric_a: 100, metric_b: 5, metric_c: 90, category_id: 1, category: { id: 1, name: 'COVID-19', color: '#EF4444' } },
+    { id: 2, title: 'Entry 2', date: '2024-01-16', group_name: 'India', metric_a: 200, metric_b: 10, metric_c: 180, category_id: 1, category: { id: 1, name: 'COVID-19', color: '#EF4444' } }
   ],
   total: 2,
   pages: 1,
@@ -27,8 +27,8 @@ describe('DataEntries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.get.mockImplementation((url) => {
-      if (url.includes('/api/data')) return Promise.resolve({ data: mockEntries })
-      if (url.includes('/api/categories')) return Promise.resolve({ data: mockCategories })
+      if (url.includes('/data')) return Promise.resolve({ data: mockEntries })
+      if (url.includes('/categories')) return Promise.resolve({ data: mockCategories })
       return Promise.reject(new Error('Unknown URL'))
     })
   })

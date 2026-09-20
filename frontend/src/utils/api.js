@@ -8,11 +8,21 @@ const api = axios.create({
   }
 })
 
+let lastRedirect = 0
+
 api.interceptors.response.use(
-  response => response,
+  response => {
+    lastRedirect = 0
+    return response
+  },
   error => {
     if (error.response?.status === 401) {
-      window.location.href = '/login'
+      const now = Date.now()
+      const path = window.location.pathname
+      if (path !== '/login' && path !== '/register' && now - lastRedirect > 2000) {
+        lastRedirect = now
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

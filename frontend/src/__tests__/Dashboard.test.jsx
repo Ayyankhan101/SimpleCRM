@@ -84,18 +84,18 @@ import Dashboard from '../pages/Dashboard'
 
 const mockSummary = {
   total_entries: 100,
-  total_confirmed: 50000,
-  total_deaths: 1000,
-  total_recovered: 45000,
+  total_metric_a: 50000,
+  total_metric_b: 1000,
+  total_metric_c: 45000,
   mortality_rate: 2.0,
   recovery_rate: 90.0,
-  countries_count: 10,
-  top_countries: [{ country: 'USA', confirmed: 10000 }]
+  groups_count: 10,
+  top_groups: [{ group_name: 'USA', metric_a: 10000 }]
 }
 
 const mockTrends = [
-  { date: '2024-01-01', confirmed: 100, deaths: 5, recovered: 90, active: 5 },
-  { date: '2024-01-02', confirmed: 200, deaths: 10, recovered: 180, active: 10 }
+  { date: '2024-01-01', confirmed: 100, metric_b: 5, metric_c: 90, active: 5 },
+  { date: '2024-01-02', confirmed: 200, metric_b: 10, metric_c: 180, active: 10 }
 ]
 
 const mockBreakdown = [
@@ -141,8 +141,8 @@ describe('Dashboard', () => {
       expect(screen.getByText('Total Entries')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Confirmed Cases')).toBeInTheDocument()
-    expect(screen.getByText('Deaths')).toBeInTheDocument()
+    expect(screen.getByText('Metric A')).toBeInTheDocument()
+    expect(screen.getByText('Metric B')).toBeInTheDocument()
     expect(screen.getByText('Recovery Rate')).toBeInTheDocument()
     expect(screen.getByText('Mortality Rate')).toBeInTheDocument()
     expect(screen.getByText('Countries')).toBeInTheDocument()

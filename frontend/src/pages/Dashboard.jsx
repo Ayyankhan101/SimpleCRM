@@ -1,282 +1,366 @@
-import { useState, useEffect } from 'react'
-import { select } from 'd3-selection'
-import { scaleTime, scaleLinear, scaleBand, scaleOrdinal } from 'd3-scale'
-import { line as d3Line, arc as d3Arc, pie as d3Pie } from 'd3-shape'
-import { axisBottom, axisLeft } from 'd3-axis'
-import { timeParse } from 'd3-time-format'
-import { format as d3Format } from 'd3-format'
-import { extent, max } from 'd3-array'
-import { curveMonotoneX } from 'd3-shape'
+import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
+import { Users, CurrencyCircleDollar, Lightning, ArrowRight, CalendarBlank, EnvelopeSimple } from '@phosphor-icons/react'
 import api from '../utils/api'
+import { DEAL_STAGES, ACTIVITY_TYPES, getStageColor, getStageLabel, formatRelativeDate } from '../lib/constants'
+import { StatSkeleton } from '../components/ui/Skeleton'
+import Badge from '../components/ui/Badge'
+
+function AnimatedNumber({ value, duration = 800 }) {
+  const [display, setDisplay] = useState(0)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    let start = 0
+    const startTime = performance.now()
+    const animate = (now) => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(eased * value))
+      if (progress < 1) ref.current = requestAnimationFrame(animate)
+    }
+    ref.current = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(ref.current)
+  }, [value, duration])
+
+  return <span>{display}</span>
+}
+
+const container = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+}
+
+const item = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+}
+
+function ActivityRow({ activity, border }) {
+  const typeColor = getStageColor(ACTIVITY_TYPES, activity.type)
+  return (
+    <div className={`flex items-center gap-3 p-3 border-l-2 ${border} hover:bg-carga-primary/50 dark:hover:bg-carga-neutral/50 transition-colors`}>
+      <Badge color={typeColor} dot>
+        {getStageLabel(ACTIVITY_TYPES, activity.type)}
+      </Badge>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium font-display text-carga-secondary dark:text-carga-primary truncate">{activity.subject}</p>
+      </div>
+      <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 whitespace-nowrap font-mono">
+        {formatRelativeDate(activity.due_date)}
+      </span>
+    </div>
+  )
+}
 
 export default function Dashboard() {
-  const [summary, setSummary] = useState(null)
-  const [trends, setTrends] = useState([])
-  const [breakdown, setBreakdown] = useState([])
+  const [stats, setStats] = useState({ contacts: 0, deals: 0, activities: 0 })
+  const [pipeline, setPipeline] = useState([])
+  const [revenueTrend, setRevenueTrend] = useState([])
+  const [emailEngagement, setEmailEngagement] = useState({ total: 0, opened: 0, clicked: 0 })
+  const [activityBreakdown, setActivityBreakdown] = useState([])
+  const [overdueActivities, setOverdueActivities] = useState([])
+  const [dueTodayActivities, setDueTodayActivities] = useState([])
+  const [upcomingActivities, setUpcomingActivities] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [reminderStatus, setReminderStatus] = useState(null)
+  const [sendingReminder, setSendingReminder] = useState(false)
 
   useEffect(() => {
-    fetchData()
+    fetchDashboardData()
+    checkReminders()
   }, [])
 
-  useEffect(() => {
-    if (summary) {
-      try {
-        drawTrendsChart()
-        drawBreakdownChart()
-        drawCountryChart()
-      } catch (err) {
-        console.error('Error drawing charts:', err)
-      }
-    }
-  }, [summary, trends, breakdown])
-
-  const fetchData = async () => {
+  const checkReminders = async () => {
     try {
-      const [summaryRes, trendsRes, breakdownRes] = await Promise.all([
-        api.get('/analytics/summary'),
-        api.get('/analytics/trends?days=90'),
-        api.get('/analytics/category-breakdown')
-      ])
-      setSummary(summaryRes.data)
-      setTrends(trendsRes.data.trends)
-      setBreakdown(breakdownRes.data)
+      const res = await api.get('/v1/reminders/check')
+      setReminderStatus(res.data)
+    } catch {}
+  }
+
+  const sendDigest = async () => {
+    setSendingReminder(true)
+    try {
+      await api.post('/v1/reminders/digest')
+      setReminderStatus(prev => ({ ...prev, should_send_digest: false, last_digest_sent: new Date().toISOString() }))
+    } catch {}
+    setSendingReminder(false)
+  }
+
+  const fetchDashboardData = async () => {
+    try {
+      const statsRes = await api.get('/v1/stats')
+      const data = statsRes.data
+
+      setStats({
+        contacts: data.contacts || 0,
+        deals: data.deals || 0,
+        activities: data.activities || 0,
+      })
+
+      setPipeline(data.pipeline || [])
+      setRevenueTrend(data.revenue_trend || [])
+      setEmailEngagement(data.email_engagement || { total: 0, opened: 0, clicked: 0 })
+      setActivityBreakdown(data.activity_breakdown || [])
+      setOverdueActivities(data.overdue_activities || [])
+      setDueTodayActivities(data.due_today_activities || [])
+      setUpcomingActivities(data.upcoming_activities || [])
     } catch (error) {
-      console.error('Error fetching data:', error)
-      setError('Failed to load dashboard data')
+      console.error('Dashboard error:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const drawTrendsChart = () => {
-    const container = select('#trends-chart')
-    container.selectAll('*').remove()
-    
-    if (!trends.length) return
+  if (loading) return <StatSkeleton />
 
-    const margin = { top: 20, right: 30, bottom: 30, left: 60 }
-    const width = container.node().getBoundingClientRect().width - margin.left - margin.right
-    const height = 260 - margin.top - margin.bottom
-
-    const svg = container.append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`)
-
-    const parseDate = timeParse('%Y-%m-%d')
-    const data = trends.map(d => ({
-      date: parseDate(d.date),
-      confirmed: d.confirmed,
-      deaths: d.deaths
-    })).filter(d => d.date)
-
-    const x = scaleTime()
-      .domain(extent(data, d => d.date))
-      .range([0, width])
-
-    const y = scaleLinear()
-      .domain([0, max(data, d => d.confirmed)])
-      .range([height, 0])
-
-    svg.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(axisBottom(x).ticks(5))
-
-    svg.append('g')
-      .call(axisLeft(y).ticks(5).tickFormat(d3Format('.2s')))
-
-    const lineGen = d3Line()
-      .x(d => x(d.date))
-      .y(d => y(d.confirmed))
-      .curve(curveMonotoneX)
-
-    svg.append('path')
-      .datum(data)
-      .attr('fill', 'none')
-      .attr('stroke', '#3B82F6')
-      .attr('stroke-width', 2)
-      .attr('d', lineGen)
-
-    const deathsLineGen = d3Line()
-      .x(d => x(d.date))
-      .y(d => y(d.deaths))
-      .curve(curveMonotoneX)
-
-    svg.append('path')
-      .datum(data)
-      .attr('fill', 'none')
-      .attr('stroke', '#EF4444')
-      .attr('stroke-width', 2)
-      .attr('d', deathsLineGen)
-  }
-
-  const drawBreakdownChart = () => {
-    const container = select('#breakdown-chart')
-    container.selectAll('*').remove()
-    
-    if (!breakdown.length) return
-
-    const width = container.node().getBoundingClientRect().width
-    const height = 260
-    const radius = Math.min(width, height) / 2 - 20
-
-    const svg = container.append('svg')
-      .attr('width', width)
-      .attr('height', height)
-      .append('g')
-      .attr('transform', `translate(${width / 2},${height / 2})`)
-
-    const color = scaleOrdinal()
-      .domain(breakdown.map(d => d.category_name))
-      .range(['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'])
-
-    const pie = d3Pie()
-      .value(d => d.total)
-      .sort(null)
-
-    const arc = d3Arc()
-      .innerRadius(radius * 0.5)
-      .outerRadius(radius)
-
-    const arcs = svg.selectAll('arc')
-      .data(pie(breakdown))
-      .enter()
-      .append('g')
-
-    arcs.append('path')
-      .attr('d', arc)
-      .attr('fill', d => color(d.data.category_name))
-      .attr('stroke', 'white')
-      .style('stroke-width', 2)
-
-    arcs.append('text')
-      .attr('transform', d => `translate(${arc.centroid(d)})`)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '10px')
-      .attr('fill', 'white')
-      .text(d => d.data.category_name.substring(0, 8))
-  }
-
-  const drawCountryChart = () => {
-    const container = select('#country-chart')
-    container.selectAll('*').remove()
-    
-    if (!summary?.top_countries?.length) return
-
-    const margin = { top: 20, right: 30, bottom: 60, left: 80 }
-    const width = container.node().getBoundingClientRect().width - margin.left - margin.right
-    const height = 260 - margin.top - margin.bottom
-
-    const svg = container.append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`)
-
-    const data = summary.top_countries.slice(0, 8)
-
-    const x = scaleBand()
-      .domain(data.map(d => d.country))
-      .range([0, width])
-      .padding(0.3)
-
-    const y = scaleLinear()
-      .domain([0, max(data, d => d.confirmed)])
-      .range([height, 0])
-
-    svg.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(axisBottom(x))
-      .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end')
-
-    svg.append('g')
-      .call(axisLeft(y).ticks(5).tickFormat(d3Format('.2s')))
-
-    svg.selectAll('rect')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('x', d => x(d.country))
-      .attr('y', d => y(d.confirmed))
-      .attr('width', x.bandwidth())
-      .attr('height', d => height - y(d.confirmed))
-      .attr('fill', '#3B82F6')
-      .attr('rx', 4)
-  }
-
-  if (loading) {
-    return <div className="loading">Loading dashboard...</div>
-  }
-
-  if (error) {
-    return (
-      <div className="error-state">
-        <p>{error}</p>
-        <button onClick={fetchData}>Retry</button>
-      </div>
-    )
-  }
-
-  const formatNumber = (num) => {
-    if (!num) return '0'
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-    return num.toString()
-  }
+  const statItems = [
+    { label: 'Contacts', value: stats.contacts, color: 'text-carga-secondary dark:text-carga-primary', icon: Users, to: '/contacts' },
+    { label: 'Deals', value: stats.deals, color: 'text-emerald-600 dark:text-emerald-400', icon: CurrencyCircleDollar, to: '/deals' },
+    { label: 'Activities', value: stats.activities, color: 'text-amber-600 dark:text-amber-400', icon: Lightning, to: '/activities' },
+  ]
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Overview of your data analytics</p>
-      </div>
+    <motion.div variants={container} initial="hidden" animate="visible">
+      <motion.div variants={item} className="mb-8">
+        <h1 className="text-2xl font-bold font-display text-carga-secondary dark:text-carga-primary tracking-tight">Dashboard</h1>
+        <p className="text-sm text-carga-secondary/50 dark:text-carga-primary/50 mt-1">Overview of your CRM</p>
+      </motion.div>
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-label">Total Entries</div>
-          <div className="stat-value primary">{formatNumber(summary?.total_entries)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Confirmed Cases</div>
-          <div className="stat-value danger">{formatNumber(summary?.total_confirmed)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Deaths</div>
-          <div className="stat-value">{formatNumber(summary?.total_deaths)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Recovery Rate</div>
-          <div className="stat-value success">{summary?.recovery_rate || 0}%</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Mortality Rate</div>
-          <div className="stat-value warning">{summary?.mortality_rate || 0}%</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Countries</div>
-          <div className="stat-value">{summary?.countries_count || 0}</div>
-        </div>
-      </div>
+      {/* Email reminder banner */}
+      {reminderStatus?.email_configured && reminderStatus?.should_send_digest && (
+        <motion.div variants={item}
+          className="mb-6 flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800" style={{ borderRadius: 0 }}>
+          <EnvelopeSimple size={20} className="text-amber-600 dark:text-amber-400 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium font-display text-amber-800 dark:text-amber-200">
+              {reminderStatus.overdue + reminderStatus.due_today} activit{(reminderStatus.overdue + reminderStatus.due_today) === 1 ? 'y' : 'ies'} need attention
+            </p>
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              {reminderStatus.overdue} overdue, {reminderStatus.due_today} due today
+            </p>
+          </div>
+          <button onClick={sendDigest} disabled={sendingReminder}
+            className="px-3 py-1.5 text-xs font-medium font-display bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition-colors whitespace-nowrap" style={{ borderRadius: 0 }}>
+            {sendingReminder ? 'Sending...' : 'Email Digest'}
+          </button>
+        </motion.div>
+      )}
 
-      <div className="charts-grid">
-        <div className="chart-card">
-          <h3 className="chart-title">Trends Over Time</h3>
-          <div id="trends-chart" className="chart-container"></div>
+      {/* Stats — border-top grouping, no cards */}
+      <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-3 gap-0 mb-8">
+        {statItems.map(({ label, value, color, icon: Icon, to }) => (
+          <Link
+            key={label}
+            to={to}
+            className="group p-6 border-t-2 border-carga-secondary/20 hover:border-emerald-500 transition-colors duration-200"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Icon size={16} className="text-carga-secondary/30 group-hover:text-emerald-500 transition-colors" />
+              <span className="text-xs font-medium font-display text-carga-secondary/50 dark:text-carga-primary/50 uppercase tracking-wider">{label}</span>
+            </div>
+            <div className={`text-3xl font-bold font-mono ${color}`}>
+              <AnimatedNumber value={value} />
+            </div>
+          </Link>
+        ))}
+      </motion.div>
+
+      {/* Analytics row: Revenue + Email + Activity breakdown */}
+      <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Revenue Trend */}
+        <div className="bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-6" style={{ borderRadius: 0 }}>
+          <h3 className="text-sm font-semibold font-display text-carga-secondary dark:text-carga-primary mb-4">Revenue Trend</h3>
+          {revenueTrend.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={revenueTrend}>
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#71717a' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  formatter={(v) => [`$${v.toLocaleString()}`, 'Revenue']}
+                  contentStyle={{ borderRadius: 0, border: '1px solid #332B1C33', background: '#F0E5C5', color: '#332B1C', fontSize: '13px' }}
+                />
+                <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[180px] text-sm text-carga-secondary/30">No closed deals yet</div>
+          )}
         </div>
-        <div className="chart-card">
-          <h3 className="chart-title">Category Breakdown</h3>
-          <div id="breakdown-chart" className="chart-container"></div>
+
+        {/* Email Engagement */}
+        <div className="bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-6" style={{ borderRadius: 0 }}>
+          <h3 className="text-sm font-semibold font-display text-carga-secondary dark:text-carga-primary mb-4">Email Engagement</h3>
+          {emailEngagement.total > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <div className="text-2xl font-bold font-mono text-carga-secondary dark:text-carga-primary">{emailEngagement.total}</div>
+                  <div className="text-[10px] text-carga-secondary/30 uppercase tracking-wider mt-1 font-display">Sent</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{emailEngagement.opened}</div>
+                  <div className="text-[10px] text-carga-secondary/30 uppercase tracking-wider mt-1 font-display">Opened</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">{emailEngagement.clicked}</div>
+                  <div className="text-[10px] text-carga-secondary/30 uppercase tracking-wider mt-1 font-display">Clicked</div>
+                </div>
+              </div>
+              <div className="pt-3 border-t border-carga-secondary/10">
+                <div className="flex justify-between text-xs text-carga-secondary/50">
+                  <span className="font-display">Open rate</span>
+                  <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">{Math.round((emailEngagement.opened / emailEngagement.total) * 100)}%</span>
+                </div>
+                <div className="flex justify-between text-xs text-carga-secondary/50 mt-1">
+                  <span className="font-display">Click rate</span>
+                  <span className="font-mono font-medium text-blue-600 dark:text-blue-400">{Math.round((emailEngagement.clicked / emailEngagement.total) * 100)}%</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[180px] text-sm text-carga-secondary/30">No emails sent yet</div>
+          )}
         </div>
-        <div className="chart-card">
-          <h3 className="chart-title">Top Countries by Cases</h3>
-          <div id="country-chart" className="chart-container"></div>
+
+        {/* Activity Breakdown */}
+        <div className="bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-6" style={{ borderRadius: 0 }}>
+          <h3 className="text-sm font-semibold font-display text-carga-secondary dark:text-carga-primary mb-4">Activity Breakdown</h3>
+          {activityBreakdown.length > 0 ? (
+            <div className="flex items-center gap-6">
+              <ResponsiveContainer width={120} height={120}>
+                <PieChart>
+                  <Pie
+                    data={activityBreakdown}
+                    dataKey="count"
+                    nameKey="type"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={50}
+                    innerRadius={25}
+                    strokeWidth={0}
+                  >
+                    {activityBreakdown.map((entry, i) => {
+                      const colors = { call: '#3b82f6', email: '#10b981', meeting: '#f59e0b', note: '#8b5cf6', task: '#ef4444', follow_up: '#ec4899' }
+                      return <Cell key={i} fill={colors[entry.type] || '#71717a'} />
+                    })}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ borderRadius: 0, border: '1px solid #332B1C33', background: '#F0E5C5', color: '#332B1C', fontSize: '13px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex-1 space-y-2">
+                {activityBreakdown.map((entry) => {
+                  const colors = { call: 'bg-blue-500', email: 'bg-emerald-500', meeting: 'bg-amber-500', note: 'bg-violet-500', task: 'bg-red-500', follow_up: 'bg-pink-500' }
+                  return (
+                    <div key={entry.type} className="flex items-center gap-2">
+                      <div className={`w-2 h-2 ${colors[entry.type] || 'bg-carga-secondary/30'}`} style={{ borderRadius: 0 }} />
+                      <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 flex-1 capitalize font-display">{entry.type.replace('_', ' ')}</span>
+                      <span className="text-xs font-mono font-medium text-carga-secondary dark:text-carga-primary">{entry.count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[120px] text-sm text-carga-secondary/30">No activities yet</div>
+          )}
         </div>
+      </motion.div>
+
+      {/* Bento grid: 2fr 1fr */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Pipeline chart — 3 cols */}
+        <motion.div variants={item} className="lg:col-span-3 bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-8" style={{ borderRadius: 0 }}>
+          <h3 className="text-sm font-semibold font-display text-carga-secondary dark:text-carga-primary mb-6">Deal Pipeline</h3>
+          {pipeline.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={pipeline} barSize={32}>
+                <XAxis
+                  dataKey="stage"
+                  tickFormatter={(s) => getStageLabel(DEAL_STAGES, s)}
+                  tick={{ fontSize: 11, fill: '#71717a' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis tick={{ fontSize: 11, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  formatter={(v) => [v, 'Deals']}
+                  labelFormatter={(s) => getStageLabel(DEAL_STAGES, s)}
+                  contentStyle={{
+                    borderRadius: 0,
+                    border: '1px solid #332B1C33',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    background: '#F0E5C5',
+                    color: '#332B1C',
+                    fontSize: '13px',
+                  }}
+                />
+                <Bar dataKey="count" fill="#10b981" radius={[0, 0, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64 text-sm text-carga-secondary/30">
+              No deals yet
+            </div>
+          )}
+        </motion.div>
+
+        {/* Activities panel — 2 cols */}
+        <motion.div variants={item} className="lg:col-span-2 bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-8" style={{ borderRadius: 0 }}>
+          {overdueActivities.length === 0 && dueTodayActivities.length === 0 && upcomingActivities.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <CalendarBlank size={28} className="text-carga-secondary/20 dark:text-carga-primary/20 mb-3" />
+              <p className="text-sm text-carga-secondary/30 dark:text-carga-primary/30">No upcoming activities</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {overdueActivities.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-xs font-semibold font-display text-red-600 dark:text-red-400 uppercase tracking-wider">Overdue</h4>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400" style={{ borderRadius: 0 }}>{overdueActivities.length}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {overdueActivities.map((activity) => (
+                      <ActivityRow key={activity.id} activity={activity} border="border-l-red-500" />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {dueTodayActivities.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-xs font-semibold font-display text-amber-600 dark:text-amber-400 uppercase tracking-wider">Due Today</h4>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400" style={{ borderRadius: 0 }}>{dueTodayActivities.length}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {dueTodayActivities.map((activity) => (
+                      <ActivityRow key={activity.id} activity={activity} border="border-l-amber-500" />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {upcomingActivities.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-xs font-semibold font-display text-carga-secondary/50 dark:text-carga-primary/50 uppercase tracking-wider">Upcoming</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {upcomingActivities.map((activity) => (
+                      <ActivityRow key={activity.id} activity={activity} border="" />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 }
