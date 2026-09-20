@@ -1,0 +1,21 @@
+name: simplecrm-backend
+services:
+  - name: api
+    dockerfile_path: Dockerfile
+    source_dir: .
+    http_port: 5000
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    envs:
+      - key: SECRET_KEY
+        value: "${SECRET_KEY}"
+      - key: JWT_SECRET_KEY
+        value: "${JWT_SECRET_KEY}"
+      - key: DATABASE_URL
+        value: "${DATABASE_URL}"
+      - key: FLASK_ENV
+        value: "production"
+      - key: ENFORCE_HTTPS
+        value: "true"
+      - key: FRONTEND_URL
+        value: "https://frontend-navy-psi-33.vercel.app"
