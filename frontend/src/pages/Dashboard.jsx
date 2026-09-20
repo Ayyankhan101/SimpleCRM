@@ -42,14 +42,14 @@ const item = {
 function ActivityRow({ activity, border }) {
   const typeColor = getStageColor(ACTIVITY_TYPES, activity.type)
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl border-l-2 ${border} hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors`}>
+    <div className={`flex items-center gap-3 p-3 border-l-2 ${border} hover:bg-carga-primary/50 dark:hover:bg-carga-neutral/50 transition-colors`}>
       <Badge color={typeColor} dot>
         {getStageLabel(ACTIVITY_TYPES, activity.type)}
       </Badge>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50 truncate">{activity.subject}</p>
+        <p className="text-sm font-medium font-display text-carga-secondary dark:text-carga-primary truncate">{activity.subject}</p>
       </div>
-      <span className="text-xs text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
+      <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 whitespace-nowrap font-mono">
         {formatRelativeDate(activity.due_date)}
       </span>
     </div>
@@ -118,7 +118,7 @@ export default function Dashboard() {
   if (loading) return <StatSkeleton />
 
   const statItems = [
-    { label: 'Contacts', value: stats.contacts, color: 'text-zinc-950 dark:text-zinc-50', icon: Users, to: '/contacts' },
+    { label: 'Contacts', value: stats.contacts, color: 'text-carga-secondary dark:text-carga-primary', icon: Users, to: '/contacts' },
     { label: 'Deals', value: stats.deals, color: 'text-emerald-600 dark:text-emerald-400', icon: CurrencyCircleDollar, to: '/deals' },
     { label: 'Activities', value: stats.activities, color: 'text-amber-600 dark:text-amber-400', icon: Lightning, to: '/activities' },
   ]
@@ -126,17 +126,17 @@ export default function Dashboard() {
   return (
     <motion.div variants={container} initial="hidden" animate="visible">
       <motion.div variants={item} className="mb-8">
-        <h1 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight">Dashboard</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Overview of your CRM</p>
+        <h1 className="text-2xl font-bold font-display text-carga-secondary dark:text-carga-primary tracking-tight">Dashboard</h1>
+        <p className="text-sm text-carga-secondary/50 dark:text-carga-primary/50 mt-1">Overview of your CRM</p>
       </motion.div>
 
       {/* Email reminder banner */}
       {reminderStatus?.email_configured && reminderStatus?.should_send_digest && (
         <motion.div variants={item}
-          className="mb-6 flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl">
+          className="mb-6 flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800" style={{ borderRadius: 0 }}>
           <EnvelopeSimple size={20} className="text-amber-600 dark:text-amber-400 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+            <p className="text-sm font-medium font-display text-amber-800 dark:text-amber-200">
               {reminderStatus.overdue + reminderStatus.due_today} activit{(reminderStatus.overdue + reminderStatus.due_today) === 1 ? 'y' : 'ies'} need attention
             </p>
             <p className="text-xs text-amber-600 dark:text-amber-400">
@@ -144,7 +144,7 @@ export default function Dashboard() {
             </p>
           </div>
           <button onClick={sendDigest} disabled={sendingReminder}
-            className="px-3 py-1.5 text-xs font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors whitespace-nowrap">
+            className="px-3 py-1.5 text-xs font-medium font-display bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition-colors whitespace-nowrap" style={{ borderRadius: 0 }}>
             {sendingReminder ? 'Sending...' : 'Email Digest'}
           </button>
         </motion.div>
@@ -156,11 +156,11 @@ export default function Dashboard() {
           <Link
             key={label}
             to={to}
-            className="group p-6 border-t-2 border-zinc-100 dark:border-zinc-800 hover:border-emerald-500 transition-colors duration-200"
+            className="group p-6 border-t-2 border-carga-secondary/20 hover:border-emerald-500 transition-colors duration-200"
           >
             <div className="flex items-center gap-2 mb-2">
-              <Icon size={16} className="text-zinc-400 group-hover:text-emerald-500 transition-colors" />
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{label}</span>
+              <Icon size={16} className="text-carga-secondary/30 group-hover:text-emerald-500 transition-colors" />
+              <span className="text-xs font-medium font-display text-carga-secondary/50 dark:text-carga-primary/50 uppercase tracking-wider">{label}</span>
             </div>
             <div className={`text-3xl font-bold font-mono ${color}`}>
               <AnimatedNumber value={value} />
@@ -172,8 +172,8 @@ export default function Dashboard() {
       {/* Analytics row: Revenue + Email + Activity breakdown */}
       <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Revenue Trend */}
-        <div className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-6">
-          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4">Revenue Trend</h3>
+        <div className="bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-6" style={{ borderRadius: 0 }}>
+          <h3 className="text-sm font-semibold font-display text-carga-secondary dark:text-carga-primary mb-4">Revenue Trend</h3>
           {revenueTrend.length > 0 ? (
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={revenueTrend}>
@@ -181,54 +181,54 @@ export default function Dashboard() {
                 <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
                 <Tooltip
                   formatter={(v) => [`$${v.toLocaleString()}`, 'Revenue']}
-                  contentStyle={{ borderRadius: '12px', border: '1px solid #e4e4e7', fontSize: '13px' }}
+                  contentStyle={{ borderRadius: 0, border: '1px solid #332B1C33', background: '#F0E5C5', color: '#332B1C', fontSize: '13px' }}
                 />
                 <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981' }} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-[180px] text-sm text-zinc-400">No closed deals yet</div>
+            <div className="flex items-center justify-center h-[180px] text-sm text-carga-secondary/30">No closed deals yet</div>
           )}
         </div>
 
         {/* Email Engagement */}
-        <div className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-6">
-          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4">Email Engagement</h3>
+        <div className="bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-6" style={{ borderRadius: 0 }}>
+          <h3 className="text-sm font-semibold font-display text-carga-secondary dark:text-carga-primary mb-4">Email Engagement</h3>
           {emailEngagement.total > 0 ? (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <div className="text-2xl font-bold font-mono text-zinc-950 dark:text-zinc-50">{emailEngagement.total}</div>
-                  <div className="text-[10px] text-zinc-400 uppercase tracking-wider mt-1">Sent</div>
+                  <div className="text-2xl font-bold font-mono text-carga-secondary dark:text-carga-primary">{emailEngagement.total}</div>
+                  <div className="text-[10px] text-carga-secondary/30 uppercase tracking-wider mt-1 font-display">Sent</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{emailEngagement.opened}</div>
-                  <div className="text-[10px] text-zinc-400 uppercase tracking-wider mt-1">Opened</div>
+                  <div className="text-[10px] text-carga-secondary/30 uppercase tracking-wider mt-1 font-display">Opened</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">{emailEngagement.clicked}</div>
-                  <div className="text-[10px] text-zinc-400 uppercase tracking-wider mt-1">Clicked</div>
+                  <div className="text-[10px] text-carga-secondary/30 uppercase tracking-wider mt-1 font-display">Clicked</div>
                 </div>
               </div>
-              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                <div className="flex justify-between text-xs text-zinc-500">
-                  <span>Open rate</span>
+              <div className="pt-3 border-t border-carga-secondary/10">
+                <div className="flex justify-between text-xs text-carga-secondary/50">
+                  <span className="font-display">Open rate</span>
                   <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">{Math.round((emailEngagement.opened / emailEngagement.total) * 100)}%</span>
                 </div>
-                <div className="flex justify-between text-xs text-zinc-500 mt-1">
-                  <span>Click rate</span>
+                <div className="flex justify-between text-xs text-carga-secondary/50 mt-1">
+                  <span className="font-display">Click rate</span>
                   <span className="font-mono font-medium text-blue-600 dark:text-blue-400">{Math.round((emailEngagement.clicked / emailEngagement.total) * 100)}%</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-[180px] text-sm text-zinc-400">No emails sent yet</div>
+            <div className="flex items-center justify-center h-[180px] text-sm text-carga-secondary/30">No emails sent yet</div>
           )}
         </div>
 
         {/* Activity Breakdown */}
-        <div className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-6">
-          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-4">Activity Breakdown</h3>
+        <div className="bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-6" style={{ borderRadius: 0 }}>
+          <h3 className="text-sm font-semibold font-display text-carga-secondary dark:text-carga-primary mb-4">Activity Breakdown</h3>
           {activityBreakdown.length > 0 ? (
             <div className="flex items-center gap-6">
               <ResponsiveContainer width={120} height={120}>
@@ -249,7 +249,7 @@ export default function Dashboard() {
                     })}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ borderRadius: '12px', border: '1px solid #e4e4e7', fontSize: '13px' }}
+                    contentStyle={{ borderRadius: 0, border: '1px solid #332B1C33', background: '#F0E5C5', color: '#332B1C', fontSize: '13px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -258,16 +258,16 @@ export default function Dashboard() {
                   const colors = { call: 'bg-blue-500', email: 'bg-emerald-500', meeting: 'bg-amber-500', note: 'bg-violet-500', task: 'bg-red-500', follow_up: 'bg-pink-500' }
                   return (
                     <div key={entry.type} className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${colors[entry.type] || 'bg-zinc-400'}`} />
-                      <span className="text-xs text-zinc-600 dark:text-zinc-400 flex-1 capitalize">{entry.type.replace('_', ' ')}</span>
-                      <span className="text-xs font-mono font-medium text-zinc-950 dark:text-zinc-50">{entry.count}</span>
+                      <div className={`w-2 h-2 ${colors[entry.type] || 'bg-carga-secondary/30'}`} style={{ borderRadius: 0 }} />
+                      <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 flex-1 capitalize font-display">{entry.type.replace('_', ' ')}</span>
+                      <span className="text-xs font-mono font-medium text-carga-secondary dark:text-carga-primary">{entry.count}</span>
                     </div>
                   )
                 })}
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-[120px] text-sm text-zinc-400">No activities yet</div>
+            <div className="flex items-center justify-center h-[120px] text-sm text-carga-secondary/30">No activities yet</div>
           )}
         </div>
       </motion.div>
@@ -275,8 +275,8 @@ export default function Dashboard() {
       {/* Bento grid: 2fr 1fr */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Pipeline chart — 3 cols */}
-        <motion.div variants={item} className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-8">
-          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50 mb-6">Deal Pipeline</h3>
+        <motion.div variants={item} className="lg:col-span-3 bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-8" style={{ borderRadius: 0 }}>
+          <h3 className="text-sm font-semibold font-display text-carga-secondary dark:text-carga-primary mb-6">Deal Pipeline</h3>
           {pipeline.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={pipeline} barSize={32}>
@@ -292,36 +292,38 @@ export default function Dashboard() {
                   formatter={(v) => [v, 'Deals']}
                   labelFormatter={(s) => getStageLabel(DEAL_STAGES, s)}
                   contentStyle={{
-                    borderRadius: '12px',
-                    border: '1px solid #e4e4e7',
+                    borderRadius: 0,
+                    border: '1px solid #332B1C33',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    background: '#F0E5C5',
+                    color: '#332B1C',
                     fontSize: '13px',
                   }}
                 />
-                <Bar dataKey="count" fill="#10b981" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="#10b981" radius={[0, 0, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-64 text-sm text-zinc-400">
+            <div className="flex items-center justify-center h-64 text-sm text-carga-secondary/30">
               No deals yet
             </div>
           )}
         </motion.div>
 
         {/* Activities panel — 2 cols */}
-        <motion.div variants={item} className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-8">
+        <motion.div variants={item} className="lg:col-span-2 bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-8" style={{ borderRadius: 0 }}>
           {overdueActivities.length === 0 && dueTodayActivities.length === 0 && upcomingActivities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <CalendarBlank size={28} className="text-zinc-300 dark:text-zinc-600 mb-3" />
-              <p className="text-sm text-zinc-400 dark:text-zinc-500">No upcoming activities</p>
+              <CalendarBlank size={28} className="text-carga-secondary/20 dark:text-carga-primary/20 mb-3" />
+              <p className="text-sm text-carga-secondary/30 dark:text-carga-primary/30">No upcoming activities</p>
             </div>
           ) : (
             <div className="space-y-5">
               {overdueActivities.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">Overdue</h4>
-                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 rounded-full">{overdueActivities.length}</span>
+                    <h4 className="text-xs font-semibold font-display text-red-600 dark:text-red-400 uppercase tracking-wider">Overdue</h4>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400" style={{ borderRadius: 0 }}>{overdueActivities.length}</span>
                   </div>
                   <div className="space-y-2">
                     {overdueActivities.map((activity) => (
@@ -333,8 +335,8 @@ export default function Dashboard() {
               {dueTodayActivities.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Due Today</h4>
-                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 rounded-full">{dueTodayActivities.length}</span>
+                    <h4 className="text-xs font-semibold font-display text-amber-600 dark:text-amber-400 uppercase tracking-wider">Due Today</h4>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400" style={{ borderRadius: 0 }}>{dueTodayActivities.length}</span>
                   </div>
                   <div className="space-y-2">
                     {dueTodayActivities.map((activity) => (
@@ -346,7 +348,7 @@ export default function Dashboard() {
               {upcomingActivities.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Upcoming</h4>
+                    <h4 className="text-xs font-semibold font-display text-carga-secondary/50 dark:text-carga-primary/50 uppercase tracking-wider">Upcoming</h4>
                   </div>
                   <div className="space-y-2">
                     {upcomingActivities.map((activity) => (

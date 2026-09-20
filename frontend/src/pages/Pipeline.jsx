@@ -10,11 +10,11 @@ import { DEAL_STAGES, getStageColor, getStageLabel, formatCurrency, formatRelati
 import { CardSkeleton } from '../components/ui/Skeleton'
 
 const stageDotColors = {
-  zinc: 'bg-zinc-500',
+  zinc: 'bg-carga-secondary dark:bg-carga-primary',
   sky: 'bg-sky-500',
   amber: 'bg-amber-500',
   orange: 'bg-orange-500',
-  emerald: 'bg-emerald-500',
+  emerald: 'bg-carga-tertiary dark:bg-carga-secondary',
   red: 'bg-red-500',
 }
 
@@ -34,33 +34,33 @@ function DealCard({ deal, contactName, overlay = false }) {
       ref={setNodeRef}
       style={style}
       className={`
-        bg-white dark:bg-zinc-800 rounded-xl border border-slate-200/50 dark:border-zinc-700/50
+        bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary/20 dark:border-carga-primary/20
         p-4 cursor-grab active:cursor-grabbing
-        ${isDragging ? 'opacity-50 shadow-diffusion-lg' : 'shadow-diffusion hover:shadow-diffusion-lg'}
-        ${overlay ? 'shadow-diffusion-lg rotate-2' : ''}
+        ${isDragging ? 'opacity-50 shadow-carga-lg' : 'shadow-carga hover:shadow-carga-lg'}
+        ${overlay ? 'shadow-carga-lg rotate-2' : ''}
         transition-shadow duration-200
       `}
       {...attributes}
       {...listeners}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h4 className="text-sm font-medium text-zinc-950 dark:text-zinc-50 leading-tight">{deal.title}</h4>
-        <DotsSixVertical size={14} className="text-zinc-300 dark:text-zinc-600 flex-shrink-0 mt-0.5" />
+        <h4 className="text-sm font-medium text-carga-secondary dark:text-carga-primary leading-tight">{deal.title}</h4>
+        <DotsSixVertical size={14} className="text-carga-secondary/30 dark:text-carga-primary/30 flex-shrink-0 mt-0.5" />
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold font-mono text-zinc-950 dark:text-zinc-50">
+        <span className="text-sm font-bold font-mono text-carga-secondary dark:text-carga-primary">
           {formatCurrency(deal.value)}
         </span>
         {contactName && (
-          <span className="text-xs text-zinc-400 dark:text-zinc-500 truncate max-w-[120px]">
+          <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 truncate max-w-[120px]">
             {contactName}
           </span>
         )}
       </div>
 
       {deal.expected_close_date && (
-        <div className="flex items-center gap-1 mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+        <div className="flex items-center gap-1 mt-2 text-xs text-carga-secondary/50 dark:text-carga-primary/50">
           <CalendarBlank size={12} />
           {formatRelativeDate(deal.expected_close_date)}
         </div>
@@ -79,7 +79,7 @@ function DealCardOverlay({ deal, contactName }) {
 
 function ColumnContainer({ stage, deals, contactMap }) {
   const color = getStageColor(DEAL_STAGES, stage)
-  const dotColor = stageDotColors[color] || 'bg-zinc-500'
+  const dotColor = stageDotColors[color] || 'bg-carga-secondary dark:bg-carga-primary'
   const totalValue = deals.reduce((sum, d) => sum + (d.value || 0), 0)
   const dealIds = deals.map((d) => d.id)
 
@@ -90,16 +90,16 @@ function ColumnContainer({ stage, deals, contactMap }) {
       {/* Column header */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
-          <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+          <div className={`w-2.5 h-2.5 ${dotColor}`} />
+          <h3 className="text-sm font-display font-semibold text-carga-secondary dark:text-carga-primary">
             {getStageLabel(DEAL_STAGES, stage)}
           </h3>
-          <span className="text-xs text-zinc-400 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 bg-carga-primary/10 dark:bg-carga-secondary/10 px-2 py-0.5 rounded-full">
             {deals.length}
           </span>
         </div>
         {totalValue > 0 && (
-          <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs font-mono text-carga-secondary/70 dark:text-carga-primary/70">
             {formatCurrency(totalValue)}
           </span>
         )}
@@ -109,17 +109,17 @@ function ColumnContainer({ stage, deals, contactMap }) {
       <div
         ref={setNodeRef}
         className={`
-          flex-1 space-y-2 min-h-[120px] rounded-xl p-2 transition-colors duration-150
+          flex-1 space-y-2 min-h-[120px] p-2 transition-colors duration-150
           border border-dashed
           ${isOver
-            ? 'bg-emerald-50/80 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700'
-            : 'bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800'
+            ? 'bg-carga-tertiary/10 dark:bg-carga-secondary/10 border-carga-tertiary dark:border-carga-secondary'
+            : 'bg-carga-primary/5 dark:bg-carga-secondary/5 border-carga-secondary/20 dark:border-carga-primary/20'
           }
         `}
       >
         <SortableContext items={dealIds} strategy={verticalListSortingStrategy}>
           {deals.length === 0 ? (
-            <div className="flex items-center justify-center h-24 text-xs text-zinc-400 dark:text-zinc-600">
+            <div className="flex items-center justify-center h-24 text-xs text-carga-secondary/40 dark:text-carga-primary/40">
               {isOver ? 'Drop here' : 'No deals'}
             </div>
           ) : (
@@ -203,9 +203,6 @@ export default function Pipeline() {
     const activeDeal = deals.find((d) => d.id === active.id)
     if (!activeDeal) return
 
-    // Determine target stage:
-    // 1. over.id is a valid stage string → dropped on column (empty or via useDroppable)
-    // 2. over.id is a deal ID → dropped on another card
     let targetStage = null
 
     if (validStages.includes(String(over.id))) {
@@ -220,7 +217,6 @@ export default function Pipeline() {
     if (!targetStage) return
     if (targetStage === activeDeal.stage) return
 
-    // Optimistic update
     setDeals((prev) =>
       prev.map((d) => (d.id === active.id ? { ...d, stage: targetStage } : d))
     )
@@ -237,8 +233,8 @@ export default function Pipeline() {
   return (
     <motion.div variants={container} initial="hidden" animate="visible">
       <motion.div variants={item} className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight">Pipeline</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Drag deals between stages</p>
+        <h1 className="text-2xl font-display font-bold text-carga-secondary dark:text-carga-primary tracking-tight">Pipeline</h1>
+        <p className="text-sm text-carga-secondary/50 dark:text-carga-primary/50 mt-1">Drag deals between stages</p>
       </motion.div>
 
       <DndContext
@@ -261,8 +257,8 @@ export default function Pipeline() {
           </div>
 
           {/* Closed stages */}
-          <div className="mt-6 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-            <h2 className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3 px-1">Closed</h2>
+          <div className="mt-6 pt-6 border-t border-carga-secondary/10 dark:border-carga-primary/10">
+            <h2 className="text-xs font-semibold text-carga-secondary/40 dark:text-carga-primary/40 uppercase tracking-wider mb-3 px-1">Closed</h2>
             <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
               {closedColumns.map((stage) => (
                 <ColumnContainer

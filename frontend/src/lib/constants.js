@@ -1,32 +1,42 @@
 export const CONTACT_STAGES = [
-  { value: 'lead', label: 'Lead', color: 'zinc' },
-  { value: 'prospect', label: 'Prospect', color: 'sky' },
-  { value: 'proposal', label: 'Proposal', color: 'amber' },
-  { value: 'negotiation', label: 'Negotiation', color: 'orange' },
-  { value: 'closed_won', label: 'Won', color: 'emerald' },
-  { value: 'closed_lost', label: 'Lost', color: 'red' },
+  { value: 'lead', label: 'Lead', color: '#71717a' },
+  { value: 'prospect', label: 'Prospect', color: '#332B1C' },
+  { value: 'proposal', label: 'Proposal', color: '#a8a29e' },
+  { value: 'negotiation', label: 'Negotiation', color: '#E2F4CB' },
+  { value: 'closed_won', label: 'Won', color: '#E2F4CB' },
+  { value: 'closed_lost', label: 'Lost', color: '#ef4444' },
 ]
 
 export const DEAL_STAGES = [
-  { value: 'lead', label: 'Lead', color: 'zinc' },
-  { value: 'qualified', label: 'Qualified', color: 'sky' },
-  { value: 'proposal', label: 'Proposal', color: 'amber' },
-  { value: 'negotiation', label: 'Negotiation', color: 'orange' },
-  { value: 'closed_won', label: 'Won', color: 'emerald' },
-  { value: 'closed_lost', label: 'Lost', color: 'red' },
+  { value: 'lead', label: 'Lead', color: '#71717a' },
+  { value: 'qualified', label: 'Qualified', color: '#332B1C' },
+  { value: 'proposal', label: 'Proposal', color: '#a8a29e' },
+  { value: 'negotiation', label: 'Negotiation', color: '#E2F4CB' },
+  { value: 'closed_won', label: 'Won', color: '#E2F4CB' },
+  { value: 'closed_lost', label: 'Lost', color: '#ef4444' },
 ]
 
 export const ACTIVITY_TYPES = [
-  { value: 'call', label: 'Call', color: 'blue' },
-  { value: 'email', label: 'Email', color: 'sky' },
-  { value: 'meeting', label: 'Meeting', color: 'amber' },
-  { value: 'note', label: 'Note', color: 'zinc' },
-  { value: 'task', label: 'Task', color: 'emerald' },
-  { value: 'follow_up', label: 'Follow Up', color: 'red' },
+  { value: 'call', label: 'Call', color: '#332B1C' },
+  { value: 'email', label: 'Email', color: '#E2F4CB' },
+  { value: 'meeting', label: 'Meeting', color: '#a8a29e' },
+  { value: 'note', label: 'Note', color: '#71717a' },
+  { value: 'task', label: 'Task', color: '#E2F4CB' },
+  { value: 'follow_up', label: 'Follow Up', color: '#ef4444' },
 ]
 
+export const CARGA_COLORS = {
+  primary: '#F0E5C5',
+  secondary: '#332B1C',
+  tertiary: '#E2F4CB',
+  neutral: '#121212',
+  danger: '#ef4444',
+  muted: '#71717a',
+  subtle: '#a8a29e',
+}
+
 export function getStageColor(stages, value) {
-  return stages.find(s => s.value === value)?.color || 'zinc'
+  return stages.find(s => s.value === value)?.color || '#71717a'
 }
 
 export function getStageLabel(stages, value) {

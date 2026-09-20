@@ -64,12 +64,14 @@ def create_app(config_class=Config):
     from app.api_v1.contacts import contacts_blp
     from app.api_v1.deals import deals_blp
     from app.api_v1.activities import activities_blp
+    from app.api_v1.stats import stats_blp
     api.register_blueprint(contacts_blp)
     api.register_blueprint(deals_blp)
     api.register_blueprint(activities_blp)
+    api.register_blueprint(stats_blp)
 
     # Exempt ALL API blueprints from CSRF — REST API uses SameSite cookies
-    for bp_obj in [auth.bp, health.bp, contacts_blp, deals_blp, activities_blp]:
+    for bp_obj in [auth.bp, health.bp, contacts_blp, deals_blp, activities_blp, stats_blp]:
         csrf.exempt(bp_obj)
 
     @app.errorhandler(404)
@@ -85,6 +87,7 @@ def create_app(config_class=Config):
         return jsonify({'error': 'Internal server error'}), 500
 
     with app.app_context():
+        db.create_all()
         if os.environ.get('FLASK_ENV') not in ('testing', 'production'):
             seed_demo_data()
 

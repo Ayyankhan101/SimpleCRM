@@ -8,39 +8,44 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Geist', 'system-ui', 'sans-serif'],
-        mono: ['Geist Mono', 'ui-monospace', 'monospace'],
+        display: ['"Barlow Condensed"', 'system-ui', 'sans-serif'],
+        sans: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       colors: {
-        zinc: {
-          950: '#09090b',
+        carga: {
+          primary: '#F0E5C5',
+          secondary: '#332B1C',
+          tertiary: '#E2F4CB',
+          neutral: '#121212',
+          surface: 'rgba(240, 229, 197, 0.55)',
+          'surface-dark': 'rgba(51, 43, 28, 0.55)',
         },
       },
       borderRadius: {
-        '4xl': '2.5rem',
+        'none': '0px',
+        'sm': '0px',
+        'DEFAULT': '0px',
+        'md': '0px',
+        'lg': '0px',
+        'xl': '0px',
+        '2xl': '0px',
+        '3xl': '0px',
+        '4xl': '0px',
+        'full': '9999px',
       },
       boxShadow: {
-        'diffusion': '0 20px 40px -15px rgba(0,0,0,0.05)',
-        'diffusion-lg': '0 25px 50px -12px rgba(0,0,0,0.08)',
-        'glass': 'inset 0 1px 0 rgba(255,255,255,0.1)',
+        'carga': 'inset 0 1px 2px 0px rgba(52, 40, 20, 0.55)',
+        'carga-lg': '0 2px 3px 0px rgba(52, 40, 20, 0.25), 0 18px 44px 0px rgba(52, 40, 20, 0.38)',
+        'carga-inset': 'inset 0 1px 2px 0px rgba(52, 40, 20, 0.55)',
       },
       animation: {
         'shimmer': 'shimmer 2s infinite linear',
-        'float': 'float 3s ease-in-out infinite',
-        'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
       },
       keyframes: {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-4px)' },
-        },
-        'pulse-soft': {
-          '0%, 100%': { opacity: 1 },
-          '50%': { opacity: 0.7 },
         },
       },
     },

@@ -127,12 +127,12 @@ export default function Activities() {
   if (loading) return (
     <div className="space-y-4">
       {[1,2,3].map(i => (
-        <div key={i} className="bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5 animate-pulse">
+        <div key={i} className="bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-5 animate-pulse">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+            <div className="w-10 h-10 bg-carga-surface dark:bg-carga-surface-dark" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 bg-zinc-100 dark:bg-zinc-800 rounded w-1/3" />
-              <div className="h-3 bg-zinc-100 dark:bg-zinc-800 rounded w-1/2" />
+              <div className="h-4 bg-carga-surface dark:bg-carga-surface-dark w-1/3" />
+              <div className="h-3 bg-carga-surface dark:bg-carga-surface-dark w-1/2" />
             </div>
           </div>
         </div>
@@ -145,8 +145,8 @@ export default function Activities() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight">Activities</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{activities.length} activities logged</p>
+          <h1 className="text-2xl font-bold font-display text-carga-secondary dark:text-carga-primary tracking-tight">Activities</h1>
+          <p className="text-sm text-carga-secondary/50 dark:text-carga-primary/50 mt-1">{activities.length} activities logged</p>
         </div>
         <Button onClick={openNew}>
           <Plus size={16} weight="bold" />
@@ -159,7 +159,7 @@ export default function Activities() {
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all min-w-[160px]"
+          className="px-4 py-2.5 border border-carga-secondary dark:border-carga-primary/20 bg-carga-surface dark:bg-carga-surface-dark text-sm text-carga-secondary dark:text-carga-primary focus:outline-none focus:ring-2 focus:ring-carga-secondary/20 focus:border-carga-secondary transition-all min-w-[160px]"
         >
           <option value="">All Types</option>
           {ACTIVITY_TYPES.map((t) => (
@@ -188,21 +188,21 @@ export default function Activities() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className={`bg-white dark:bg-zinc-900 rounded-4xl border border-slate-200/50 dark:border-zinc-700/50 shadow-diffusion p-5 flex items-start gap-4 hover:shadow-diffusion-lg transition-shadow duration-200 border-l-4 ${
+                className={`bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary dark:border-carga-primary/20 shadow-carga-lg p-5 flex items-start gap-4 hover:shadow-carga-lg transition-shadow duration-200 border-l-4 ${
                   a.is_overdue ? 'border-l-red-500' : a.is_due_today ? 'border-l-amber-500' : 'border-l-transparent'
                 } ${a.completed ? 'opacity-60' : ''}`}
               >
                 <button
                   onClick={() => handleToggleComplete(a)}
-                  className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                  className={`mt-0.5 w-6 h-6 border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                     a.completed
-                      ? 'bg-emerald-500 border-emerald-500 text-white'
-                      : 'border-zinc-300 dark:border-zinc-600 hover:border-emerald-400 dark:hover:border-emerald-500'
+                      ? 'bg-carga-secondary border-carga-secondary text-carga-primary'
+                      : 'border-carga-secondary/30 dark:border-carga-primary/30 hover:border-carga-secondary dark:hover:border-carga-primary'
                   }`}
                 >
                   {a.completed && <Check size={12} weight="bold" />}
                 </button>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
+                <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
                   <Icon size={18} className={colors.text} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -211,26 +211,26 @@ export default function Activities() {
                       {getStageLabel(ACTIVITY_TYPES, a.type)}
                     </Badge>
                     {a.is_overdue && !a.completed && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 rounded-full">OVERDUE</span>
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">OVERDUE</span>
                     )}
                     {a.is_due_today && !a.completed && !a.is_overdue && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 rounded-full">DUE TODAY</span>
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">DUE TODAY</span>
                     )}
                     {a.due_date && (
-                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                      <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 font-mono">
                         {formatRelativeDate(a.due_date)}
                       </span>
                     )}
                   </div>
-                  <h3 className={`text-sm font-medium text-zinc-950 dark:text-zinc-50 truncate ${a.completed ? 'line-through' : ''}`}>{a.subject}</h3>
+                  <h3 className={`text-sm font-medium font-display text-carga-secondary dark:text-carga-primary truncate ${a.completed ? 'line-through' : ''}`}>{a.subject}</h3>
                   {a.body && (
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">{a.body}</p>
+                    <p className="text-sm text-carga-secondary/50 dark:text-carga-primary/50 mt-1 line-clamp-2">{a.body}</p>
                   )}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+                  <div className="flex items-center gap-3 mt-2 text-xs text-carga-secondary/50 dark:text-carga-primary/50 font-mono">
                     {a.contact_name && <span>Contact: {a.contact_name}</span>}
                     {a.deal_title && <span>Deal: {a.deal_title}</span>}
                     {a.type === 'email' && a.email_opened_at && (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-1 text-carga-secondary dark:text-carga-primary">
                         <Eye size={12} />
                         Opened
                       </span>
@@ -246,13 +246,13 @@ export default function Activities() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => handleEdit(a)}
-                    className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+                    className="p-2 text-carga-secondary/50 hover:text-carga-secondary dark:text-carga-primary/50 dark:hover:text-carga-primary hover:bg-carga-surface dark:hover:bg-carga-surface-dark transition-colors"
                   >
                     <PencilSimple size={15} />
                   </button>
                   <button
                     onClick={() => handleDelete(a.id)}
-                    className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                    className="p-2 text-carga-secondary/50 hover:text-red-600 hover:bg-red-50 dark:text-carga-primary/50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
                   >
                     <Trash size={15} />
                   </button>
@@ -272,16 +272,16 @@ export default function Activities() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400">
               {error}
             </div>
           )}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Type</label>
+            <label className="block text-sm font-medium font-display text-carga-secondary dark:text-carga-primary">Type</label>
             <select
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-950 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              className="w-full px-4 py-2.5 border border-carga-secondary dark:border-carga-primary/20 bg-carga-surface dark:bg-carga-surface-dark text-sm text-carga-secondary dark:text-carga-primary focus:outline-none focus:ring-2 focus:ring-carga-secondary/20 focus:border-carga-secondary transition-all"
             >
               {ACTIVITY_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -311,12 +311,12 @@ export default function Activities() {
             onChange={(id) => setFormData({ ...formData, deal_id: id || '' })}
           />
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Body</label>
+            <label className="block text-sm font-medium font-display text-carga-secondary dark:text-carga-primary">Body</label>
             <textarea
               rows={4}
               value={formData.body}
               onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-950 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+              className="w-full px-4 py-2.5 border border-carga-secondary dark:border-carga-primary/20 bg-carga-surface dark:bg-carga-surface-dark text-sm text-carga-secondary dark:text-carga-primary placeholder:text-carga-secondary/30 dark:placeholder:text-carga-primary/30 focus:outline-none focus:ring-2 focus:ring-carga-secondary/20 focus:border-carga-secondary transition-all resize-none"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">

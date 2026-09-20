@@ -2,14 +2,14 @@ import { forwardRef } from 'react'
 import { motion } from 'framer-motion'
 
 const variants = {
-  primary: 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm',
-  secondary: 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700',
-  ghost: 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
-  danger: 'bg-red-500 text-white hover:bg-red-600 shadow-sm',
+  primary: 'bg-carga-secondary text-carga-primary hover:opacity-90 border border-carga-secondary',
+  secondary: 'bg-carga-primary/50 text-carga-secondary hover:bg-carga-primary/70 border border-carga-secondary/20',
+  ghost: 'text-carga-secondary hover:bg-carga-primary/50 border border-transparent',
+  danger: 'bg-red-500 text-white hover:bg-red-600 border border-red-500',
 }
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-sm',
+  sm: 'px-3 py-1.5 text-xs',
   md: 'px-5 py-2.5 text-sm',
   lg: 'px-6 py-3 text-base',
 }
@@ -24,9 +24,10 @@ const Button = forwardRef(function Button(
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className={`
-        inline-flex items-center justify-center gap-2 font-medium rounded-xl
-        transition-colors duration-200
+        inline-flex items-center justify-center gap-2 font-medium
+        transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]
         disabled:opacity-50 disabled:cursor-not-allowed
+        font-display tracking-wide uppercase
         ${variants[variant]} ${sizes[size]} ${className}
       `}
       disabled={disabled || loading}
