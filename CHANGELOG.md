@@ -2,6 +2,17 @@
 
 All notable changes to SimpleCRM will be documented in this file.
 
+## [3.1.0] - 2026-09-20
+
+### Added
+- Email sending from ContactDetail and Deals pages (via Resend)
+- Email open/click tracking (webhook + Activity model fields)
+- Dashboard analytics: revenue trend (LineChart), email engagement stats, activity breakdown (PieChart)
+- Resend webhook endpoint (`POST /api/v1/webhooks/resend`)
+
+### Removed
+- `conductor/` directory (old data analytics project docs, no longer relevant)
+
 ## [3.0.1] - 2026-09-19
 
 ### Fixed

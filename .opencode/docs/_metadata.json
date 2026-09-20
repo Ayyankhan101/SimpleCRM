@@ -1,61 +1,40 @@
 {
   "documents": {
-    "vercel_com_docs_storage_vercel-postgres.md": {
-      "url": "https://vercel.com/docs/storage/vercel-postgres",
-      "title": "Postgres on Vercel",
-      "fetchedAt": "2026-09-18T16:31:06.007Z",
-      "expiresAt": "2026-09-19T16:31:06.007Z",
-      "size": 3975
-    },
-    "neon_tech_pricing.md": {
-      "url": "https://neon.tech/pricing",
-      "title": "Pricing — Neon",
-      "fetchedAt": "2026-09-18T16:31:21.494Z",
-      "expiresAt": "2026-09-19T16:31:21.494Z",
-      "size": 15120
-    },
-    "neon_tech_docs_integrations_vercel.md": {
-      "url": "https://neon.tech/docs/integrations/vercel",
-      "title": "Connect a Next.js application to Neon - Neon Docs",
-      "fetchedAt": "2026-09-18T16:31:21.839Z",
-      "expiresAt": "2026-09-19T16:31:21.839Z",
-      "size": 9467
-    },
-    "neon_tech_docs_connect_connect-from-any-app.md": {
-      "url": "https://neon.tech/docs/connect/connect-from-any-app",
-      "title": "Connect from any application - Neon Docs",
-      "fetchedAt": "2026-09-18T16:31:27.717Z",
-      "expiresAt": "2026-09-19T16:31:27.717Z",
-      "size": 9647
-    },
-    "neon_tech_docs_manage_projects.md": {
-      "url": "https://neon.tech/docs/manage/projects#create-a-project",
-      "title": "Manage projects - Neon Docs",
-      "fetchedAt": "2026-09-18T17:22:46.726Z",
-      "expiresAt": "2026-09-19T17:22:46.726Z",
-      "size": 15163
-    },
-    "neon_tech_docs_reference_cli-projects.md": {
-      "url": "https://neon.tech/docs/reference/cli-projects",
-      "title": "Neon CLI command: projects - Neon Docs",
-      "fetchedAt": "2026-09-18T17:22:47.173Z",
-      "expiresAt": "2026-09-19T17:22:47.173Z",
-      "size": 14164
-    },
-    "neon_tech_docs_reference_cli-install.md": {
-      "url": "https://neon.tech/docs/reference/cli-install",
-      "title": "Neon CLI: Install and connect - Neon Docs",
-      "fetchedAt": "2026-09-18T17:23:12.647Z",
-      "expiresAt": "2026-09-19T17:23:12.647Z",
-      "size": 3679
-    },
     "www_hostinger_com_tutorials_dns-records.md": {
       "url": "https://www.hostinger.com/tutorials/dns-records",
       "title": "Hostinger Tutorials",
       "fetchedAt": "2026-09-19T07:34:29.388Z",
       "expiresAt": "2026-09-20T07:34:29.388Z",
       "size": 15147
+    },
+    "resend_com_docs_dashboard_webhooks_introduction.md": {
+      "url": "https://resend.com/docs/dashboard/webhooks/introduction",
+      "title": "Managing Webhooks - Resend",
+      "fetchedAt": "2026-09-19T11:21:58.309Z",
+      "expiresAt": "2026-09-20T11:21:58.309Z",
+      "size": 7699
+    },
+    "resend_com_docs_webhooks_event-types.md": {
+      "url": "https://resend.com/docs/webhooks/event-types",
+      "title": "Event Types - Resend",
+      "fetchedAt": "2026-09-19T11:22:08.342Z",
+      "expiresAt": "2026-09-20T11:22:08.342Z",
+      "size": 3698
+    },
+    "resend_com_docs_webhooks_emails_opened.md": {
+      "url": "https://resend.com/docs/webhooks/emails/opened",
+      "title": "email.opened - Resend",
+      "fetchedAt": "2026-09-19T11:22:19.101Z",
+      "expiresAt": "2026-09-20T11:22:19.101Z",
+      "size": 2414
+    },
+    "resend_com_docs_api-reference_emails_send-email.md": {
+      "url": "https://resend.com/docs/api-reference/emails/send-email",
+      "title": "Send Email - Resend",
+      "fetchedAt": "2026-09-19T11:22:52.547Z",
+      "expiresAt": "2026-09-20T11:22:52.547Z",
+      "size": 15155
     }
   },
-  "lastUpdated": "2026-09-19T07:34:29.389Z"
+  "lastUpdated": "2026-09-19T17:31:49.874Z"
 }

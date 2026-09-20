@@ -4,7 +4,7 @@ Stop paying for features you'll never use.
 
 A simple CRM for small businesses. Contacts, deals, activities — that's it. Built with Flask + React.
 
-![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-private-red.svg)
 
 **Live:** https://frontend-navy-psi-33.vercel.app
@@ -32,7 +32,8 @@ Open **http://localhost:5173**, register a new account, start adding contacts.
 - **Deals** — Pipeline view with stages, values, probability tracking
 - **Pipeline** — Kanban drag-and-drop board for deal management
 - **Activities** — Log calls, emails, meetings, tasks, follow-ups with due dates
-- **Dashboard** — Stat cards, pipeline chart, overdue/due today/upcoming activity sections
+- **Dashboard** — Stat cards, pipeline chart, revenue trend, email engagement, activity breakdown
+- **Email Integration** — Send emails from contacts/deals, track opens and clicks via Resend
 - **CSV Import** — Preview and bulk import contacts from CSV files
 - **Activity Reminders** — Email digest for overdue and due-today activities (Resend)
 - **Auth** — Register/login, Google OAuth, role-based access (owner/admin/member)
@@ -120,6 +121,12 @@ Open **http://localhost:5173**, register a new account, start adding contacts.
 | GET | `/api/v1/reminders/check` | Check overdue/due-today counts |
 | POST | `/api/v1/reminders/digest` | Send email digest of pending activities |
 
+### Email & Webhooks
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/emails/send` | Send email via Resend |
+| POST | `/api/v1/webhooks/resend` | Receive Resend webhook events (open/click) |
+
 ## Project Structure
 
 ```
@@ -138,8 +145,10 @@ SimpleCRM/
 │   │   │   ├── contacts.py  # Contact CRUD + search + stage filter
 │   │   │   ├── deals.py     # Deal CRUD + stage filter
 │   │   │   ├── activities.py # Activity CRUD + due date filter
+│   │   │   ├── emails.py    # Send email via Resend
 │   │   │   ├── import_contacts.py # CSV preview + import
-│   │   │   └── reminders.py # Activity reminder check + email digest
+│   │   │   ├── reminders.py # Activity reminder check + email digest
+│   │   │   └── webhooks.py  # Resend webhook handler (open/click)
 │   │   └── services/
 │   │       ├── email.py     # Resend email service
 │   │       ├── rbac.py      # Role-based access
@@ -194,7 +203,7 @@ FRONTEND_URL=https://your-domain.com
 ```bash
 RESEND_API_KEY=re_...
 FROM_EMAIL=onboarding@resend.dev    # test mode
-RESEND_TEST_MODE=true               # set false for production
+RESEND_TEST_MODE=false              # emails go to real addresses
 ```
 
 **Optional (Google OAuth):**
@@ -238,17 +247,7 @@ Falls back to SQLite automatically if `DATABASE_URL` is not set.
 ./start.sh --test
 ```
 
-**QA test suite (51 tests):**
-```bash
-python /tmp/test_full_qa5.py
-```
-
-**Regression test suite (25 tests):**
-```bash
-python /tmp/test_final2.py
-```
-
-**Total: 76/76 tests covering:**
+**Test coverage (76 tests):**
 - Login/logout/register flows
 - Contact CRUD + search + stage filters
 - Deal CRUD + pipeline stages

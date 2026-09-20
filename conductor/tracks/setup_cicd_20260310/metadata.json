@@ -1,8 +1,0 @@
-{
-  "track_id": "setup_cicd_20260310",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-03-10T14:30:00Z",
-  "updated_at": "2026-03-10T14:30:00Z",
-  "description": "Setup CI/CD pipeline for automated testing and deployment."
-}

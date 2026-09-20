@@ -24,7 +24,7 @@ This starts both the Flask backend (port 5000) and Vite frontend (port 5173).
 SimpleCRM/
 ├── api/                    # Flask backend
 │   ├── app/
-│   │   ├── api_v1/        # API endpoints (contacts, deals, activities)
+│   │   ├── api_v1/        # API endpoints (contacts, deals, activities, emails, webhooks)
 │   │   ├── routes/        # Auth routes
 │   │   ├── services/      # Email, security
 │   │   ├── models.py      # SQLAlchemy models
@@ -80,6 +80,8 @@ API docs available at `/api/docs/openapi.json` when running locally.
 | GET | `/api/v1/deals/` | Yes | List deals |
 | GET | `/api/v1/activities/` | Yes | List activities |
 | GET | `/api/v1/stats` | Yes | Dashboard stats |
+| POST | `/api/v1/emails/send` | Yes | Send email via Resend |
+| POST | `/api/v1/webhooks/resend` | No | Receive Resend webhooks |
 
 ## Code Style
 
@@ -104,6 +106,8 @@ API docs available at `/api/docs/openapi.json` when running locally.
 | `DATABASE_URL` | Prod | Postgres connection string |
 | `RESEND_API_KEY` | Optional | Email service API key |
 | `FRONTEND_URL` | Prod | Frontend URL for CORS |
+| `FROM_EMAIL` | Optional | Sender email (default: onboarding@resend.dev) |
+| `RESEND_TEST_MODE` | Optional | Set false for real delivery |
 
 ## License
 
