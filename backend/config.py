@@ -14,10 +14,19 @@ class Config:
 
     BASE_DIR = Path(__file__).parent
     INSTANCE_DIR = BASE_DIR / 'instance'
-    INSTANCE_DIR.mkdir(exist_ok=True)
-    
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{INSTANCE_DIR / "data_analytics.db"}'
+
+    if not os.environ.get('VERCEL'):
+        INSTANCE_DIR.mkdir(exist_ok=True)
+
+    if os.environ.get('VERCEL'):
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:////tmp/simplecrm.db'
+    else:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{INSTANCE_DIR / "data_analytics.db"}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,  # handle Neon scale-to-zero reconnection
+        'pool_recycle': 300,    # recycle connections every 5 min
+    }
 
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
 
@@ -31,6 +40,7 @@ class Config:
 
     WTF_CSRF_ENABLED = True
     CORS_HEADERS = 'Content-Type'
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB
 
 
 class ProductionConfig(Config):
@@ -40,7 +50,9 @@ class ProductionConfig(Config):
     @classmethod
     def init_app(cls, app):
         if not os.environ.get('DATABASE_URL'):
-            raise ValueError("DATABASE_URL environment variable is required in production")
+            import warnings
+            warnings.warn("DATABASE_URL not set — falling back to SQLite in /tmp")
+            cls.SQLALCHEMY_DATABASE_URI = 'sqlite:///tmp/simplecrm.db'
 
 
 class DevelopmentConfig(Config):

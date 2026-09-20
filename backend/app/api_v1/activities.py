@@ -13,14 +13,26 @@ from app.api_v1 import activities_blp
 @activities_blp.response(200, ActivitySchema(many=True))
 @login_required
 def list_activities():
-    """List activities, optionally filtered by type or deal."""
+    """List activities, optionally filtered by type, deal, or due status."""
     activity_type = request.args.get('type')
     deal_id = request.args.get('deal_id', type=int)
+    due_filter = request.args.get('due')  # overdue, today, upcoming
     query = Activity.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if activity_type:
         query = query.filter_by(type=activity_type)
     if deal_id:
         query = query.filter_by(deal_id=deal_id)
+    if due_filter:
+        now = datetime.utcnow()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start.replace(hour=23, minute=59, second=59)
+        query = query.filter(Activity.completed == False, Activity.due_date.isnot(None))
+        if due_filter == 'overdue':
+            query = query.filter(Activity.due_date < today_start)
+        elif due_filter == 'today':
+            query = query.filter(Activity.due_date >= today_start, Activity.due_date <= today_end)
+        elif due_filter == 'upcoming':
+            query = query.filter(Activity.due_date > today_end)
     return query.order_by(Activity.created_at.desc()).all()
 
 
@@ -48,13 +60,33 @@ def create_activity(data):
 
 
 @activities_blp.route('/<int:activity_id>', methods=['PUT'])
+@activities_blp.arguments(ActivitySchema(only=('type', 'subject', 'body', 'outcome', 'due_date', 'contact_id', 'deal_id', 'completed'), partial=True))
+@activities_blp.response(200, ActivitySchema)
 @activities_blp.doc(security=[{'Bearer': []}])
-@activities_blp.response(204)
 @login_required
-def complete_activity(activity_id):
-    """Mark an activity as completed."""
+def update_activity(data, activity_id):
+    """Update an existing activity."""
     activity = Activity.query.filter_by(id=activity_id, owner_id=current_user.id, deleted_at=None).first_or_404()
-    activity.completed = True
-    activity.completed_at = datetime.now(timezone.utc)
+    allowed_fields = {'type', 'subject', 'body', 'outcome', 'deal_id', 'contact_id', 'due_date', 'completed'}
+    for key, value in data.items():
+        if key in allowed_fields and hasattr(activity, key):
+            setattr(activity, key, value)
+    if 'completed' in data:
+        if data['completed'] and not activity.completed_at:
+            activity.completed_at = datetime.now(timezone.utc)
+        elif not data['completed']:
+            activity.completed_at = None
+    db.session.commit()
+    return activity
+
+
+@activities_blp.route('/<int:activity_id>', methods=['DELETE'])
+@activities_blp.response(204)
+@activities_blp.doc(security=[{'Bearer': []}])
+@login_required
+def delete_activity(activity_id):
+    """Soft-delete an activity."""
+    activity = Activity.query.filter_by(id=activity_id, owner_id=current_user.id, deleted_at=None).first_or_404()
+    activity.deleted_at = datetime.now(timezone.utc)
     db.session.commit()
     return '', 204

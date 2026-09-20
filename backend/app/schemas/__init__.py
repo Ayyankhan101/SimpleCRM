@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, pre_load, validate
 
 
 class OrganizationSchema(Schema):
@@ -25,20 +25,29 @@ class ContactSchema(Schema):
     id = fields.Int(dump_only=True)
     first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     last_name = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email(allow_none=True)
+    email = fields.Str(allow_none=True)
     phone = fields.Str(allow_none=True)
     company = fields.Str(allow_none=True)
     role = fields.Str(allow_none=True)
     stage = fields.Str(validate=validate.OneOf([
         'lead', 'prospect', 'qualified', 'proposal', 'negotiation',
-        'closed_won', 'closed_lost', 'churned'
+        'closed_won', 'closed_lost'
     ]))
     score = fields.Int()
     notes = fields.Str(allow_none=True)
-    owner_id = fields.Int()
-    org_id = fields.Int()
+    owner_id = fields.Int(dump_only=True)
+    org_id = fields.Int(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
+
+    @pre_load
+    def clean_fields(self, data, **kwargs):
+        if data.get('email') == '':
+            data['email'] = None
+        for key in ('phone', 'company', 'role', 'notes'):
+            if data.get(key) == '':
+                data[key] = None
+        return data
 
 
 class DealSchema(Schema):
@@ -52,8 +61,8 @@ class DealSchema(Schema):
     probability = fields.Int(validate=validate.Range(min=0, max=100))
     expected_close_date = fields.Date(allow_none=True)
     contact_id = fields.Int(allow_none=True)
-    owner_id = fields.Int()
-    org_id = fields.Int()
+    owner_id = fields.Int(dump_only=True)
+    org_id = fields.Int(dump_only=True)
     notes = fields.Str(allow_none=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
@@ -61,17 +70,50 @@ class DealSchema(Schema):
 
 class ActivitySchema(Schema):
     id = fields.Int(dump_only=True)
-    type = fields.Str(required=True, validate=validate.Length(min=1, max=50))
+    type = fields.Str(required=True, validate=[validate.Length(min=1, max=50), validate.OneOf(['call', 'email', 'meeting', 'note', 'task', 'follow_up'])])
     subject = fields.Str(required=True, validate=validate.Length(min=1, max=200))
     body = fields.Str(allow_none=True)
     outcome = fields.Str(allow_none=True)
     deal_id = fields.Int(allow_none=True)
     contact_id = fields.Int(allow_none=True)
-    owner_id = fields.Int()
-    org_id = fields.Int()
+    owner_id = fields.Int(dump_only=True)
+    org_id = fields.Int(dump_only=True)
     due_date = fields.Date(allow_none=True)
     completed = fields.Bool()
+    is_overdue = fields.Bool(dump_only=True)
+    is_due_today = fields.Bool(dump_only=True)
+    resend_email_id = fields.Str(dump_only=True)
+    email_opened_at = fields.DateTime(dump_only=True)
+    email_clicked_at = fields.DateTime(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
+
+
+class ContactDetailSchema(Schema):
+    id = fields.Int(dump_only=True)
+    first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    last_name = fields.Str(validate=validate.Length(max=100))
+    email = fields.Str(allow_none=True)
+    phone = fields.Str(allow_none=True)
+    company = fields.Str(allow_none=True)
+    role = fields.Str(allow_none=True)
+    stage = fields.Str(validate=validate.OneOf([
+        'lead', 'prospect', 'qualified', 'proposal', 'negotiation',
+        'closed_won', 'closed_lost'
+    ]))
+    score = fields.Int()
+    notes = fields.Str(allow_none=True)
+    owner_id = fields.Int(dump_only=True)
+    org_id = fields.Int(dump_only=True)
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    deals = fields.List(fields.Nested('DealSchema'))
+    activities = fields.List(fields.Nested('ActivitySchema'))
+
+    @pre_load
+    def clean_fields(self, data, **kwargs):
+        if data.get('email') == '':
+            data['email'] = None
+        return data
 
 
 class TagSchema(Schema):

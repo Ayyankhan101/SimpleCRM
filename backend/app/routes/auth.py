@@ -43,6 +43,9 @@ def register():
     user.set_password(data['password'])
 
     slug = user.username.lower().replace(' ', '-')
+    existing_slug = Organization.query.filter_by(slug=slug).first()
+    if existing_slug:
+        slug = f"{slug}-{secrets.token_hex(3)}"
     org = Organization(name=f"{user.username}'s Workspace", slug=slug)
     db.session.add(org)
     db.session.flush()
@@ -73,6 +76,9 @@ def login():
         return jsonify({'error': 'Invalid email or password'}), 401
 
     login_user(user)
+
+    # Auto-send daily digest if overdue/due-today exist and not sent today
+    _maybe_send_digest(user)
 
     return jsonify({
         'message': 'Login successful',
@@ -162,11 +168,20 @@ def google_callback():
         if user:
             user.google_id = userinfo['id']
         else:
+            username = userinfo.get('name', userinfo['email'].split('@')[0])
             user = User(
                 email=userinfo['email'],
-                username=userinfo.get('name', userinfo['email'].split('@')[0]),
+                username=username,
                 google_id=userinfo['id']
             )
+            slug = username.lower().replace(' ', '-')
+            existing_slug = Organization.query.filter_by(slug=slug).first()
+            if existing_slug:
+                slug = f"{slug}-{secrets.token_hex(3)}"
+            org = Organization(name=f"{username}'s Workspace", slug=slug)
+            db.session.add(org)
+            db.session.flush()
+            user.org_id = org.id
             db.session.add(user)
 
     db.session.commit()
@@ -269,3 +284,42 @@ def change_password():
     current_user.set_password(data['new_password'])
     db.session.commit()
     return jsonify({'message': 'Password updated successfully'})
+
+
+def _maybe_send_digest(user):
+    """Send daily digest on login if there are pending activities and none sent today."""
+    try:
+        from datetime import datetime, timezone
+        from app.models import Activity
+        from app.services.email import is_configured, send_daily_digest
+
+        if not is_configured():
+            return
+
+        now = datetime.now(timezone.utc)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+
+        if user.last_digest_sent_at and user.last_digest_sent_at.replace(tzinfo=None) >= today_start:
+            return
+
+        base_filter = [
+            Activity.owner_id == user.id,
+            Activity.deleted_at.is_(None),
+            Activity.completed == False,
+            Activity.due_date.isnot(None),
+        ]
+
+        overdue = Activity.query.filter(*base_filter, Activity.due_date < today_start).order_by(Activity.due_date.asc()).all()
+        due_today = Activity.query.filter(*base_filter, Activity.due_date >= today_start, Activity.due_date <= today_start.replace(hour=23, minute=59, second=59)).order_by(Activity.due_date.asc()).all()
+        upcoming = Activity.query.filter(*base_filter, Activity.due_date > today_start.replace(hour=23, minute=59, second=59)).order_by(Activity.due_date.asc()).limit(10).all()
+
+        if not overdue and not due_today:
+            return
+
+        user_name = user.username or user.email.split('@')[0]
+        sent = send_daily_digest(user.email, user_name, overdue, due_today, upcoming)
+        if sent:
+            user.last_digest_sent_at = now.replace(tzinfo=None)
+            db.session.commit()
+    except Exception as e:
+        print(f"Digest send error: {e}")

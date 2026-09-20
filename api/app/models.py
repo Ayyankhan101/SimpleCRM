@@ -68,8 +68,8 @@ class User(UserMixin, db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    def set_password(self, password, method='pbkdf2:sha256'):
+        self.password_hash = generate_password_hash(password, method=method)
 
     def check_password(self, password):
         if not self.password_hash:

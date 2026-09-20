@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../App'
 import { AuthProvider } from '../context/AuthContext'
+import { ThemeProvider } from '../context/ThemeContext'
 import api from '../utils/api'
 
 vi.mock('../utils/api')
@@ -10,9 +11,11 @@ vi.mock('../utils/api')
 const renderApp = (initialEntries = ['/']) => {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ThemeProvider>
     </MemoryRouter>
   )
 }
@@ -29,7 +32,7 @@ describe('App', () => {
     renderApp(['/'])
     
     await waitFor(() => {
-      expect(screen.getByText('Welcome Back')).toBeInTheDocument()
+      expect(screen.getByText('Welcome back')).toBeInTheDocument()
     })
   })
 
@@ -38,7 +41,7 @@ describe('App', () => {
     renderApp(['/login'])
     
     await waitFor(() => {
-      expect(screen.getByText('Welcome Back')).toBeInTheDocument()
+      expect(screen.getByText('Welcome back')).toBeInTheDocument()
     })
   })
 
@@ -47,7 +50,7 @@ describe('App', () => {
     renderApp(['/register'])
     
     await waitFor(() => {
-      expect(screen.getByText('Create Account')).toBeInTheDocument()
+      expect(screen.getByText('Create account')).toBeInTheDocument()
     })
   })
 
@@ -56,7 +59,7 @@ describe('App', () => {
     renderApp(['/data'])
     
     await waitFor(() => {
-      expect(screen.getByText('Welcome Back')).toBeInTheDocument()
+      expect(screen.getByText('Welcome back')).toBeInTheDocument()
     })
   })
 

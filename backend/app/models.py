@@ -48,6 +48,7 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     role = db.Column(db.String(20), default='member')  # owner/admin/member
     org_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)
+    last_digest_sent_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                            onupdate=lambda: datetime.now(timezone.utc))
@@ -67,10 +68,12 @@ class User(UserMixin, db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    def set_password(self, password, method='pbkdf2:sha256'):
+        self.password_hash = generate_password_hash(password, method=method)
 
     def check_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
 
 
@@ -91,7 +94,7 @@ class Contact(db.Model):
     role = db.Column(db.String(100))
     address = db.Column(db.Text)
     website = db.Column(db.String(200))
-    stage = db.Column(db.String(20), default='lead')  # lead/prospect/customer/churned
+    stage = db.Column(db.String(20), default='lead')  # lead/prospect/proposal/negotiation/closed_won/closed_lost
     score = db.Column(db.Integer, default=0)  # 0-100
     tags = db.Column(db.Text)  # JSON array
     custom_fields = db.Column(db.Text)  # JSON object
@@ -111,7 +114,7 @@ class Contact(db.Model):
             'id': self.id,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'full_name': f'{self.first_name} {self.last_name}',
+            'full_name': f'{self.first_name} {self.last_name}'.strip() if self.last_name else self.first_name,
             'email': self.email,
             'phone': self.phone,
             'company': self.company,
@@ -184,14 +187,14 @@ class Deal(db.Model):
         return {
             'id': self.id,
             'title': self.title,
-            'value': self.value,
+            'value': round(self.value, 2) if self.value is not None else 0,
             'currency': self.currency,
             'stage': self.stage,
             'probability': self.probability,
             'expected_close_date': self.expected_close_date.isoformat() if self.expected_close_date else None,
             'actual_close_date': self.actual_close_date.isoformat() if self.actual_close_date else None,
             'contact_id': self.contact_id,
-            'contact_name': f'{self.contact.first_name} {self.contact.last_name}' if self.contact else None,
+            'contact_name': f'{self.contact.first_name} {self.contact.last_name or ""}'.strip() if self.contact else None,
             'owner_id': self.owner_id,
             'org_id': self.org_id,
             'notes': self.get_notes(),
@@ -203,8 +206,11 @@ class Deal(db.Model):
     def get_notes(self):
         if self.notes:
             import json
-            return json.loads(self.notes)
-        return {}
+            try:
+                return json.loads(self.notes)
+            except (json.JSONDecodeError, TypeError):
+                return self.notes
+        return ''
 
     def set_notes(self, notes_dict):
         import json
@@ -222,6 +228,7 @@ class Activity(db.Model):
         Index('idx_activities_contact', 'contact_id'),
         Index('idx_activities_deal', 'deal_id'),
         Index('idx_activities_owner_due', 'owner_id', 'due_date'),
+        Index('idx_activities_resend_id', 'resend_email_id'),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -236,10 +243,43 @@ class Activity(db.Model):
     due_date = db.Column(db.DateTime, nullable=True)
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
+    resend_email_id = db.Column(db.String(36), nullable=True)
+    email_opened_at = db.Column(db.DateTime, nullable=True)
+    email_clicked_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    @property
+    def is_overdue(self):
+        if not self.due_date or self.completed:
+            return False
+        due = self.due_date
+        if due.tzinfo is not None:
+            due = due.replace(tzinfo=None)
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        return due < today
+
+    @property
+    def is_due_today(self):
+        if not self.due_date or self.completed:
+            return False
+        due = self.due_date
+        if due.tzinfo is not None:
+            due = due.replace(tzinfo=None)
+        return due.date() == datetime.utcnow().date()
+
     def to_dict(self):
+        deal_title = None
+        try:
+            deal_title = self.deal.title if self.deal else None
+        except Exception:
+            deal_title = None
+        contact_name = None
+        try:
+            contact_name = f'{self.contact.first_name} {self.contact.last_name}' if self.contact else None
+        except Exception:
+            contact_name = None
+
         return {
             'id': self.id,
             'type': self.type,
@@ -247,14 +287,19 @@ class Activity(db.Model):
             'body': self.body,
             'outcome': self.outcome,
             'deal_id': self.deal_id,
-            'deal_title': self.deal.title if self.deal else None,
+            'deal_title': deal_title,
             'contact_id': self.contact_id,
-            'contact_name': f'{self.contact.first_name} {self.contact.last_name}' if self.contact else None,
+            'contact_name': contact_name,
             'owner_id': self.owner_id,
             'org_id': self.org_id,
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'completed': self.completed,
+            'is_overdue': self.is_overdue,
+            'is_due_today': self.is_due_today,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'resend_email_id': self.resend_email_id,
+            'email_opened_at': self.email_opened_at.isoformat() if self.email_opened_at else None,
+            'email_clicked_at': self.email_clicked_at.isoformat() if self.email_clicked_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
@@ -315,5 +360,8 @@ class AuditLog(db.Model):
     def get_changes(self):
         if self.changes:
             import json
-            return json.loads(self.changes)
+            try:
+                return json.loads(self.changes)
+            except (json.JSONDecodeError, TypeError):
+                return {}
         return {}

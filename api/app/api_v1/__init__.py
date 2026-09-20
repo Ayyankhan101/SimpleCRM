@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from flask_smorest import Blueprint
 from flask import jsonify
 from flask_login import login_required, current_user
@@ -60,24 +62,24 @@ def get_stats():
     pipeline = [{'stage': row[0], 'count': row[1]} for row in pipeline_rows]
 
     # Revenue trend: closed_won deals grouped by month
-    revenue_rows = (
-        db.session.query(
-            func.date_trunc('month', Deal.actual_close_date),
-            func.sum(Deal.value)
-        )
+    # Use Python-side grouping for SQLite compatibility (date_trunc is PostgreSQL-only)
+    closed_deals = (
+        db.session.query(Deal.actual_close_date, Deal.value)
         .filter(
             Deal.owner_id == current_user.id,
             Deal.stage == 'closed_won',
             Deal.deleted_at.is_(None),
             Deal.actual_close_date.isnot(None),
         )
-        .group_by(func.date_trunc('month', Deal.actual_close_date))
-        .order_by(func.date_trunc('month', Deal.actual_close_date))
         .all()
     )
+    monthly_revenue = defaultdict(float)
+    for close_date, value in closed_deals:
+        month_key = close_date.strftime('%b %Y')
+        monthly_revenue[month_key] += float(value or 0)
     revenue_trend = [
-        {'month': row[0].strftime('%b %Y'), 'value': float(row[1] or 0)}
-        for row in revenue_rows
+        {'month': month, 'value': round(total, 2)}
+        for month, total in sorted(monthly_revenue.items(), key=lambda x: x[0])
     ]
 
     # Email engagement
