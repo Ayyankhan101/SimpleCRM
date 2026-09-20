@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { House, Users, CurrencyCircleDollar, Lightning, SignOut, List, X, Sun, Moon, Funnel } from '@phosphor-icons/react'
+import { House, Users, CurrencyCircleDollar, Lightning, SignOut, List, X, Sun, Moon, Funnel, Leaf } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
@@ -14,18 +14,27 @@ const navItems = [
 ]
 
 function ThemeToggle({ className = '' }) {
-  const { resolved, toggleTheme } = useTheme()
+  const { theme, cycleTheme } = useTheme()
+  
+  const configs = {
+    carga: { icon: Leaf, label: 'CARGA', next: 'dark' },
+    dark: { icon: Moon, label: 'Dark', next: 'light' },
+    light: { icon: Sun, label: 'Light', next: 'carga' },
+  }
+  
+  const { icon: Icon, label } = configs[theme] || configs.carga
+  
   return (
     <button
-      onClick={toggleTheme}
+      onClick={cycleTheme}
       className={`flex items-center gap-3 w-full px-3 py-2.5 text-xs font-display tracking-widest uppercase transition-colors duration-200 ${
-        resolved === 'dark'
+        theme === 'dark'
           ? 'text-carga-primary/50 hover:text-carga-primary hover:bg-carga-primary/10'
           : 'text-carga-secondary/50 hover:text-carga-secondary hover:bg-carga-primary/50'
       } ${className}`}
     >
-      {resolved === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-      <span>{resolved === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+      <Icon size={20} />
+      <span>{label}</span>
     </button>
   )
 }

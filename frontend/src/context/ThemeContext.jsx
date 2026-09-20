@@ -2,54 +2,44 @@ import { createContext, useContext, useState, useEffect } from 'react'
 
 const ThemeContext = createContext()
 
+const THEMES = ['carga', 'dark', 'light']
+
 function getInitialTheme() {
   const stored = localStorage.getItem('simplecrm-theme')
-  if (stored === 'light' || stored === 'dark') return stored
-  if (stored === 'system' || !stored) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  }
-  return 'light'
+  if (THEMES.includes(stored)) return stored
+  return 'carga'
 }
 
 function applyTheme(theme) {
-  const isDark = theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.classList.toggle('dark', isDark)
+  document.documentElement.classList.remove('dark', 'light')
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark')
+  } else if (theme === 'light') {
+    document.documentElement.classList.add('light')
+  }
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setThemeState] = useState(getInitialTheme)
-  const [resolved, setResolved] = useState(getInitialTheme)
+  const [theme, setTheme] = useState(getInitialTheme)
 
-  const setTheme = (t) => {
+  const setThemeAndPersist = (t) => {
     localStorage.setItem('simplecrm-theme', t)
-    setThemeState(t)
+    setTheme(t)
     applyTheme(t)
-    setResolved(t === 'system'
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : t)
   }
 
-  const toggleTheme = () => {
-    const cycle = { system: 'light', light: 'dark', dark: 'system' }
-    setTheme(cycle[theme] || 'system')
+  const cycleTheme = () => {
+    const idx = THEMES.indexOf(theme)
+    const next = THEMES[(idx + 1) % THEMES.length]
+    setThemeAndPersist(next)
   }
 
   useEffect(() => {
     applyTheme(theme)
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const handler = () => {
-      if (theme === 'system') {
-        applyTheme('system')
-        setResolved(mq.matches ? 'dark' : 'light')
-      }
-    }
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
   }, [theme])
 
   return (
-    <ThemeContext.Provider value={{ theme, resolved, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme: setThemeAndPersist, cycleTheme }}>
       {children}
     </ThemeContext.Provider>
   )
