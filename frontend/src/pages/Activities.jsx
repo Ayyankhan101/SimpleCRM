@@ -44,7 +44,7 @@ export default function Activities() {
   const fetchActivities = useCallback(async () => {
     try {
       const params = filterType ? { type: filterType } : {}
-      const res = await api.get('/v1/activities', { params })
+      const res = await api.get('/v1/activities/', { params })
       setActivities(res.data)
     } catch {
       // silent
@@ -71,7 +71,7 @@ export default function Activities() {
       if (editingActivity) {
         await api.put(`/v1/activities/${editingActivity.id}`, payload)
       } else {
-        await api.post('/v1/activities', payload)
+        await api.post('/v1/activities/', payload)
       }
       setShowModal(false)
       setEditingActivity(null)

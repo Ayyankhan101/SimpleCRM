@@ -10,7 +10,7 @@ export default function ContactPicker({ value, onChange }) {
   const ref = useRef(null)
 
   useEffect(() => {
-    api.get('/v1/contacts').then((res) => {
+    api.get('/v1/contacts/').then((res) => {
       setContacts(res.data || [])
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])

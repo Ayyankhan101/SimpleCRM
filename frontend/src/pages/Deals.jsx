@@ -32,7 +32,7 @@ export default function Deals() {
   const fetchDeals = useCallback(async () => {
     try {
       const params = filterStage ? { stage: filterStage } : {}
-      const res = await api.get('/v1/deals', { params })
+      const res = await api.get('/v1/deals/', { params })
       setDeals(res.data)
     } catch {
       // silent
@@ -58,7 +58,7 @@ export default function Deals() {
       if (editingDeal) {
         await api.put(`/v1/deals/${editingDeal.id}`, payload)
       } else {
-        await api.post('/v1/deals', payload)
+        await api.post('/v1/deals/', payload)
       }
       setShowModal(false)
       setEditingDeal(null)

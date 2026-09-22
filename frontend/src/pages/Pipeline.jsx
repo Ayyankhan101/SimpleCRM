@@ -164,8 +164,8 @@ export default function Pipeline() {
   const fetchData = async () => {
     try {
       const [dealsRes, contactsRes] = await Promise.all([
-        api.get('/v1/deals'),
-        api.get('/v1/contacts'),
+        api.get('/v1/deals/'),
+        api.get('/v1/contacts/'),
       ])
       setDeals(dealsRes.data || [])
       setContacts(contactsRes.data || [])

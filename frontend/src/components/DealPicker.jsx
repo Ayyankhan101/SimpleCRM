@@ -11,7 +11,7 @@ export default function DealPicker({ value, onChange }) {
   const ref = useRef(null)
 
   useEffect(() => {
-    api.get('/v1/deals').then((res) => {
+    api.get('/v1/deals/').then((res) => {
       setDeals(res.data || [])
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
