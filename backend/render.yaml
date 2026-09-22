@@ -6,14 +6,16 @@ services:
     startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT run:app
     envVars:
       - key: SECRET_KEY
-        value: "SECRET_KEY_HERE"
+        sync: false
       - key: JWT_SECRET_KEY
-        value: "JWT_SECRET_KEY_HERE"
+        sync: false
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_8NKtLl4fkjnX@ep-hidden-sky-b5l9moai.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require"
       - key: FLASK_ENV
         value: "production"
       - key: FRONTEND_URL
         value: "https://frontend-navy-psi-33.vercel.app"
+      - key: COOKIE_SECURE
+        value: "true"
       - key: ENFORCE_HTTPS
         value: "true"
