@@ -30,7 +30,7 @@ class Config:
 
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
 
-    SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
+    SESSION_COOKIE_SECURE = os.environ.get('COOKIE_SECURE', '').lower() == 'true' or os.environ.get('FLASK_ENV') == 'production'
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 
@@ -57,7 +57,6 @@ class ProductionConfig(Config):
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SESSION_COOKIE_SECURE = False
     WTF_CSRF_ENABLED = False
 
 
