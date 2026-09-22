@@ -4,10 +4,11 @@ Stop paying for features you'll never use.
 
 A simple CRM for small businesses. Contacts, deals, activities — that's it. Built with Flask + React.
 
-![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-3.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-private-red.svg)
 
-**Live:** https://frontend-navy-psi-33.vercel.app
+**Frontend:** https://frontend-navy-psi-33.vercel.app
+**Backend:** https://simplecrm-e1rk.onrender.com
 
 ## Quick Start
 
@@ -38,7 +39,7 @@ Open **http://localhost:5173**, register a new account, start adding contacts.
 - **Activity Reminders** — Email digest for overdue and due-today activities (Resend)
 - **Auth** — Register/login, Google OAuth, role-based access (owner/admin/member)
 - **Multi-tenant** — Organization support with plans (free/pro/enterprise)
-- **Dark Mode** — Toggle between light, dark, and system themes
+- **3-Way Theme Toggle** — CARGA (warm beige), Dark, Light themes with persistence
 - **Stage Filters** — Filter contacts/deals by pipeline stage
 - **Search** — Find contacts by name/email/company
 - **Responsive** — Works on desktop and mobile
@@ -132,7 +133,7 @@ Open **http://localhost:5173**, register a new account, start adding contacts.
 ```
 SimpleCRM/
 ├── start.sh                 # One-command startup
-├── api/                     # Backend (Flask)
+├── backend/                 # Backend (Flask)
 │   ├── app/
 │   │   ├── __init__.py      # App factory + seed data + stats endpoint
 │   │   ├── models.py        # User, Organization, Contact, Deal, Activity, AuditLog
@@ -154,7 +155,8 @@ SimpleCRM/
 │   │       ├── rbac.py      # Role-based access
 │   │       └── security.py  # Input sanitization
 │   ├── config.py            # Config with Neon Postgres + Resend
-│   ├── index.py             # Vercel WSGI entry point
+│   ├── render.yaml          # Render deployment config
+│   ├── run.py               # WSGI entry point
 │   └── requirements.txt     # Python dependencies
 ├── frontend/
 │   ├── src/
@@ -180,10 +182,10 @@ SimpleCRM/
 │   │   ├── lib/
 │   │   │   └── constants.js # Stages, colors, formatters
 │   │   └── utils/
-│   │       └── api.js       # Axios config
+│   │       └── api.js       # Axios config (VITE_API_BASE_URL)
 │   ├── vercel.json
 │   └── package.json
-├── vercel.json               # Root deploy config
+├── vercel.json               # Frontend deploy config
 └── README.md
 ```
 
@@ -197,6 +199,11 @@ SECRET_KEY=<random-key>
 JWT_SECRET_KEY=<random-key>
 DATABASE_URL=postgresql://user:pass@host:port/db
 FRONTEND_URL=https://your-domain.com
+```
+
+**Optional (cookie security):**
+```bash
+COOKIE_SECURE=true              # set true in production (SameSite=None, Secure)
 ```
 
 **Optional (email reminders):**
@@ -247,33 +254,43 @@ Falls back to SQLite automatically if `DATABASE_URL` is not set.
 ./start.sh --test
 ```
 
-**Test coverage (76 tests):**
+**Test coverage (30 API + 12 browser tests):**
 - Login/logout/register flows
 - Contact CRUD + search + stage filters
 - Deal CRUD + pipeline stages
 - Activity CRUD + completion toggle + due date filters
 - CSV import preview + import
-- Dark mode persistence
-- 404 page + deep linking
-- Sidebar navigation + mobile responsive
+- CORS headers + cookie security
+- Theme toggle (CARGA/Dark/Light)
+- SPA navigation + responsive layout
 
 ## Deployment
 
-### Vercel
-- Root `vercel.json` handles both API and frontend
+### Frontend (Vercel)
 - SPA routing configured for client-side navigation
-- API routes proxy to Python serverless functions
-- **Deploy from project root:** `npx vercel --prod --yes`
+- **Deploy:** `npx vercel --prod --yes`
+- Set `VITE_API_BASE_URL` to backend URL (e.g., `https://simplecrm-e1rk.onrender.com/api`)
+
+### Backend (Render)
+- WSGI via `gunicorn -w 4 -b 0.0.0.0:$PORT run:app`
+- Configured via `render.yaml` in `backend/`
+- Set env vars in Render dashboard: `DATABASE_URL`, `SECRET_KEY`, `JWT_SECRET_KEY`, `FRONTEND_URL`, `COOKIE_SECURE=true`
+- Free tier: spins down after 15 min idle (~30-60 sec cold start)
 
 ### Production Variables
 ```bash
+# Backend (Render)
 SECRET_KEY=<random-key>
 JWT_SECRET_KEY=<random-key>
 DATABASE_URL=postgresql://neondb_owner:...@ep-...neon.tech/neondb?sslmode=require
 FRONTEND_URL=https://frontend-navy-psi-33.vercel.app
+COOKIE_SECURE=true
 RESEND_API_KEY=re_...
 FROM_EMAIL=onboarding@resend.dev
-RESEND_TEST_MODE=true
+RESEND_TEST_MODE=false
+
+# Frontend (Vercel)
+VITE_API_BASE_URL=https://simplecrm-e1rk.onrender.com/api
 ```
 
 ## Troubleshooting
@@ -286,7 +303,7 @@ kill <pid>
 
 **Reset database:**
 ```bash
-cd api && rm -f simplecrm.db && cd .. && ./start.sh
+cd backend && rm -f simplecrm.db && cd .. && ./start.sh
 ```
 
 **Frontend build fails:**
@@ -302,6 +319,11 @@ npx vercel login
 # Deploy from project root (not frontend/)
 npx vercel --prod --yes
 ```
+
+**"Failed to save" error on create (POST returns 308):**
+- Flask-smorest routes use trailing slashes (`/v1/contacts/`)
+- Frontend API calls must include trailing slash for list/create endpoints
+- Without it, Flask returns 308 redirect → axios converts POST to GET
 
 ## License
 

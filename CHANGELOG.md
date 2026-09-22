@@ -2,6 +2,29 @@
 
 All notable changes to SimpleCRM will be documented in this file.
 
+## [3.2.0] - 2026-09-22
+
+### Added
+- Backend deployed to Render (`https://simplecrm-e1rk.onrender.com`)
+- 3-way theme toggle: CARGA (warm beige), Dark, Light
+- Comprehensive E2E test suite: 30 API tests + 12 Playwright browser tests
+- CORS configured for Vercel frontend origin
+- `COOKIE_SECURE` env var for production cookie settings
+- `render.yaml` for Render deployment
+
+### Fixed
+- Contact creation "Failed to save contact" false error — Flask 308 redirect on missing trailing slash caused axios to convert POST → GET. Added trailing slash to all list/create API calls.
+- `ActivitySchema` missing `completed_at`, `deal_title`, `contact_name` fields — API never returned these fields. Added dump_only fields.
+- Vercel `VITE_API_BASE_URL` missing `/api` suffix — caused CORS errors and login failures.
+
+### Changed
+- Project structure: `api/` → `backend/`
+- Frontend on Vercel, backend on Render (was: both on Vercel serverless)
+- README updated with Render deployment, 3-way theme, new env vars
+
+### Removed
+- 30 duplicate test contacts from Neon database (52 → 22 active)
+
 ## [3.1.0] - 2026-09-20
 
 ### Added
