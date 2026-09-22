@@ -57,10 +57,10 @@ describe('AuthContext', () => {
     const { result } = renderHook(() => useAuth(), { wrapper })
     
     await act(async () => {
-      await result.current.login('test@test.com', 'password123')
+      await result.current.login('testuser', 'password123')
     })
     
-    expect(api.post).toHaveBeenCalledWith('/auth/login', { email: 'test@test.com', password: 'password123' })
+    expect(api.post).toHaveBeenCalledWith('/auth/login', { identifier: 'testuser', password: 'password123' })
     expect(result.current.user).toEqual(mockUser)
   })
 

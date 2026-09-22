@@ -7,7 +7,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,7 +19,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(email, password)
+      await login(identifier, password)
       navigate('/')
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message || 'Login failed'
@@ -91,12 +91,12 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
+              label="Email or Username"
+              type="text"
+              placeholder="you@example.com or username"
               icon={<Envelope size={18} className="text-carga-secondary/50 dark:text-carga-primary/50" />}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
             />
             <Input
