@@ -32,7 +32,7 @@ class Config:
 
     SESSION_COOKIE_SECURE = os.environ.get('COOKIE_SECURE', '').lower() == 'true' or os.environ.get('FLASK_ENV') == 'production'
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'None' if os.environ.get('COOKIE_SECURE', '').lower() == 'true' else 'Lax'
 
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID') or ''
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET') or ''
