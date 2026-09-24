@@ -44,3 +44,4 @@ Thumbs.db
 
 # Design review artifacts
 .design-review/
+.env.local
