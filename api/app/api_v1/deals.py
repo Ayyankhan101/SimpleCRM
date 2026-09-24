@@ -17,7 +17,7 @@ def list_deals():
     stage = request.args.get('stage')
     query = Deal.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if stage:
-        query = query.filter(Deal.stage.ilike(stage))
+        query = query.filter_by(stage=stage)
     return query.order_by(Deal.created_at.desc()).all()
 
 
@@ -28,7 +28,6 @@ def list_deals():
 @login_required
 def create_deal(data):
     """Create a new deal."""
-    notes = data.get('notes')
     deal = Deal(
         title=data['title'],
         value=data['value'],
@@ -37,11 +36,10 @@ def create_deal(data):
         probability=data.get('probability', 10),
         expected_close_date=data.get('expected_close_date'),
         contact_id=data.get('contact_id'),
+        notes=data.get('notes'),
         owner_id=current_user.id,
         org_id=current_user.org_id
     )
-    if notes:
-        deal.set_notes(notes)
     db.session.add(deal)
     db.session.commit()
     return deal
@@ -55,11 +53,8 @@ def create_deal(data):
 def update_deal(data, deal_id):
     """Update an existing deal."""
     deal = Deal.query.filter_by(id=deal_id, owner_id=current_user.id, deleted_at=None).first_or_404()
-    allowed_fields = {'title', 'value', 'currency', 'stage', 'probability', 'expected_close_date', 'contact_id'}
     for key, value in data.items():
-        if key == 'notes':
-            deal.set_notes(value)
-        elif key in allowed_fields and hasattr(deal, key):
+        if hasattr(deal, key):
             setattr(deal, key, value)
     deal.updated_at = datetime.now(timezone.utc)
     db.session.commit()

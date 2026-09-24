@@ -67,13 +67,19 @@ def register():
 def login():
     data = request.get_json()
 
-    if not data or not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Email and password required'}), 400
+    if not data or not data.get('identifier') or not data.get('password'):
+        return jsonify({'error': 'Email/username and password required'}), 400
 
-    user = User.query.filter_by(email=data['email']).first()
+    identifier = data['identifier']
+    user = User.query.filter(
+        db.or_(
+            User.email.ilike(identifier),
+            User.username.ilike(identifier)
+        )
+    ).first()
 
     if not user or not user.check_password(data['password']):
-        return jsonify({'error': 'Invalid email or password'}), 401
+        return jsonify({'error': 'Invalid credentials'}), 401
 
     login_user(user)
 

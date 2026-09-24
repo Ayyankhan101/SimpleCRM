@@ -85,6 +85,9 @@ class ActivitySchema(Schema):
     resend_email_id = fields.Str(dump_only=True)
     email_opened_at = fields.DateTime(dump_only=True)
     email_clicked_at = fields.DateTime(dump_only=True)
+    completed_at = fields.DateTime(dump_only=True)
+    deal_title = fields.Str(dump_only=True)
+    contact_name = fields.Str(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
 
 
