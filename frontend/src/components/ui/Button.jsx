@@ -2,10 +2,10 @@ import { forwardRef } from 'react'
 import { motion } from 'framer-motion'
 
 const variants = {
-  primary: 'bg-carga-secondary text-carga-primary hover:opacity-90 border border-carga-secondary',
-  secondary: 'bg-carga-primary/50 text-carga-secondary hover:bg-carga-primary/70 border border-carga-secondary/20',
-  ghost: 'text-carga-secondary hover:bg-carga-primary/50 border border-transparent',
-  danger: 'bg-red-500 text-white hover:bg-red-600 border border-red-500',
+  primary: 'bg-glassfin-secondary text-glassfin-neutral hover:opacity-90 border-0 dark:bg-glassfin-neutral dark:text-glassfin-secondary',
+  secondary: 'bg-glassfin-primary/10 text-glassfin-secondary hover:bg-glassfin-primary/20 border border-glassfin-secondary/15 dark:bg-glassfin-primary/15 dark:text-glassfin-neutral dark:hover:bg-glassfin-primary/25 dark:border-glassfin-neutral/15',
+  ghost: 'text-glassfin-secondary hover:bg-glassfin-primary/8 border border-transparent dark:text-glassfin-neutral dark:hover:bg-glassfin-primary/12',
+  danger: 'bg-red-500 text-white hover:bg-red-600 border-0',
 }
 
 const sizes = {
@@ -27,7 +27,9 @@ const Button = forwardRef(function Button(
         inline-flex items-center justify-center gap-2 font-medium
         transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]
         disabled:opacity-50 disabled:cursor-not-allowed
+        focus-visible:outline-2 focus-visible:outline-glassfin-primary/50 focus-visible:outline-offset-2
         font-display tracking-wide uppercase
+        rounded-full
         ${variants[variant]} ${sizes[size]} ${className}
       `}
       disabled={disabled || loading}

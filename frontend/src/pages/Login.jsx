@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { TrendUp, Envelope, LockKey, ArrowRight } from '@phosphor-icons/react'
+import { ChartIcon, LetterIcon, LockPasswordIcon, AltArrowRightIcon } from '@solar-icons/react/linear'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -40,12 +40,12 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex bg-carga-primary dark:bg-carga-neutral">
+    <div className="min-h-[100dvh] flex bg-glassfin-neutral dark:bg-[#0a1a15]">
       {/* Left panel — branding (always dark) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-carga-neutral relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-glassfin-secondary relative overflow-hidden rounded-r-3xl">
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-carga-tertiary blur-[128px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-carga-secondary blur-[96px]" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-glassfin-tertiary blur-[128px]" />
+          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-glassfin-primary blur-[96px]" />
         </div>
         <div className="relative z-10 flex flex-col justify-center px-16">
           <motion.div
@@ -54,17 +54,17 @@ export default function Login() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-11 h-11 bg-carga-tertiary text-carga-secondary flex items-center justify-center" style={{ borderRadius: 0 }}>
-                <TrendUp size={22} weight="bold" />
+              <div className="w-11 h-11 bg-glassfin-tertiary text-glassfin-secondary flex items-center justify-center rounded-full">
+                <ChartIcon size={22} />
               </div>
-              <span className="text-xl font-bold text-carga-primary tracking-tight font-display">SimpleCRM</span>
+              <span className="text-xl font-bold text-glassfin-neutral tracking-tight font-display">SimpleCRM</span>
             </div>
-            <h1 className="text-4xl font-bold text-carga-primary tracking-tight leading-tight mb-4 font-display">
+            <h1 className="text-4xl font-bold text-glassfin-neutral tracking-tight leading-tight mb-4 font-display">
               Stop paying for
               <br />
               features you'll never use.
             </h1>
-            <p className="text-lg text-carga-primary/50 max-w-md leading-relaxed font-mono">
+            <p className="text-lg text-glassfin-neutral/50 max-w-md leading-relaxed font-mono">
               Contacts, deals, tasks. Nothing more. Built for small businesses that hate HubSpot.
             </p>
           </motion.div>
@@ -72,7 +72,7 @@ export default function Login() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-carga-primary dark:bg-carga-neutral">
+      <div className="flex-1 flex items-center justify-center p-8 bg-glassfin-neutral dark:bg-[#0a1a15]">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -80,21 +80,21 @@ export default function Login() {
           className="w-full max-w-sm"
         >
           <div className="lg:hidden flex items-center gap-2 mb-10">
-            <div className="w-9 h-9 bg-carga-tertiary text-carga-secondary flex items-center justify-center" style={{ borderRadius: 0 }}>
-              <TrendUp size={18} weight="bold" />
+            <div className="w-9 h-9 bg-glassfin-tertiary text-glassfin-secondary flex items-center justify-center rounded-full">
+              <ChartIcon size={18} />
             </div>
-            <span className="text-lg font-bold text-carga-secondary dark:text-carga-primary font-display">SimpleCRM</span>
+            <span className="text-lg font-bold text-glassfin-secondary dark:text-glassfin-neutral font-display">SimpleCRM</span>
           </div>
 
-          <h2 className="text-2xl font-bold text-carga-secondary dark:text-carga-primary tracking-tight mb-1 font-display">Welcome back</h2>
-          <p className="text-sm text-carga-secondary/50 dark:text-carga-primary/50 mb-8 font-mono">Sign in to your account</p>
+          <h2 className="text-2xl font-bold text-glassfin-secondary dark:text-glassfin-neutral tracking-tight mb-1 font-display">Welcome back</h2>
+          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mb-8 font-mono">Sign in to your account</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email or Username"
               type="text"
               placeholder="you@example.com or username"
-              icon={<Envelope size={18} className="text-carga-secondary/50 dark:text-carga-primary/50" />}
+              icon={<LetterIcon size={18} className="text-glassfin-secondary/50 dark:text-glassfin-neutral/50" />}
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               required
@@ -103,7 +103,7 @@ export default function Login() {
               label="Password"
               type="password"
               placeholder="Enter your password"
-              icon={<LockKey size={18} className="text-carga-secondary/50 dark:text-carga-primary/50" />}
+              icon={<LockPasswordIcon size={18} className="text-glassfin-secondary/50 dark:text-glassfin-neutral/50" />}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -113,8 +113,7 @@ export default function Login() {
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400 font-mono"
-                style={{ borderRadius: 0 }}
+                className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-sm text-red-600 dark:text-red-400 font-mono rounded-xl"
               >
                 {error}
               </motion.div>
@@ -122,23 +121,22 @@ export default function Login() {
 
             <Button type="submit" loading={loading} className="w-full">
               Sign in
-              <ArrowRight size={16} weight="bold" />
+              <AltArrowRightIcon size={16} />
             </Button>
           </form>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-carga-secondary/20 dark:border-carga-primary/10" />
+              <div className="w-full border-t border-glassfin-secondary/10 dark:border-glassfin-neutral/10" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-3 bg-carga-primary dark:bg-carga-neutral text-carga-secondary/50 dark:text-carga-primary/50 font-mono">or</span>
+              <span className="px-3 bg-glassfin-neutral dark:bg-[#0a1a15] text-glassfin-secondary/50 dark:text-glassfin-neutral/50 font-mono">or</span>
             </div>
           </div>
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-5 py-2.5 border border-carga-secondary/30 dark:border-carga-primary/20 text-sm font-medium text-carga-secondary dark:text-carga-primary hover:bg-carga-surface dark:hover:bg-carga-surface-dark active:scale-[0.98] transition-all duration-200 font-mono"
-            style={{ borderRadius: 0 }}
+            className="w-full flex items-center justify-center gap-3 px-5 py-2.5 border border-glassfin-secondary/20 dark:border-glassfin-neutral/12 text-sm font-medium text-glassfin-secondary dark:text-glassfin-neutral hover:bg-glassfin-primary/5 dark:hover:bg-glassfin-primary/8 active:scale-[0.98] transition-all duration-200 font-mono rounded-full"
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -149,9 +147,9 @@ export default function Login() {
             Continue with Google
           </button>
 
-          <p className="mt-8 text-center text-sm text-carga-secondary/50 dark:text-carga-primary/50 font-mono">
+          <p className="mt-8 text-center text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 font-mono">
             Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-carga-secondary dark:text-carga-primary hover:opacity-70 transition-opacity">
+            <Link to="/register" className="font-medium text-glassfin-secondary dark:text-glassfin-neutral hover:opacity-70 transition-opacity">
               Sign up
             </Link>
           </p>

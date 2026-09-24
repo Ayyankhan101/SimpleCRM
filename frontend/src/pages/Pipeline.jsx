@@ -4,18 +4,26 @@ import { DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useS
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { CurrencyCircleDollar, CalendarBlank, DotsSixVertical } from '@phosphor-icons/react'
+import { DollarIcon, CalendarIcon, MenuDotsIcon } from '@solar-icons/react/linear'
 import api from '../utils/api'
 import { DEAL_STAGES, getStageColor, getStageLabel, formatCurrency, formatRelativeDate } from '../lib/constants'
 import { CardSkeleton } from '../components/ui/Skeleton'
+import { useToast } from '../components/ui/Toast'
 
 const stageDotColors = {
-  zinc: 'bg-carga-secondary dark:bg-carga-primary',
-  sky: 'bg-sky-500',
-  amber: 'bg-amber-500',
-  orange: 'bg-orange-500',
-  emerald: 'bg-carga-tertiary dark:bg-carga-secondary',
-  red: 'bg-red-500',
+  '#64748b': 'bg-slate-500',
+  '#123029': 'bg-glassfin-secondary dark:bg-glassfin-neutral',
+  '#E0714A': 'bg-glassfin-primary',
+  '#2F9078': 'bg-glassfin-tertiary',
+  '#ef4444': 'bg-red-500',
+}
+
+const stageDotGlows = {
+  '#64748b': 'shadow-[0_0_6px_rgba(100,116,139,0.4)]',
+  '#123029': 'shadow-[0_0_6px_rgba(18,48,41,0.3)]',
+  '#E0714A': 'shadow-[0_0_6px_rgba(224,113,74,0.4)]',
+  '#2F9078': 'shadow-[0_0_6px_rgba(47,144,120,0.4)]',
+  '#ef4444': 'shadow-[0_0_6px_rgba(239,68,68,0.4)]',
 }
 
 function DealCard({ deal, contactName, overlay = false }) {
@@ -34,34 +42,33 @@ function DealCard({ deal, contactName, overlay = false }) {
       ref={setNodeRef}
       style={style}
       className={`
-        bg-carga-surface dark:bg-carga-surface-dark border border-carga-secondary/20 dark:border-carga-primary/20
-        p-4 cursor-grab active:cursor-grabbing
-        ${isDragging ? 'opacity-50 shadow-carga-lg' : 'shadow-carga hover:shadow-carga-lg'}
-        ${overlay ? 'shadow-carga-lg rotate-2' : ''}
+        glass p-4 cursor-grab active:cursor-grabbing
+        ${isDragging ? 'opacity-50 shadow-glass-lg' : 'shadow-glass hover:shadow-glass-lg'}
+        ${overlay ? 'shadow-glass-lg rotate-2' : ''}
         transition-shadow duration-200
       `}
       {...attributes}
       {...listeners}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h4 className="text-sm font-medium text-carga-secondary dark:text-carga-primary leading-tight">{deal.title}</h4>
-        <DotsSixVertical size={14} className="text-carga-secondary/30 dark:text-carga-primary/30 flex-shrink-0 mt-0.5" />
+        <h4 className="text-sm font-medium font-display text-glassfin-secondary dark:text-glassfin-neutral leading-tight">{deal.title}</h4>
+        <MenuDotsIcon size={14} className="text-glassfin-secondary/30 dark:text-glassfin-neutral/30 flex-shrink-0 mt-0.5" />
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold font-mono text-carga-secondary dark:text-carga-primary">
+        <span className="text-sm font-bold font-mono text-glassfin-secondary dark:text-glassfin-neutral">
           {formatCurrency(deal.value)}
         </span>
         {contactName && (
-          <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 truncate max-w-[120px]">
+          <span className="text-xs text-glassfin-secondary/70 dark:text-glassfin-neutral/70 truncate max-w-[120px]">
             {contactName}
           </span>
         )}
       </div>
 
       {deal.expected_close_date && (
-        <div className="flex items-center gap-1 mt-2 text-xs text-carga-secondary/50 dark:text-carga-primary/50">
-          <CalendarBlank size={12} />
+        <div className="flex items-center gap-1 mt-2 text-xs text-glassfin-secondary/50 dark:text-glassfin-neutral/50">
+          <CalendarIcon size={12} />
           {formatRelativeDate(deal.expected_close_date)}
         </div>
       )}
@@ -79,7 +86,8 @@ function DealCardOverlay({ deal, contactName }) {
 
 function ColumnContainer({ stage, deals, contactMap }) {
   const color = getStageColor(DEAL_STAGES, stage)
-  const dotColor = stageDotColors[color] || 'bg-carga-secondary dark:bg-carga-primary'
+  const dotColor = stageDotColors[color] || 'bg-glassfin-secondary dark:bg-glassfin-neutral'
+  const dotGlow = stageDotGlows[color] || ''
   const totalValue = deals.reduce((sum, d) => sum + (d.value || 0), 0)
   const dealIds = deals.map((d) => d.id)
 
@@ -87,40 +95,39 @@ function ColumnContainer({ stage, deals, contactMap }) {
 
   return (
     <div className="flex flex-col min-w-[280px] max-w-[320px] w-full">
-      {/* Column header */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 ${dotColor}`} />
-          <h3 className="text-sm font-display font-semibold text-carga-secondary dark:text-carga-primary">
+          <div className={`w-2.5 h-2.5 ${dotColor} rounded-full ${dotGlow}`} />
+          <h3 className="text-sm font-display font-semibold text-glassfin-secondary dark:text-glassfin-neutral">
             {getStageLabel(DEAL_STAGES, stage)}
           </h3>
-          <span className="text-xs text-carga-secondary/50 dark:text-carga-primary/50 bg-carga-primary/10 dark:bg-carga-secondary/10 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-glassfin-secondary/70 dark:text-glassfin-neutral/70 bg-glassfin-primary/10 dark:bg-glassfin-primary/15 px-2 py-0.5 rounded-full">
             {deals.length}
           </span>
         </div>
         {totalValue > 0 && (
-          <span className="text-xs font-mono text-carga-secondary/70 dark:text-carga-primary/70">
+          <span className="text-xs font-mono text-glassfin-secondary/70 dark:text-glassfin-neutral/70">
             {formatCurrency(totalValue)}
           </span>
         )}
       </div>
 
-      {/* Cards area — droppable container */}
       <div
         ref={setNodeRef}
         className={`
           flex-1 space-y-2 min-h-[120px] p-2 transition-colors duration-150
-          border border-dashed
+          border border-dashed rounded-xl
           ${isOver
-            ? 'bg-carga-tertiary/10 dark:bg-carga-secondary/10 border-carga-tertiary dark:border-carga-secondary'
-            : 'bg-carga-primary/5 dark:bg-carga-secondary/5 border-carga-secondary/20 dark:border-carga-primary/20'
+            ? 'bg-glassfin-tertiary/10 dark:bg-glassfin-tertiary/15 border-glassfin-tertiary dark:border-glassfin-tertiary'
+            : 'bg-glassfin-primary/3 dark:bg-glassfin-primary/5 border-glassfin-secondary/15 dark:border-glassfin-neutral/12'
           }
         `}
       >
         <SortableContext items={dealIds} strategy={verticalListSortingStrategy}>
           {deals.length === 0 ? (
-            <div className="flex items-center justify-center h-24 text-xs text-carga-secondary/40 dark:text-carga-primary/40">
-              {isOver ? 'Drop here' : 'No deals'}
+            <div className="flex flex-col items-center justify-center h-24 text-xs text-glassfin-secondary/50 dark:text-glassfin-neutral/50 gap-1">
+              <DollarIcon size={18} className="opacity-40" />
+              <span>{isOver ? 'Drop here' : 'No deals'}</span>
             </div>
           ) : (
             deals.map((deal) => (
@@ -148,6 +155,7 @@ const item = {
 }
 
 export default function Pipeline() {
+  const { toast } = useToast()
   const [deals, setDeals] = useState([])
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -223,7 +231,8 @@ export default function Pipeline() {
 
     try {
       await api.put(`/v1/deals/${active.id}`, { stage: targetStage })
-    } catch {
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update deal stage')
       fetchData()
     }
   }
@@ -233,8 +242,8 @@ export default function Pipeline() {
   return (
     <motion.div variants={container} initial="hidden" animate="visible">
       <motion.div variants={item} className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-carga-secondary dark:text-carga-primary tracking-tight">Pipeline</h1>
-        <p className="text-sm text-carga-secondary/50 dark:text-carga-primary/50 mt-1">Drag deals between stages</p>
+        <h1 className="text-2xl font-display font-bold text-glassfin-secondary dark:text-glassfin-neutral tracking-tight">Pipeline</h1>
+        <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">Drag deals between stages</p>
       </motion.div>
 
       <DndContext
@@ -244,7 +253,6 @@ export default function Pipeline() {
         onDragEnd={handleDragEnd}
       >
         <motion.div variants={item}>
-          {/* Active pipeline stages */}
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
             {stageColumns.map((stage) => (
               <ColumnContainer
@@ -256,9 +264,8 @@ export default function Pipeline() {
             ))}
           </div>
 
-          {/* Closed stages */}
-          <div className="mt-6 pt-6 border-t border-carga-secondary/10 dark:border-carga-primary/10">
-            <h2 className="text-xs font-semibold text-carga-secondary/40 dark:text-carga-primary/40 uppercase tracking-wider mb-3 px-1">Closed</h2>
+          <div className="mt-6 pt-6 border-t border-glassfin-secondary/10 dark:border-glassfin-neutral/10">
+            <h2 className="text-xs font-semibold font-display text-glassfin-secondary/60 dark:text-glassfin-neutral/60 uppercase tracking-wider mb-3 px-1">Closed</h2>
             <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
               {closedColumns.map((stage) => (
                 <ColumnContainer

@@ -1,36 +1,22 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
 import App from '../App'
-import { AuthProvider } from '../context/AuthContext'
-import { ThemeProvider } from '../context/ThemeContext'
 import api from '../utils/api'
+import { renderWithProviders } from './test-utils'
 
 vi.mock('../utils/api')
-
-const renderApp = (initialEntries = ['/']) => {
-  return render(
-    <MemoryRouter initialEntries={initialEntries}>
-      <ThemeProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </ThemeProvider>
-    </MemoryRouter>
-  )
-}
 
 describe('App', () => {
   it('shows loading state while checking auth', () => {
     api.get.mockImplementation(() => new Promise(() => {}))
-    renderApp()
+    renderWithProviders(<App />)
     expect(screen.getByText('Loading...')).toBeInTheDocument()
   })
 
   it('renders login page for unauthenticated users', async () => {
     api.get.mockRejectedValue(new Error('Not logged in'))
-    renderApp(['/'])
-    
+    renderWithProviders(<App />, { initialEntries: ['/'] })
+
     await waitFor(() => {
       expect(screen.getByText('Welcome back')).toBeInTheDocument()
     })
@@ -38,8 +24,8 @@ describe('App', () => {
 
   it('renders login page on /login route', async () => {
     api.get.mockRejectedValue(new Error('Not logged in'))
-    renderApp(['/login'])
-    
+    renderWithProviders(<App />, { initialEntries: ['/login'] })
+
     await waitFor(() => {
       expect(screen.getByText('Welcome back')).toBeInTheDocument()
     })
@@ -47,17 +33,17 @@ describe('App', () => {
 
   it('renders register page on /register route', async () => {
     api.get.mockRejectedValue(new Error('Not logged in'))
-    renderApp(['/register'])
-    
+    renderWithProviders(<App />, { initialEntries: ['/register'] })
+
     await waitFor(() => {
-      expect(screen.getByText('Create account')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Create account' })).toBeInTheDocument()
     })
   })
 
   it('redirects unauthenticated users from protected routes', async () => {
     api.get.mockRejectedValue(new Error('Not logged in'))
-    renderApp(['/data'])
-    
+    renderWithProviders(<App />, { initialEntries: ['/data'] })
+
     await waitFor(() => {
       expect(screen.getByText('Welcome back')).toBeInTheDocument()
     })
@@ -67,9 +53,9 @@ describe('App', () => {
     const mockUser = { id: 1, email: 'test@test.com', username: 'testuser' }
     api.get.mockResolvedValueOnce({ data: { user: mockUser } })
     api.get.mockResolvedValue({ data: { total_entries: 10, total_confirmed: 100, countries_count: 5, top_countries: [] } })
-    
-    renderApp(['/'])
-    
+
+    renderWithProviders(<App />, { initialEntries: ['/'] })
+
     await waitFor(() => {
       expect(screen.getByText('Dashboard')).toBeInTheDocument()
     })

@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
 import Register from '../pages/Register'
-import { AuthProvider } from '../context/AuthContext'
 import api from '../utils/api'
+import { renderWithProviders } from './test-utils'
 
 vi.mock('../utils/api')
 
@@ -16,17 +15,11 @@ beforeEach(() => {
 describe('Register', () => {
   it('renders registration form', async () => {
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/register']}>
-          <AuthProvider>
-            <Register />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Register />, { initialEntries: ['/register'] })
     })
 
     await waitFor(() => {
-      expect(screen.getByText('Create Account')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Create account' })).toBeInTheDocument()
     })
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument()
@@ -36,33 +29,21 @@ describe('Register', () => {
 
   it('renders login link', async () => {
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/register']}>
-          <AuthProvider>
-            <Register />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Register />, { initialEntries: ['/register'] })
     })
 
     await waitFor(() => {
-      expect(screen.getByText('Create Account')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Create account' })).toBeInTheDocument()
     })
     expect(screen.getByText(/already have an account/i)).toBeInTheDocument()
-    expect(screen.getByText('Login')).toBeInTheDocument()
+    expect(screen.getByText('Sign in')).toBeInTheDocument()
   })
 
   it('updates form fields', async () => {
     const user = userEvent.setup()
 
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/register']}>
-          <AuthProvider>
-            <Register />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Register />, { initialEntries: ['/register'] })
     })
 
     await waitFor(() => {
@@ -86,13 +67,7 @@ describe('Register', () => {
     api.post.mockResolvedValue({ data: { user: mockUser } })
 
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/register']}>
-          <AuthProvider>
-            <Register />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Register />, { initialEntries: ['/register'] })
     })
 
     await waitFor(() => {
@@ -105,7 +80,7 @@ describe('Register', () => {
     await user.type(screen.getByLabelText(/confirm password/i), 'Password123')
 
     await act(async () => {
-      await user.click(screen.getByRole('button', { name: /sign up/i }))
+      await user.click(screen.getByRole('button', { name: /create account/i }))
     })
 
     expect(api.post).toHaveBeenCalledWith('/auth/register', {
@@ -120,13 +95,7 @@ describe('Register', () => {
     api.post.mockRejectedValue({ response: { data: { error: 'Email already registered' } } })
 
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/register']}>
-          <AuthProvider>
-            <Register />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Register />, { initialEntries: ['/register'] })
     })
 
     await waitFor(() => {
@@ -139,7 +108,7 @@ describe('Register', () => {
     await user.type(screen.getByLabelText(/confirm password/i), 'Password123')
 
     await act(async () => {
-      await user.click(screen.getByRole('button', { name: /sign up/i }))
+      await user.click(screen.getByRole('button', { name: /create account/i }))
     })
 
     await waitFor(() => {

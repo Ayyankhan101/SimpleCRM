@@ -1,32 +1,37 @@
-import { forwardRef } from 'react'
+import { forwardRef, useId } from 'react'
 
 const Input = forwardRef(function Input(
   { label, error, className = '', ...props },
   ref
 ) {
+  const id = useId()
+  const errorId = error ? `${id}-error` : undefined
+
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-xs font-display font-medium text-carga-secondary dark:text-carga-primary tracking-widest uppercase">
+        <label htmlFor={id} className="block text-xs font-display font-medium text-glassfin-secondary dark:text-glassfin-neutral tracking-widest uppercase">
           {label}
         </label>
       )}
       <input
         ref={ref}
+        id={id}
+        aria-describedby={errorId}
+        aria-invalid={error ? 'true' : undefined}
         className={`
-          w-full px-4 py-2.5 border bg-carga-primary/30 dark:bg-carga-neutral/30
-          text-carga-secondary dark:text-carga-primary font-mono text-xs
-          placeholder:text-carga-secondary/40 dark:placeholder:text-carga-primary/40
-          focus:outline-none focus:ring-2 focus:ring-carga-tertiary/50 focus:border-carga-secondary
-          transition-all duration-200
-          ${error ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-carga-secondary/30 dark:border-carga-primary/20'}
+          w-full px-4 py-2.5 border bg-glassfin-neutral/40 dark:bg-glassfin-secondary/40
+          text-glassfin-secondary dark:text-glassfin-neutral font-mono text-xs
+          placeholder:text-glassfin-secondary/40 dark:placeholder:text-glassfin-neutral/35
+          focus:outline-none focus:ring-2 focus:ring-glassfin-primary/20 focus:border-glassfin-primary
+          transition-all duration-200 rounded-xl
+          ${error ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-glassfin-secondary/15 dark:border-glassfin-neutral/12'}
           ${className}
         `}
-        style={{ borderRadius: 0 }}
         {...props}
       />
       {error && (
-        <p className="text-xs text-red-500 font-mono">{error}</p>
+        <p id={errorId} className="text-xs text-red-500 font-mono" role="alert">{error}</p>
       )}
     </div>
   )
