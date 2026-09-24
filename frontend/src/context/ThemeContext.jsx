@@ -2,28 +2,34 @@ import { createContext, useContext, useState, useEffect } from 'react'
 
 const ThemeContext = createContext()
 
-const THEMES = ['carga', 'dark', 'light']
+const THEMES = ['glassfin', 'dark', 'light']
 
 function getInitialTheme() {
-  const stored = localStorage.getItem('simplecrm-theme')
-  if (THEMES.includes(stored)) return stored
-  return 'carga'
+  try {
+    const stored = localStorage.getItem('glassfin-theme')
+    if (THEMES.includes(stored)) return stored
+  } catch {}
+  return 'glassfin'
 }
 
 function applyTheme(theme) {
-  document.documentElement.classList.remove('dark', 'light')
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark')
-  } else if (theme === 'light') {
-    document.documentElement.classList.add('light')
-  }
+  try {
+    document.documentElement.classList.remove('dark', 'light', 'glassfin')
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else if (theme === 'light') {
+      document.documentElement.classList.add('light')
+    } else {
+      document.documentElement.classList.add('glassfin')
+    }
+  } catch {}
 }
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(getInitialTheme)
 
   const setThemeAndPersist = (t) => {
-    localStorage.setItem('simplecrm-theme', t)
+    try { localStorage.setItem('glassfin-theme', t) } catch {}
     setTheme(t)
     applyTheme(t)
   }

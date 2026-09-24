@@ -3,15 +3,26 @@ services:
     name: simplecrm-api
     runtime: docker
     dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
     envVars:
       - key: SECRET_KEY
         generateValue: true
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:///data.db
+        value: postgresql://neondb_owner:npg_8NKtLl4fkjnX@ep-hidden-sky-b5l9moai.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require
       - key: FLASK_ENV
         value: production
+      - key: COOKIE_SECURE
+        value: "true"
       - key: FRONTEND_URL
         sync: false
-        value: https://simplecrm-frontend.vercel.app
+        value: https://simplecrm-frontend.onrender.com
+
+  - type: static_site
+    name: simplecrm-frontend
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://simplecrm-api.onrender.com

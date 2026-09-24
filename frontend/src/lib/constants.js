@@ -1,37 +1,37 @@
 export const CONTACT_STAGES = [
-  { value: 'lead', label: 'Lead', color: '#71717a' },
-  { value: 'prospect', label: 'Prospect', color: '#332B1C' },
-  { value: 'proposal', label: 'Proposal', color: '#a8a29e' },
-  { value: 'negotiation', label: 'Negotiation', color: '#E2F4CB' },
-  { value: 'closed_won', label: 'Won', color: '#E2F4CB' },
+  { value: 'lead', label: 'Lead', color: '#64748b' },
+  { value: 'prospect', label: 'Prospect', color: '#123029' },
+  { value: 'proposal', label: 'Proposal', color: '#E0714A' },
+  { value: 'negotiation', label: 'Negotiation', color: '#2F9078' },
+  { value: 'closed_won', label: 'Won', color: '#2F9078' },
   { value: 'closed_lost', label: 'Lost', color: '#ef4444' },
 ]
 
 export const DEAL_STAGES = [
-  { value: 'lead', label: 'Lead', color: '#71717a' },
-  { value: 'qualified', label: 'Qualified', color: '#332B1C' },
-  { value: 'proposal', label: 'Proposal', color: '#a8a29e' },
-  { value: 'negotiation', label: 'Negotiation', color: '#E2F4CB' },
-  { value: 'closed_won', label: 'Won', color: '#E2F4CB' },
+  { value: 'lead', label: 'Lead', color: '#64748b' },
+  { value: 'qualified', label: 'Qualified', color: '#123029' },
+  { value: 'proposal', label: 'Proposal', color: '#E0714A' },
+  { value: 'negotiation', label: 'Negotiation', color: '#2F9078' },
+  { value: 'closed_won', label: 'Won', color: '#2F9078' },
   { value: 'closed_lost', label: 'Lost', color: '#ef4444' },
 ]
 
 export const ACTIVITY_TYPES = [
-  { value: 'call', label: 'Call', color: '#332B1C' },
-  { value: 'email', label: 'Email', color: '#E2F4CB' },
-  { value: 'meeting', label: 'Meeting', color: '#a8a29e' },
+  { value: 'call', label: 'Call', color: '#123029' },
+  { value: 'email', label: 'Email', color: '#2F9078' },
+  { value: 'meeting', label: 'Meeting', color: '#E0714A' },
   { value: 'note', label: 'Note', color: '#71717a' },
-  { value: 'task', label: 'Task', color: '#E2F4CB' },
+  { value: 'task', label: 'Task', color: '#2F9078' },
   { value: 'follow_up', label: 'Follow Up', color: '#ef4444' },
 ]
 
-export const CARGA_COLORS = {
-  primary: '#F0E5C5',
-  secondary: '#332B1C',
-  tertiary: '#E2F4CB',
-  neutral: '#121212',
+export const GLASSFIN_COLORS = {
+  primary: '#E0714A',
+  secondary: '#123029',
+  tertiary: '#2F9078',
+  neutral: '#FFF6F1',
   danger: '#ef4444',
-  muted: '#71717a',
+  muted: '#64748b',
   subtle: '#a8a29e',
 }
 

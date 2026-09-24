@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
 import Login from '../pages/Login'
-import { AuthProvider } from '../context/AuthContext'
 import api from '../utils/api'
+import { renderWithProviders } from './test-utils'
 
 vi.mock('../utils/api')
 
@@ -16,17 +15,11 @@ beforeEach(() => {
 describe('Login', () => {
   it('renders login form', async () => {
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/login']}>
-          <AuthProvider>
-            <Login />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Login />, { initialEntries: ['/login'] })
     })
 
     await waitFor(() => {
-      expect(screen.getByText('Welcome Back')).toBeInTheDocument()
+      expect(screen.getByText('Welcome back')).toBeInTheDocument()
     })
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
@@ -34,13 +27,7 @@ describe('Login', () => {
 
   it('renders Google login button', async () => {
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/login']}>
-          <AuthProvider>
-            <Login />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Login />, { initialEntries: ['/login'] })
     })
 
     await waitFor(() => {
@@ -50,13 +37,7 @@ describe('Login', () => {
 
   it('renders register link', async () => {
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/login']}>
-          <AuthProvider>
-            <Login />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Login />, { initialEntries: ['/login'] })
     })
 
     await waitFor(() => {
@@ -70,13 +51,7 @@ describe('Login', () => {
     api.post.mockResolvedValue({ data: { user: mockUser } })
 
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/login']}>
-          <AuthProvider>
-            <Login />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Login />, { initialEntries: ['/login'] })
     })
 
     await waitFor(() => {
@@ -87,11 +62,11 @@ describe('Login', () => {
     await user.type(screen.getByLabelText(/password/i), 'password123')
 
     await act(async () => {
-      await user.click(screen.getByRole('button', { name: /login/i }))
+      await user.click(screen.getByRole('button', { name: /sign in/i }))
     })
 
     expect(api.post).toHaveBeenCalledWith('/auth/login', {
-      email: 'test@test.com',
+      identifier: 'test@test.com',
       password: 'password123'
     })
   })
@@ -101,13 +76,7 @@ describe('Login', () => {
     api.post.mockRejectedValue({ response: { data: { error: 'Invalid credentials' } } })
 
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/login']}>
-          <AuthProvider>
-            <Login />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Login />, { initialEntries: ['/login'] })
     })
 
     await waitFor(() => {
@@ -118,7 +87,7 @@ describe('Login', () => {
     await user.type(screen.getByLabelText(/password/i), 'wrongpassword')
 
     await act(async () => {
-      await user.click(screen.getByRole('button', { name: /login/i }))
+      await user.click(screen.getByRole('button', { name: /sign in/i }))
     })
 
     await waitFor(() => {
@@ -131,13 +100,7 @@ describe('Login', () => {
     api.post.mockImplementation(() => new Promise(() => {}))
 
     await act(async () => {
-      render(
-        <MemoryRouter initialEntries={['/login']}>
-          <AuthProvider>
-            <Login />
-          </AuthProvider>
-        </MemoryRouter>
-      )
+      renderWithProviders(<Login />, { initialEntries: ['/login'] })
     })
 
     await waitFor(() => {
@@ -148,11 +111,12 @@ describe('Login', () => {
     await user.type(screen.getByLabelText(/password/i), 'password123')
 
     await act(async () => {
-      await user.click(screen.getByRole('button', { name: /login/i }))
+      await user.click(screen.getByRole('button', { name: /sign in/i }))
     })
 
     await waitFor(() => {
-      expect(screen.getByText('Logging in...')).toBeInTheDocument()
+      const submitBtn = screen.getByRole('button', { name: /sign in/i })
+      expect(submitBtn).toBeDisabled()
     })
   })
 })

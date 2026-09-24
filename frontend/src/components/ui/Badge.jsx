@@ -1,11 +1,26 @@
+import { useTheme } from '../../context/ThemeContext'
+
 export default function Badge({ color = '#71717a', children, dot = false }) {
-  const isLight = color === '#E2F4CB' || color === '#F0E5C5' || color === '#a8a29e'
-  const textColor = isLight ? '#332B1C' : color === '#ef4444' ? '#fff' : '#F0E5C5'
-  const bgColor = color === '#ef4444' ? color : `${color}22`
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
+  const isLightColor = color === '#2F9078' || color === '#E0714A' || color === '#a8a29e'
+  const textColor = isDark
+    ? '#FFF6F1'
+    : isLightColor
+      ? '#FFF6F1'
+      : color === '#ef4444'
+        ? '#fff'
+        : '#123029'
+  const bgColor = isDark
+    ? `${color}30`
+    : color === '#ef4444'
+      ? color
+      : `${color}22`
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium font-display tracking-wide uppercase"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium font-display tracking-wide uppercase rounded-full"
       style={{
         color: textColor,
         backgroundColor: bgColor,

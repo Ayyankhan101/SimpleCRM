@@ -17,6 +17,10 @@ api.interceptors.response.use(
   },
   error => {
     if (error.response?.status === 401) {
+      const url = error.config?.url || ''
+      if (url.includes('/auth/me')) {
+        return Promise.reject(error)
+      }
       const now = Date.now()
       const path = window.location.pathname
       if (path !== '/login' && path !== '/register' && now - lastRedirect > 2000) {

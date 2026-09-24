@@ -1,36 +1,39 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { House, Users, CurrencyCircleDollar, Lightning, SignOut, List, X, Sun, Moon, Funnel, Leaf } from '@phosphor-icons/react'
+import { HomeIcon, UsersGroupRoundedIcon, DollarIcon, FilterIcon, LightningIcon, LogoutIcon, HamburgerMenuIcon, CloseIcon, SunIcon, MoonIcon, LeafIcon } from '@solar-icons/react/linear'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
 const navItems = [
-  { to: '/', icon: House, label: 'Dashboard', end: true },
-  { to: '/contacts', icon: Users, label: 'Contacts' },
-  { to: '/deals', icon: CurrencyCircleDollar, label: 'Deals' },
-  { to: '/pipeline', icon: Funnel, label: 'Pipeline' },
-  { to: '/activities', icon: Lightning, label: 'Activities' },
+  { to: '/', icon: HomeIcon, label: 'Dashboard', end: true },
+  { to: '/contacts', icon: UsersGroupRoundedIcon, label: 'Contacts' },
+  { to: '/deals', icon: DollarIcon, label: 'Deals' },
+  { to: '/pipeline', icon: FilterIcon, label: 'Pipeline' },
+  { to: '/activities', icon: LightningIcon, label: 'Activities' },
 ]
 
 function ThemeToggle({ className = '' }) {
   const { theme, cycleTheme } = useTheme()
-  
+  const isGlassfin = theme === 'glassfin'
+
   const configs = {
-    carga: { icon: Leaf, label: 'CARGA', next: 'dark' },
-    dark: { icon: Moon, label: 'Dark', next: 'light' },
-    light: { icon: Sun, label: 'Light', next: 'carga' },
+    glassfin: { icon: LeafIcon, label: 'GLASSFIN', next: 'dark' },
+    dark: { icon: MoonIcon, label: 'Dark', next: 'light' },
+    light: { icon: SunIcon, label: 'Light', next: 'glassfin' },
   }
-  
-  const { icon: Icon, label } = configs[theme] || configs.carga
-  
+
+  const { icon: Icon, label } = configs[theme] || configs.glassfin
+
   return (
     <button
       onClick={cycleTheme}
-      className={`flex items-center gap-3 w-full px-3 py-2.5 text-xs font-display tracking-widest uppercase transition-colors duration-200 ${
+      className={`flex items-center gap-3 w-full px-3 py-2.5 text-xs font-display tracking-widest uppercase transition-colors duration-200 rounded-full ${
         theme === 'dark'
-          ? 'text-carga-primary/50 hover:text-carga-primary hover:bg-carga-primary/10'
-          : 'text-carga-secondary/50 hover:text-carga-secondary hover:bg-carga-primary/50'
+          ? 'text-glassfin-primary/50 hover:text-glassfin-primary hover:bg-glassfin-primary/10'
+          : theme === 'light'
+            ? 'text-glassfin-secondary/50 hover:text-glassfin-secondary hover:bg-glassfin-secondary/8'
+            : 'text-glassfin-neutral/50 hover:text-glassfin-neutral hover:bg-glassfin-primary/10'
       } ${className}`}
     >
       <Icon size={20} />
@@ -40,14 +43,18 @@ function ThemeToggle({ className = '' }) {
 }
 
 function SidebarContent({ user, onLogout, onNavClick }) {
+  const { theme } = useTheme()
+  const isLight = theme === 'light'
+  const isGlassfin = theme === 'glassfin'
+
   return (
     <>
       <div className="px-6 pt-6 pb-8">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-carga-tertiary flex items-center justify-center" style={{ borderRadius: 0 }}>
-            <span className="text-carga-secondary font-display font-bold text-sm">S</span>
+          <div className={`w-9 h-9 ${isLight ? 'bg-glassfin-secondary' : 'bg-glassfin-tertiary'} flex items-center justify-center rounded-full`}>
+            <span className={`${isLight ? 'text-glassfin-neutral' : 'text-glassfin-neutral'} font-display font-bold text-sm`}>S</span>
           </div>
-          <span className="text-lg font-display font-bold text-carga-primary tracking-widest uppercase">SimpleCRM</span>
+          <span className={`text-lg font-display font-bold ${isLight ? 'text-glassfin-secondary' : 'text-glassfin-primary'} tracking-widest uppercase`}>SimpleCRM</span>
         </div>
       </div>
 
@@ -59,10 +66,16 @@ function SidebarContent({ user, onLogout, onNavClick }) {
             end={end}
             onClick={onNavClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 text-xs font-display tracking-widest uppercase transition-all duration-200 ${
+              `flex items-center gap-3 px-3 py-2.5 text-xs font-display tracking-widest uppercase transition-all duration-200 rounded-full ${
                 isActive
-                  ? 'bg-carga-primary/20 text-carga-primary'
-                  : 'text-carga-primary/50 hover:text-carga-primary hover:bg-carga-primary/10'
+                  ? isLight
+                    ? 'bg-glassfin-secondary/10 text-glassfin-secondary'
+                    : 'bg-glassfin-primary/15 text-glassfin-primary dark:bg-glassfin-primary/20 dark:text-glassfin-primary'
+                  : isLight
+                    ? 'text-glassfin-secondary/50 hover:text-glassfin-secondary hover:bg-glassfin-secondary/8'
+                    : isGlassfin
+                      ? 'text-glassfin-neutral/60 hover:text-glassfin-neutral hover:bg-glassfin-primary/8'
+                      : 'text-glassfin-neutral/50 hover:text-glassfin-neutral hover:bg-glassfin-primary/12'
               }`
             }
           >
@@ -72,11 +85,11 @@ function SidebarContent({ user, onLogout, onNavClick }) {
                   {isActive && (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute -left-3 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-carga-tertiary"
+                      className={`absolute -left-3 top-1/2 -translate-y-1/2 w-0.5 h-5 ${isLight ? 'bg-glassfin-secondary' : 'bg-glassfin-tertiary'} rounded-full`}
                       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     />
                   )}
-                  <Icon size={20} weight={isActive ? 'fill' : 'regular'} />
+                  <Icon size={20} weight={isActive ? 'Bold' : 'Linear'} />
                 </div>
                 <span>{label}</span>
               </>
@@ -87,23 +100,23 @@ function SidebarContent({ user, onLogout, onNavClick }) {
 
       <div className="px-3 pb-4 mt-auto space-y-1">
         <ThemeToggle />
-        <div className="border-t border-carga-primary/10 pt-4">
+        <div className={`border-t ${isLight ? 'border-glassfin-secondary/10' : 'border-glassfin-neutral/10'} pt-4`}>
           <div className="flex items-center gap-3 px-3 mb-3">
-            <div className="w-9 h-9 bg-carga-tertiary flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
-              <span className="text-carga-secondary text-sm font-display font-semibold">
+            <div className={`w-9 h-9 ${isLight ? 'bg-glassfin-secondary' : 'bg-glassfin-tertiary'} flex items-center justify-center flex-shrink-0 rounded-full`}>
+              <span className="text-glassfin-neutral text-sm font-display font-semibold">
                 {user?.username?.[0]?.toUpperCase() || 'U'}
               </span>
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-display tracking-widest uppercase text-carga-primary truncate">{user?.username}</div>
-              <div className="text-xs text-carga-primary/40 font-mono truncate">{user?.email}</div>
+              <div className={`text-xs font-display tracking-widest uppercase ${isLight ? 'text-glassfin-secondary' : 'text-glassfin-neutral'} truncate`}>{user?.username}</div>
+              <div className={`text-xs ${isLight ? 'text-glassfin-secondary/40' : 'text-glassfin-neutral/40'} font-mono truncate`}>{user?.email}</div>
             </div>
           </div>
           <button
             onClick={onLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 text-xs font-display tracking-widest uppercase text-carga-primary/50 hover:text-red-400 hover:bg-red-500/10 transition-colors duration-200"
+            className={`flex items-center gap-3 w-full px-3 py-2.5 text-xs font-display tracking-widest uppercase ${isLight ? 'text-glassfin-secondary/50 hover:text-red-600 hover:bg-red-50' : isGlassfin ? 'text-glassfin-neutral/50 hover:text-red-400 hover:bg-red-500/12' : 'text-glassfin-neutral/50 hover:text-red-400 hover:bg-red-500/12'} transition-colors duration-200 rounded-full`}
           >
-            <SignOut size={20} />
+            <LogoutIcon size={20} />
             <span>Log out</span>
           </button>
         </div>
@@ -114,8 +127,10 @@ function SidebarContent({ user, onLogout, onNavClick }) {
 
 export default function Layout() {
   const { user, logout } = useAuth()
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const isLight = theme === 'light'
 
   const handleLogout = async () => {
     await logout()
@@ -123,9 +138,9 @@ export default function Layout() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] bg-carga-primary dark:bg-carga-neutral">
+    <div className={`flex min-h-[100dvh] ${isLight ? 'bg-[#f5ede6]' : 'bg-glassfin-neutral dark:bg-[#0a1a15]'}`}>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-carga-secondary border-r border-carga-secondary z-30">
+      <aside className={`hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 ${isLight ? 'bg-[#f5ede6] border-r border-glassfin-secondary/10' : 'bg-glassfin-secondary'} z-30 rounded-r-2xl`}>
         <SidebarContent user={user} onLogout={handleLogout} />
       </aside>
 
@@ -137,7 +152,7 @@ export default function Layout() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-carga-neutral/40 backdrop-blur-sm z-40 lg:hidden"
+            className={`fixed inset-0 ${isLight ? 'bg-glassfin-secondary/20' : 'bg-glassfin-secondary/40'} backdrop-blur-sm z-40 lg:hidden`}
             onClick={() => setMobileOpen(false)}
           />
         )}
@@ -152,13 +167,13 @@ export default function Layout() {
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-y-0 left-0 w-72 bg-carga-secondary shadow-carga-lg z-50 lg:hidden flex flex-col"
+            className={`fixed inset-y-0 left-0 w-72 ${isLight ? 'bg-[#f5ede6]' : 'bg-glassfin-secondary shadow-glass-dark'} z-50 lg:hidden flex flex-col rounded-r-2xl`}
           >
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 p-2 text-carga-primary/50 hover:text-carga-primary hover:bg-carga-primary/10 transition-colors"
+              className={`absolute top-4 right-4 p-2 ${isLight ? 'text-glassfin-secondary/50 hover:text-glassfin-secondary hover:bg-glassfin-secondary/10' : 'text-glassfin-neutral/50 hover:text-glassfin-neutral hover:bg-glassfin-primary/15'} transition-colors rounded-full`}
             >
-              <X size={20} />
+              <CloseIcon size={20} />
             </button>
             <SidebarContent user={user} onLogout={handleLogout} onNavClick={() => setMobileOpen(false)} />
           </motion.aside>
@@ -168,18 +183,18 @@ export default function Layout() {
       {/* Main content */}
       <div className="flex-1 lg:ml-64">
         {/* Mobile header */}
-        <div className="lg:hidden sticky top-0 z-20 bg-carga-secondary border-b border-carga-secondary px-4 py-3 flex items-center gap-3">
+        <div className={`lg:hidden sticky top-0 z-20 ${isLight ? 'bg-[#f5ede6]/80 border-b border-glassfin-secondary/10' : 'bg-glassfin-secondary/80 backdrop-blur-lg border-b border-glassfin-secondary/10'} px-4 py-3 flex items-center gap-3`}>
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-2 -ml-2 text-carga-primary/50 hover:text-carga-primary transition-colors"
+            className={`p-2 -ml-2 ${isLight ? 'text-glassfin-secondary/50 hover:text-glassfin-secondary' : 'text-glassfin-neutral/50 hover:text-glassfin-neutral'} transition-colors rounded-full`}
           >
-            <List size={22} />
+            <HamburgerMenuIcon size={22} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-carga-tertiary flex items-center justify-center" style={{ borderRadius: 0 }}>
-              <span className="text-carga-secondary font-display font-bold text-xs">S</span>
+            <div className={`w-7 h-7 ${isLight ? 'bg-glassfin-secondary' : 'bg-glassfin-tertiary'} flex items-center justify-center rounded-full`}>
+              <span className="text-glassfin-neutral font-display font-bold text-xs">S</span>
             </div>
-            <span className="font-display font-bold text-carga-primary tracking-widest uppercase">SimpleCRM</span>
+            <span className={`font-display font-bold ${isLight ? 'text-glassfin-secondary' : 'text-glassfin-neutral'} tracking-widest uppercase`}>SimpleCRM</span>
           </div>
         </div>
 

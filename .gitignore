@@ -41,3 +41,6 @@ Thumbs.db
 .env*
 .neon
 .freebuff/
+
+# Design review artifacts
+.design-review/
