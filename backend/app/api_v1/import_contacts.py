@@ -3,7 +3,7 @@ import io
 from flask import request, jsonify
 from flask_login import current_user, login_required
 from app.models import Contact, db
-from app.api_v1 import contacts_blp
+from app.api_v1 import contacts_blp, _stats_cache
 
 ALLOWED_COLUMNS = {
     'first_name', 'last_name', 'email', 'phone', 'company',
@@ -233,6 +233,7 @@ def execute_import():
 
     if created > 0:
         db.session.commit()
+        _stats_cache.invalidate()
 
     return jsonify({
         'message': f'Import complete: {created} created, {skipped} skipped',

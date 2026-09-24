@@ -7,7 +7,7 @@ from flask_login import current_user, login_required
 
 from app.models import Deal, db
 from app.schemas import DealSchema
-from app.api_v1 import deals_blp
+from app.api_v1 import deals_blp, _stats_cache
 
 PIPELINE_STAGES = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']
 
@@ -72,6 +72,7 @@ def create_deal(data):
     )
     db.session.add(deal)
     db.session.commit()
+    _stats_cache.invalidate()
     return deal
 
 
@@ -88,6 +89,7 @@ def update_deal(data, deal_id):
             setattr(deal, key, value)
     deal.updated_at = datetime.now(timezone.utc)
     db.session.commit()
+    _stats_cache.invalidate()
     return deal
 
 
@@ -100,4 +102,5 @@ def delete_deal(deal_id):
     deal = Deal.query.filter_by(id=deal_id, owner_id=current_user.id, deleted_at=None).first_or_404()
     deal.deleted_at = datetime.now(timezone.utc)
     db.session.commit()
+    _stats_cache.invalidate()
     return '', 204

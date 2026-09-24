@@ -1,3 +1,4 @@
+import time
 from collections import defaultdict
 
 from flask_smorest import Blueprint
@@ -11,6 +12,32 @@ contacts_blp = Blueprint('contacts', 'Contacts', url_prefix='/api/v1/contacts', 
 deals_blp = Blueprint('deals', 'Deals', url_prefix='/api/v1/deals', description='Deal pipeline')
 activities_blp = Blueprint('activities', 'Activities', url_prefix='/api/v1/activities', description='Activity tracking')
 stats_blp = Blueprint('stats', 'Stats', url_prefix='/api/v1/stats', description='Dashboard statistics')
+
+
+class TTLCache:
+    def __init__(self, ttl=15):
+        self._store = {}
+        self._ttl = ttl
+
+    def get(self, key):
+        if key in self._store:
+            value, ts = self._store[key]
+            if time.time() - ts < self._ttl:
+                return value
+            del self._store[key]
+        return None
+
+    def set(self, key, value):
+        self._store[key] = (value, time.time())
+
+    def invalidate(self, key=None):
+        if key:
+            self._store.pop(key, None)
+        else:
+            self._store.clear()
+
+
+_stats_cache = TTLCache(ttl=15)
 
 
 def _activity_base_filter(user_id):
@@ -48,6 +75,10 @@ def _get_activity_lists(user_id, limit=5):
 @login_required
 def get_stats():
     """Get dashboard statistics without fetching all records."""
+    cache_key = f'stats:{current_user.id}'
+    cached = _stats_cache.get(cache_key)
+    if cached:
+        return jsonify(cached)
     owner_filter = Contact.owner_id == current_user.id
     contact_count = db.session.query(func.count(Contact.id)).filter(owner_filter, Contact.deleted_at.is_(None)).scalar() or 0
     deal_count = db.session.query(func.count(Deal.id)).filter(Deal.owner_id == current_user.id, Deal.deleted_at.is_(None)).scalar() or 0
@@ -111,7 +142,7 @@ def get_stats():
 
     overdue, due_today, upcoming = _get_activity_lists(current_user.id, limit=5)
 
-    return jsonify({
+    result = {
         'contacts': contact_count,
         'deals': deal_count,
         'activities': activity_count,
@@ -122,4 +153,6 @@ def get_stats():
         'overdue_activities': [a.to_dict() for a in overdue],
         'due_today_activities': [a.to_dict() for a in due_today],
         'upcoming_activities': [a.to_dict() for a in upcoming],
-    })
+    }
+    _stats_cache.set(cache_key, result)
+    return jsonify(result)

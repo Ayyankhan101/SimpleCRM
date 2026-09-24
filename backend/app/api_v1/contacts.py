@@ -6,7 +6,7 @@ from flask_login import current_user, login_required
 
 from app.models import Contact, Deal, Activity, db
 from app.schemas import ContactSchema, ContactDetailSchema
-from app.api_v1 import contacts_blp
+from app.api_v1 import contacts_blp, _stats_cache
 
 
 @contacts_blp.route('/', methods=['GET'])
@@ -91,6 +91,7 @@ def create_contact(data):
     )
     db.session.add(contact)
     db.session.commit()
+    _stats_cache.invalidate()
     return contact
 
 
@@ -108,6 +109,7 @@ def update_contact(data, contact_id):
             setattr(contact, key, value)
     contact.updated_at = datetime.now(timezone.utc)
     db.session.commit()
+    _stats_cache.invalidate()
     return contact
 
 
@@ -120,4 +122,5 @@ def delete_contact(contact_id):
     contact = Contact.query.filter_by(id=contact_id, owner_id=current_user.id, deleted_at=None).first_or_404()
     contact.deleted_at = datetime.now(timezone.utc)
     db.session.commit()
+    _stats_cache.invalidate()
     return '', 204

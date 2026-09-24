@@ -6,7 +6,7 @@ from flask_login import current_user, login_required
 
 from app.models import Activity, db
 from app.schemas import ActivitySchema
-from app.api_v1 import activities_blp
+from app.api_v1 import activities_blp, _stats_cache
 
 
 @activities_blp.route('/', methods=['GET'])
@@ -70,6 +70,7 @@ def create_activity(data):
     )
     db.session.add(activity)
     db.session.commit()
+    _stats_cache.invalidate()
     return activity
 
 
@@ -91,6 +92,7 @@ def update_activity(data, activity_id):
         elif not data['completed']:
             activity.completed_at = None
     db.session.commit()
+    _stats_cache.invalidate()
     return activity
 
 
@@ -103,4 +105,5 @@ def delete_activity(activity_id):
     activity = Activity.query.filter_by(id=activity_id, owner_id=current_user.id, deleted_at=None).first_or_404()
     activity.deleted_at = datetime.now(timezone.utc)
     db.session.commit()
+    _stats_cache.invalidate()
     return '', 204
