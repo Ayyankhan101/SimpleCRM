@@ -11,6 +11,7 @@ import Modal from '../components/ui/Modal'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import EmptyState from '../components/ui/EmptyState'
 import ContactPicker from '../components/ContactPicker'
+import Pagination from '../components/Pagination'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { useToast } from '../components/ui/Toast'
 
@@ -23,6 +24,9 @@ export default function Deals() {
   const [showModal, setShowModal] = useState(false)
   const [editingDeal, setEditingDeal] = useState(null)
   const [filterStage, setFilterStage] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
   const [formData, setFormData] = useState(defaultForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -34,17 +38,22 @@ export default function Deals() {
   const [emailError, setEmailError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(null)
 
+  useEffect(() => { setPage(1) }, [filterStage])
+
   const fetchDeals = useCallback(async () => {
     try {
-      const params = filterStage ? { stage: filterStage } : {}
+      const params = { page, per_page: 20 }
+      if (filterStage) params.stage = filterStage
       const res = await api.get('/v1/deals/', { params })
-      setDeals(res.data)
+      setDeals(res.data.items || [])
+      setTotalPages(res.data.pages || 1)
+      setTotal(res.data.total || 0)
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to load deals')
     } finally {
       setLoading(false)
     }
-  }, [filterStage, toast])
+  }, [page, filterStage, toast])
 
   useEffect(() => { fetchDeals() }, [fetchDeals])
 
@@ -161,7 +170,7 @@ export default function Deals() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold font-display text-glassfin-secondary dark:text-glassfin-neutral tracking-tight">Deals</h1>
-          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">{deals.length} deals in pipeline</p>
+          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">{total} deals in pipeline</p>
         </div>
         <Button onClick={openNew}>
           <AddCircleIcon size={16} />
@@ -172,7 +181,7 @@ export default function Deals() {
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="glass p-5">
           <div className="text-xs font-display font-medium text-glassfin-secondary/50 dark:text-glassfin-neutral/50 uppercase tracking-wider mb-1">Total Deals</div>
-          <div className="text-2xl font-bold font-mono text-glassfin-secondary dark:text-glassfin-neutral">{deals.length}</div>
+          <div className="text-2xl font-bold font-mono text-glassfin-secondary dark:text-glassfin-neutral">{total}</div>
         </div>
         <div className="glass p-5">
           <div className="text-xs font-display font-medium text-glassfin-secondary/50 dark:text-glassfin-neutral/50 uppercase tracking-wider mb-1">Total Value</div>
@@ -259,6 +268,9 @@ export default function Deals() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="px-6 pb-4">
+            <Pagination page={page} totalPages={totalPages} total={total} perPage={20} onPageChange={setPage} />
           </div>
         </div>
       )}

@@ -1,24 +1,54 @@
+import math
+from collections import defaultdict
 from datetime import datetime, timezone
 
-from flask import request
+from flask import jsonify, request
 from flask_login import current_user, login_required
 
 from app.models import Deal, db
 from app.schemas import DealSchema
 from app.api_v1 import deals_blp
 
+PIPELINE_STAGES = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']
+
 
 @deals_blp.route('/', methods=['GET'])
 @deals_blp.doc(security=[{'Bearer': []}])
-@deals_blp.response(200, DealSchema(many=True))
 @login_required
 def list_deals():
-    """List deals with optional stage filter."""
+    """List deals with optional stage filter and pagination."""
     stage = request.args.get('stage')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    per_page = min(per_page, 100)
+
     query = Deal.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if stage:
         query = query.filter_by(stage=stage)
-    return query.order_by(Deal.created_at.desc()).all()
+
+    total = query.count()
+    items = query.order_by(Deal.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    return jsonify({
+        'items': [d.to_dict() for d in items],
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'pages': math.ceil(total / per_page) if total > 0 else 1,
+    })
+
+
+@deals_blp.route('/pipeline', methods=['GET'])
+@deals_blp.doc(security=[{'Bearer': []}])
+@login_required
+def get_pipeline():
+    """Get deals grouped by pipeline stage for kanban board."""
+    deals = Deal.query.filter_by(owner_id=current_user.id, deleted_at=None).order_by(Deal.created_at.desc()).all()
+    grouped = defaultdict(list)
+    for deal in deals:
+        grouped[deal.stage].append(deal.to_dict())
+    pipeline = {stage: grouped.get(stage, []) for stage in PIPELINE_STAGES}
+    return jsonify({'pipeline': pipeline, 'stages': PIPELINE_STAGES, 'total': len(deals)})
 
 
 @deals_blp.route('/', methods=['POST'])

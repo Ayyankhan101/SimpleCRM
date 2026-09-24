@@ -12,6 +12,7 @@ import ConfirmModal from '../components/ui/ConfirmModal'
 import EmptyState from '../components/ui/EmptyState'
 import ContactPicker from '../components/ContactPicker'
 import DealPicker from '../components/DealPicker'
+import Pagination from '../components/Pagination'
 import { useToast } from '../components/ui/Toast'
 
 const typeIcons = {
@@ -41,22 +42,30 @@ export default function Activities() {
   const [showModal, setShowModal] = useState(false)
   const [editingActivity, setEditingActivity] = useState(null)
   const [filterType, setFilterType] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
   const [formData, setFormData] = useState(defaultForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(null)
 
+  useEffect(() => { setPage(1) }, [filterType])
+
   const fetchActivities = useCallback(async () => {
     try {
-      const params = filterType ? { type: filterType } : {}
+      const params = { page, per_page: 20 }
+      if (filterType) params.type = filterType
       const res = await api.get('/v1/activities/', { params })
-      setActivities(res.data)
+      setActivities(res.data.items || [])
+      setTotalPages(res.data.pages || 1)
+      setTotal(res.data.total || 0)
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to load activities')
     } finally {
       setLoading(false)
     }
-  }, [filterType, toast])
+  }, [page, filterType, toast])
 
   useEffect(() => { fetchActivities() }, [fetchActivities])
 
@@ -150,7 +159,7 @@ export default function Activities() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold font-display text-glassfin-secondary dark:text-glassfin-neutral tracking-tight">Activities</h1>
-          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">{activities.length} activities logged</p>
+          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">{total} activities logged</p>
         </div>
         <Button onClick={openNew}>
           <AddCircleIcon size={16} />
@@ -176,6 +185,7 @@ export default function Activities() {
           action={<Button onClick={openNew}><AddCircleIcon size={16} />Add Activity</Button>}
         />
       ) : (
+        <>
         <div className="space-y-3">
           {activities.map((a, i) => {
             const Icon = typeIcons[a.type] || LightningIcon
@@ -261,6 +271,10 @@ export default function Activities() {
             )
           })}
         </div>
+        <div className="mt-4">
+          <Pagination page={page} totalPages={totalPages} total={total} perPage={20} onPageChange={setPage} />
+        </div>
+        </>
       )}
 
       <Modal

@@ -156,6 +156,7 @@ const item = {
 
 export default function Pipeline() {
   const { toast } = useToast()
+  const [pipeline, setPipeline] = useState({})
   const [deals, setDeals] = useState([])
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -171,12 +172,13 @@ export default function Pipeline() {
 
   const fetchData = async () => {
     try {
-      const [dealsRes, contactsRes] = await Promise.all([
-        api.get('/v1/deals/'),
-        api.get('/v1/contacts/'),
+      const [pipelineRes, contactsRes] = await Promise.all([
+        api.get('/v1/deals/pipeline'),
+        api.get('/v1/contacts/', { params: { per_page: 9999 } }),
       ])
-      setDeals(dealsRes.data || [])
-      setContacts(contactsRes.data || [])
+      setPipeline(pipelineRes.data.pipeline || {})
+      setDeals(Object.values(pipelineRes.data.pipeline || {}).flat())
+      setContacts(contactsRes.data.items || contactsRes.data || [])
     } catch (err) {
       console.error('Pipeline fetch error:', err)
     } finally {
@@ -194,7 +196,7 @@ export default function Pipeline() {
   const validStages = DEAL_STAGES.map((s) => s.value)
 
   const getDealsForStage = (stage) =>
-    deals.filter((d) => d.stage === stage)
+    pipeline[stage] || []
 
   const activeDeal = deals.find((d) => d.id === activeId)
 

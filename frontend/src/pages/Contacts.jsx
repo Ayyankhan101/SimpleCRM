@@ -12,6 +12,7 @@ import Modal from '../components/ui/Modal'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import EmptyState from '../components/ui/EmptyState'
 import { TableSkeleton } from '../components/ui/Skeleton'
+import Pagination from '../components/Pagination'
 import ImportPreview from '../components/ImportPreview'
 import { useToast } from '../components/ui/Toast'
 
@@ -29,6 +30,10 @@ export default function Contacts() {
   const [editingContact, setEditingContact] = useState(null)
   const [filterStage, setFilterStage] = useState('')
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
   const [formData, setFormData] = useState(defaultForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -37,27 +42,28 @@ export default function Contacts() {
   const fileInputRef = useRef(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(t)
+  }, [search])
+
+  useEffect(() => { setPage(1) }, [debouncedSearch, filterStage])
+
   const fetchContacts = useCallback(async () => {
     try {
-      const params = filterStage ? { stage: filterStage } : {}
+      const params = { page, per_page: 10 }
+      if (filterStage) params.stage = filterStage
+      if (debouncedSearch) params.search = debouncedSearch
       const res = await api.get('/v1/contacts/', { params })
-      let data = res.data
-      if (search) {
-        const q = search.toLowerCase()
-        data = data.filter((c) =>
-          c.first_name?.toLowerCase().includes(q) ||
-          c.last_name?.toLowerCase().includes(q) ||
-          c.email?.toLowerCase().includes(q) ||
-          c.company?.toLowerCase().includes(q)
-        )
-      }
-      setContacts(data)
+      setContacts(res.data.items || [])
+      setTotalPages(res.data.pages || 1)
+      setTotal(res.data.total || 0)
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to load contacts')
     } finally {
       setLoading(false)
     }
-  }, [filterStage, search])
+  }, [page, filterStage, debouncedSearch])
 
   useEffect(() => { fetchContacts() }, [fetchContacts])
 
@@ -145,7 +151,7 @@ export default function Contacts() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold font-display text-glassfin-secondary dark:text-glassfin-neutral tracking-tight">Contacts</h1>
-          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">{search ? `${contacts.length} matching contacts` : `${contacts.length} total contacts`}</p>
+          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">{debouncedSearch ? `${total} matching contacts` : `${total} total contacts`}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
@@ -244,6 +250,9 @@ export default function Contacts() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="px-6 pb-4">
+            <Pagination page={page} totalPages={totalPages} total={total} perPage={10} onPageChange={setPage} />
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
+import math
 from datetime import datetime, timezone
 
-from flask import request
+from flask import jsonify, request
 from flask_login import current_user, login_required
 
 from app.models import Activity, db
@@ -10,13 +11,16 @@ from app.api_v1 import activities_blp
 
 @activities_blp.route('/', methods=['GET'])
 @activities_blp.doc(security=[{'Bearer': []}])
-@activities_blp.response(200, ActivitySchema(many=True))
 @login_required
 def list_activities():
-    """List activities, optionally filtered by type, deal, or due status."""
+    """List activities, optionally filtered by type, deal, or due status, with pagination."""
     activity_type = request.args.get('type')
     deal_id = request.args.get('deal_id', type=int)
     due_filter = request.args.get('due')  # overdue, today, upcoming
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    per_page = min(per_page, 100)
+
     query = Activity.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if activity_type:
         query = query.filter_by(type=activity_type)
@@ -33,7 +37,17 @@ def list_activities():
             query = query.filter(Activity.due_date >= today_start, Activity.due_date <= today_end)
         elif due_filter == 'upcoming':
             query = query.filter(Activity.due_date > today_end)
-    return query.order_by(Activity.created_at.desc()).all()
+
+    total = query.count()
+    items = query.order_by(Activity.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    return jsonify({
+        'items': [a.to_dict() for a in items],
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'pages': math.ceil(total / per_page) if total > 0 else 1,
+    })
 
 
 @activities_blp.route('/', methods=['POST'])

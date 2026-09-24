@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timezone
 
 from flask import jsonify, request
@@ -10,13 +11,16 @@ from app.api_v1 import contacts_blp
 
 @contacts_blp.route('/', methods=['GET'])
 @contacts_blp.doc(security=[{'Bearer': []}])
-@contacts_blp.response(200, ContactSchema(many=True))
 @login_required
 def list_contacts():
-    """List contacts with optional filtering."""
+    """List contacts with optional filtering and pagination."""
     stage = request.args.get('stage')
     company = request.args.get('company')
     search = request.args.get('search')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    per_page = min(per_page, 100)
+
     query = Contact.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if stage:
         query = query.filter(Contact.stage.ilike(stage))
@@ -32,7 +36,17 @@ def list_contacts():
                 Contact.company.ilike(q),
             )
         )
-    return query.order_by(Contact.created_at.desc()).all()
+
+    total = query.count()
+    items = query.order_by(Contact.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    return jsonify({
+        'items': [c.to_dict() for c in items],
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'pages': math.ceil(total / per_page) if total > 0 else 1,
+    })
 
 
 @contacts_blp.route('/<int:contact_id>', methods=['GET'])
