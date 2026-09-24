@@ -17,12 +17,4 @@ services:
         value: "true"
       - key: FRONTEND_URL
         sync: false
-        value: https://simplecrm-frontend.onrender.com
-
-  - type: static_site
-    name: simplecrm-frontend
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: https://simplecrm-api.onrender.com
+        value: https://simple-crm.vercel.app
