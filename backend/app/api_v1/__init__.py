@@ -4,6 +4,7 @@ from collections import defaultdict
 from flask_smorest import Blueprint
 from flask import jsonify
 from flask_login import login_required, current_user
+from app import limiter
 from app.models import Contact, Deal, Activity, db
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -73,6 +74,7 @@ def _get_activity_lists(user_id, limit=5):
 
 @stats_blp.route('', methods=['GET'])
 @login_required
+@limiter.limit("30 per minute")
 def get_stats():
     """Get dashboard statistics without fetching all records."""
     cache_key = f'stats:{current_user.id}'

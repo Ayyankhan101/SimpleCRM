@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from flask import jsonify, request
 from flask_login import current_user, login_required
 
+from app import limiter
 from app.models import Contact, Deal, Activity, db
 from app.schemas import ContactSchema, ContactDetailSchema
 from app.api_v1 import contacts_blp, _stats_cache
@@ -11,6 +12,7 @@ from app.api_v1 import contacts_blp, _stats_cache
 
 @contacts_blp.route('/', methods=['GET'])
 @contacts_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("60 per minute")
 @login_required
 def list_contacts():
     """List contacts with optional filtering and pagination."""
@@ -73,6 +75,7 @@ def get_contact(contact_id):
 @contacts_blp.arguments(ContactSchema(only=('first_name', 'last_name', 'email', 'phone', 'company', 'role', 'stage', 'score', 'notes')))
 @contacts_blp.response(201, ContactSchema)
 @contacts_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("30 per minute")
 @login_required
 def create_contact(data):
     """Create a new contact."""
@@ -99,6 +102,7 @@ def create_contact(data):
 @contacts_blp.doc(security=[{'Bearer': []}])
 @contacts_blp.arguments(ContactSchema(only=('first_name', 'last_name', 'email', 'phone', 'company', 'role', 'stage', 'score', 'notes'), partial=True))
 @contacts_blp.response(200, ContactSchema)
+@limiter.limit("30 per minute")
 @login_required
 def update_contact(data, contact_id):
     """Update an existing contact."""
@@ -116,6 +120,7 @@ def update_contact(data, contact_id):
 @contacts_blp.route('/<int:contact_id>', methods=['DELETE'])
 @contacts_blp.doc(security=[{'Bearer': []}])
 @contacts_blp.response(204)
+@limiter.limit("20 per minute")
 @login_required
 def delete_contact(contact_id):
     """Soft-delete a contact."""

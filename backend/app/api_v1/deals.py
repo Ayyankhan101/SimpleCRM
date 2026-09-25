@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from flask import jsonify, request
 from flask_login import current_user, login_required
 
+from app import limiter
 from app.models import Deal, db
 from app.schemas import DealSchema
 from app.api_v1 import deals_blp, _stats_cache
@@ -14,6 +15,7 @@ PIPELINE_STAGES = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won',
 
 @deals_blp.route('/', methods=['GET'])
 @deals_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("60 per minute")
 @login_required
 def list_deals():
     """List deals with optional stage filter and pagination."""
@@ -40,6 +42,7 @@ def list_deals():
 
 @deals_blp.route('/pipeline', methods=['GET'])
 @deals_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("30 per minute")
 @login_required
 def get_pipeline():
     """Get deals grouped by pipeline stage for kanban board."""
@@ -55,6 +58,7 @@ def get_pipeline():
 @deals_blp.arguments(DealSchema(only=('title', 'value', 'currency', 'stage', 'probability', 'expected_close_date', 'contact_id', 'notes')))
 @deals_blp.response(201, DealSchema)
 @deals_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("30 per minute")
 @login_required
 def create_deal(data):
     """Create a new deal."""
@@ -80,6 +84,7 @@ def create_deal(data):
 @deals_blp.doc(security=[{'Bearer': []}])
 @deals_blp.arguments(DealSchema(only=('title', 'value', 'currency', 'stage', 'probability', 'expected_close_date', 'contact_id', 'notes'), partial=True))
 @deals_blp.response(200, DealSchema)
+@limiter.limit("30 per minute")
 @login_required
 def update_deal(data, deal_id):
     """Update an existing deal."""
@@ -96,6 +101,7 @@ def update_deal(data, deal_id):
 @deals_blp.route('/<int:deal_id>', methods=['DELETE'])
 @deals_blp.doc(security=[{'Bearer': []}])
 @deals_blp.response(204)
+@limiter.limit("20 per minute")
 @login_required
 def delete_deal(deal_id):
     """Soft-delete a deal."""

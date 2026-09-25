@@ -19,7 +19,7 @@ login_manager = LoginManager()
 _rate_limit_store = os.environ.get('DATABASE_URL', 'memory://')
 limiter = Limiter(
     get_remote_address,
-    default_limits=["200 per minute", "50 per second"],
+    default_limits=["100 per minute", "20 per second"],
     storage_uri=_rate_limit_store
 )
 csrf = CSRFProtect()

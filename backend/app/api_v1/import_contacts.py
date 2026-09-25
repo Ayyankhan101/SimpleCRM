@@ -2,6 +2,7 @@ import csv
 import io
 from flask import request, jsonify
 from flask_login import current_user, login_required
+from app import limiter
 from app.models import Contact, db
 from app.api_v1 import contacts_blp, _stats_cache
 
@@ -128,6 +129,7 @@ def validate_row(row, row_num):
 
 @contacts_blp.route('/import/preview', methods=['POST'])
 @contacts_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("10 per minute")
 @login_required
 def preview_import():
     if 'file' not in request.files:
@@ -178,6 +180,7 @@ def preview_import():
 
 @contacts_blp.route('/import', methods=['POST'])
 @contacts_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("5 per minute")
 @login_required
 def execute_import():
     if 'file' not in request.files:

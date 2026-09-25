@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from flask import jsonify, request
 from flask_login import current_user, login_required
 
+from app import limiter
 from app.models import Activity, db
 from app.schemas import ActivitySchema
 from app.api_v1 import activities_blp, _stats_cache
@@ -11,6 +12,7 @@ from app.api_v1 import activities_blp, _stats_cache
 
 @activities_blp.route('/', methods=['GET'])
 @activities_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("60 per minute")
 @login_required
 def list_activities():
     """List activities, optionally filtered by type, deal, or due status, with pagination."""
@@ -54,6 +56,7 @@ def list_activities():
 @activities_blp.arguments(ActivitySchema(only=('type', 'subject', 'body', 'outcome', 'deal_id', 'contact_id', 'due_date')))
 @activities_blp.response(201, ActivitySchema)
 @activities_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("30 per minute")
 @login_required
 def create_activity(data):
     """Log a new activity."""
@@ -78,6 +81,7 @@ def create_activity(data):
 @activities_blp.arguments(ActivitySchema(only=('type', 'subject', 'body', 'outcome', 'due_date', 'contact_id', 'deal_id', 'completed'), partial=True))
 @activities_blp.response(200, ActivitySchema)
 @activities_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("30 per minute")
 @login_required
 def update_activity(data, activity_id):
     """Update an existing activity."""
@@ -99,6 +103,7 @@ def update_activity(data, activity_id):
 @activities_blp.route('/<int:activity_id>', methods=['DELETE'])
 @activities_blp.response(204)
 @activities_blp.doc(security=[{'Bearer': []}])
+@limiter.limit("20 per minute")
 @login_required
 def delete_activity(activity_id):
     """Soft-delete an activity."""
