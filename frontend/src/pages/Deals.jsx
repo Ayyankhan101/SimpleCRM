@@ -161,10 +161,10 @@ export default function Deals() {
     }
   }
 
-  if (loading) return <TableSkeleton rows={5} cols={5} />
-
   const totalValue = useMemo(() => deals.reduce((sum, d) => sum + (d.value || 0), 0), [deals])
   const wonDeals = useMemo(() => deals.filter((d) => d.stage === 'closed_won'), [deals])
+
+  if (loading) return <TableSkeleton rows={5} cols={5} />
 
   return (
     <div>

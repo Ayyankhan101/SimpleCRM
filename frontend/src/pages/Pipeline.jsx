@@ -172,13 +172,31 @@ export default function Pipeline() {
 
   const fetchData = async () => {
     try {
-      const [pipelineRes, contactsRes] = await Promise.all([
+      const [pipelineRes, contactsRes] = await Promise.allSettled([
         api.get('/v1/deals/pipeline'),
         api.get('/v1/contacts/', { params: { per_page: 9999 } }),
       ])
-      setPipeline(pipelineRes.data.pipeline || {})
-      setDeals(Object.values(pipelineRes.data.pipeline || {}).flat())
-      setContacts(contactsRes.data.items || contactsRes.data || [])
+      const contacts = contactsRes.status === 'fulfilled'
+        ? (contactsRes.value.data.items || contactsRes.value.data || [])
+        : []
+      setContacts(contacts)
+
+      if (pipelineRes.status === 'fulfilled') {
+        const pipeline = pipelineRes.value.data.pipeline || {}
+        setPipeline(pipeline)
+        setDeals(Object.values(pipeline).flat())
+      } else {
+        const dealsRes = await api.get('/v1/deals/')
+        const allDeals = Array.isArray(dealsRes.data) ? dealsRes.data : (dealsRes.data.items || [])
+        const grouped = {}
+        for (const deal of allDeals) {
+          const stage = deal.stage || 'lead'
+          if (!grouped[stage]) grouped[stage] = []
+          grouped[stage].push(deal)
+        }
+        setPipeline(grouped)
+        setDeals(allDeals)
+      }
     } catch (err) {
       console.error('Pipeline fetch error:', err)
     } finally {
