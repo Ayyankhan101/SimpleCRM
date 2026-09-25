@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { AddCircleIcon, DollarIcon, PenIcon, TrashBinMinimalisticIcon, LetterIcon } from '@solar-icons/react/linear'
+import { AddCircleIcon, DollarIcon, PenIcon, TrashBinMinimalisticIcon, LetterIcon, MagnifierIcon } from '@solar-icons/react/linear'
 import api from '../utils/api'
 import { DEAL_STAGES, getStageColor, getStageLabel, formatCurrency } from '../lib/constants'
 import Button from '../components/ui/Button'
@@ -24,6 +24,8 @@ export default function Deals() {
   const [showModal, setShowModal] = useState(false)
   const [editingDeal, setEditingDeal] = useState(null)
   const [filterStage, setFilterStage] = useState('')
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -38,12 +40,18 @@ export default function Deals() {
   const [emailError, setEmailError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(null)
 
-  useEffect(() => { setPage(1) }, [filterStage])
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(t)
+  }, [search])
+
+  useEffect(() => { setPage(1) }, [debouncedSearch, filterStage])
 
   const fetchDeals = useCallback(async () => {
     try {
       const params = { page, per_page: 20 }
       if (filterStage) params.stage = filterStage
+      if (debouncedSearch) params.search = debouncedSearch
       const res = await api.get('/v1/deals/', { params })
       const data = Array.isArray(res.data) ? res.data : (res.data.items || [])
       setDeals(data)
@@ -54,7 +62,7 @@ export default function Deals() {
     } finally {
       setLoading(false)
     }
-  }, [page, filterStage, toast])
+  }, [page, filterStage, debouncedSearch, toast])
 
   useEffect(() => { fetchDeals() }, [fetchDeals])
 
@@ -171,7 +179,7 @@ export default function Deals() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold font-display text-glassfin-secondary dark:text-glassfin-neutral tracking-tight">Deals</h1>
-          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">{total} deals in pipeline</p>
+          <p className="text-sm text-glassfin-secondary/50 dark:text-glassfin-neutral/50 mt-1">{debouncedSearch ? `${total} matching deals` : `${total} deals in pipeline`}</p>
         </div>
         <Button onClick={openNew}>
           <AddCircleIcon size={16} />
@@ -195,6 +203,16 @@ export default function Deals() {
       </div>
 
       <div className="flex gap-3 mb-6">
+        <div className="relative flex-1">
+          <Input
+            placeholder="Search deals..."
+            aria-label="Search deals"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            icon={<MagnifierIcon size={16} className="text-glassfin-secondary/50 dark:text-glassfin-neutral/50" />}
+            className="w-full"
+          />
+        </div>
         <Select
           value={filterStage}
           onChange={(e) => setFilterStage(e.target.value)}

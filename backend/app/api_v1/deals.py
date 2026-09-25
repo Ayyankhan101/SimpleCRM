@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from flask import jsonify, request
 from flask_login import current_user, login_required
+from sqlalchemy import or_
 
 from app import limiter
 from app.models import Deal, db
@@ -20,6 +21,7 @@ PIPELINE_STAGES = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won',
 def list_deals():
     """List deals with optional stage filter and pagination."""
     stage = request.args.get('stage')
+    search = request.args.get('search')
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     per_page = min(per_page, 100)
@@ -27,6 +29,14 @@ def list_deals():
     query = Deal.query.filter_by(owner_id=current_user.id, deleted_at=None)
     if stage:
         query = query.filter_by(stage=stage)
+    if search:
+        q = f'%{search}%'
+        query = query.filter(
+            or_(
+                Deal.title.ilike(q),
+                Deal.notes.ilike(q),
+            )
+        )
 
     total = query.count()
     items = query.order_by(Deal.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
