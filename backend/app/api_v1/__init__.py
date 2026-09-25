@@ -1,13 +1,14 @@
 import time
+import random
 from collections import defaultdict
 
 from flask_smorest import Blueprint
-from flask import jsonify
+from flask import jsonify, request
 from flask_login import login_required, current_user
 from app import limiter
 from app.models import Contact, Deal, Activity, db
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 contacts_blp = Blueprint('contacts', 'Contacts', url_prefix='/api/v1/contacts', description='Contact management')
 deals_blp = Blueprint('deals', 'Deals', url_prefix='/api/v1/deals', description='Deal pipeline')
@@ -158,3 +159,44 @@ def get_stats():
     }
     _stats_cache.set(cache_key, result)
     return jsonify(result)
+
+
+@stats_blp.route('/backfill-dates')
+@login_required
+def backfill_close_dates():
+    """Set actual_close_date on closed_won deals and promote some leads to closed_won."""
+    today = date.today()
+    six_months_ago = today - timedelta(days=180)
+    updated = 0
+
+    # 1. Backfill existing closed_won deals without close dates
+    deals = Deal.query.filter_by(
+        owner_id=current_user.id,
+        stage='closed_won',
+        deleted_at=None,
+    ).filter(Deal.actual_close_date.is_(None)).all()
+
+    for deal in deals:
+        deal.actual_close_date = six_months_ago + timedelta(days=random.randint(0, 180))
+    updated += len(deals)
+
+    # 2. Promote some lead/proposal deals to closed_won with close dates
+    from sqlalchemy import or_
+    promotable = Deal.query.filter(
+        Deal.owner_id == current_user.id,
+        Deal.deleted_at.is_(None),
+        or_(Deal.stage == 'lead', Deal.stage == 'proposal'),
+    ).order_by(func.random()).limit(8).all()
+
+    for deal in promotable:
+        deal.stage = 'closed_won'
+        deal.actual_close_date = six_months_ago + timedelta(days=random.randint(0, 180))
+        deal.value = deal.value or random.randint(5000, 30000)
+    updated += len(promotable)
+
+    if updated == 0:
+        return jsonify({'message': 'No deals need backfilling', 'updated': 0})
+
+    db.session.commit()
+    _stats_cache.invalidate()
+    return jsonify({'message': f'Backfilled {updated} deals', 'updated': updated})

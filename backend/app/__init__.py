@@ -160,11 +160,12 @@ def seed_demo_data():
 
         # Create demo deals
         from app.models import Deal
+        from datetime import timedelta
         contacts = Contact.query.filter_by(owner_id=user.id).all()
         deals_data = [
             {'title': 'Website Redesign', 'value': 15000, 'stage': 'proposal', 'contact_id': contacts[0].id},
             {'title': 'Mobile App', 'value': 25000, 'stage': 'lead', 'contact_id': contacts[1].id},
-            {'title': 'Brand Identity', 'value': 8000, 'stage': 'closed_won', 'contact_id': contacts[2].id},
+            {'title': 'Brand Identity', 'value': 8000, 'stage': 'closed_won', 'contact_id': contacts[2].id, 'actual_close_date': datetime.utcnow().date() - timedelta(days=45)},
         ]
 
         for d_data in deals_data:
