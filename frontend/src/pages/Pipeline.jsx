@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { motion } from 'framer-motion'
 import { DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -26,7 +26,7 @@ const stageDotGlows = {
   '#ef4444': 'shadow-[0_0_6px_rgba(239,68,68,0.4)]',
 }
 
-function DealCard({ deal, contactName, overlay = false }) {
+const DealCard = memo(function DealCard({ deal, contactName, overlay = false }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: deal.id,
     data: { deal },
@@ -74,7 +74,7 @@ function DealCard({ deal, contactName, overlay = false }) {
       )}
     </div>
   )
-}
+})
 
 function DealCardOverlay({ deal, contactName }) {
   return (
@@ -84,7 +84,7 @@ function DealCardOverlay({ deal, contactName }) {
   )
 }
 
-function ColumnContainer({ stage, deals, contactMap }) {
+const ColumnContainer = memo(function ColumnContainer({ stage, deals, contactMap }) {
   const color = getStageColor(DEAL_STAGES, stage)
   const dotColor = stageDotColors[color] || 'bg-glassfin-secondary dark:bg-glassfin-neutral'
   const dotGlow = stageDotGlows[color] || ''
@@ -142,7 +142,7 @@ function ColumnContainer({ stage, deals, contactMap }) {
       </div>
     </div>
   )
-}
+})
 
 const container = {
   hidden: { opacity: 0 },
@@ -186,25 +186,28 @@ export default function Pipeline() {
     }
   }
 
-  const contactMap = {}
-  contacts.forEach((c) => {
-    contactMap[c.id] = `${c.first_name} ${c.last_name}`
-  })
+  const contactMap = useMemo(() => {
+    const map = {}
+    contacts.forEach((c) => {
+      map[c.id] = `${c.first_name} ${c.last_name}`
+    })
+    return map
+  }, [contacts])
 
-  const stageColumns = DEAL_STAGES.filter((s) => !['closed_won', 'closed_lost'].includes(s.value))
-  const closedColumns = DEAL_STAGES.filter((s) => ['closed_won', 'closed_lost'].includes(s.value))
-  const validStages = DEAL_STAGES.map((s) => s.value)
+  const stageColumns = useMemo(() => DEAL_STAGES.filter((s) => !['closed_won', 'closed_lost'].includes(s.value)), [])
+  const closedColumns = useMemo(() => DEAL_STAGES.filter((s) => ['closed_won', 'closed_lost'].includes(s.value)), [])
+  const validStages = useMemo(() => DEAL_STAGES.map((s) => s.value), [])
 
-  const getDealsForStage = (stage) =>
-    pipeline[stage] || []
+  const getDealsForStage = useCallback((stage) =>
+    pipeline[stage] || [], [pipeline])
 
-  const activeDeal = deals.find((d) => d.id === activeId)
+  const activeDeal = useMemo(() => deals.find((d) => d.id === activeId), [deals, activeId])
 
-  const handleDragStart = (event) => {
+  const handleDragStart = useCallback((event) => {
     setActiveId(event.active.id)
-  }
+  }, [])
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = useCallback(async (event) => {
     const { active, over } = event
     setActiveId(null)
 
@@ -237,7 +240,7 @@ export default function Pipeline() {
       toast.error(err.response?.data?.error || 'Failed to update deal stage')
       fetchData()
     }
-  }
+  }, [deals, validStages, toast])
 
   if (loading) return <CardSkeleton count={6} />
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { AddCircleIcon, DollarIcon, PenIcon, TrashBinMinimalisticIcon, LetterIcon } from '@solar-icons/react/linear'
 import api from '../utils/api'
@@ -162,8 +162,8 @@ export default function Deals() {
 
   if (loading) return <TableSkeleton rows={5} cols={5} />
 
-  const totalValue = deals.reduce((sum, d) => sum + (d.value || 0), 0)
-  const wonDeals = deals.filter((d) => d.stage === 'closed_won')
+  const totalValue = useMemo(() => deals.reduce((sum, d) => sum + (d.value || 0), 0), [deals])
+  const wonDeals = useMemo(() => deals.filter((d) => d.stage === 'closed_won'), [deals])
 
   return (
     <div>
