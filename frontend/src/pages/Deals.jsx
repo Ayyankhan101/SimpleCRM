@@ -45,9 +45,10 @@ export default function Deals() {
       const params = { page, per_page: 20 }
       if (filterStage) params.stage = filterStage
       const res = await api.get('/v1/deals/', { params })
-      setDeals(res.data.items || [])
-      setTotalPages(res.data.pages || 1)
-      setTotal(res.data.total || 0)
+      const data = Array.isArray(res.data) ? res.data : (res.data.items || [])
+      setDeals(data)
+      setTotal(Array.isArray(res.data) ? data.length : (res.data.total || 0))
+      setTotalPages(Array.isArray(res.data) ? 1 : (res.data.pages || 1))
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to load deals')
     } finally {

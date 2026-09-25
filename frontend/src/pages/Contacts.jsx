@@ -55,9 +55,10 @@ export default function Contacts() {
       if (filterStage) params.stage = filterStage
       if (debouncedSearch) params.search = debouncedSearch
       const res = await api.get('/v1/contacts/', { params })
-      setContacts(res.data.items || [])
-      setTotalPages(res.data.pages || 1)
-      setTotal(res.data.total || 0)
+      const data = Array.isArray(res.data) ? res.data : (res.data.items || [])
+      setContacts(data)
+      setTotal(Array.isArray(res.data) ? data.length : (res.data.total || 0))
+      setTotalPages(Array.isArray(res.data) ? 1 : (res.data.pages || 1))
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to load contacts')
     } finally {

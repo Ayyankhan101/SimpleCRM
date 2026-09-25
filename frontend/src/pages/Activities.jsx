@@ -57,9 +57,10 @@ export default function Activities() {
       const params = { page, per_page: 20 }
       if (filterType) params.type = filterType
       const res = await api.get('/v1/activities/', { params })
-      setActivities(res.data.items || [])
-      setTotalPages(res.data.pages || 1)
-      setTotal(res.data.total || 0)
+      const data = Array.isArray(res.data) ? res.data : (res.data.items || [])
+      setActivities(data)
+      setTotal(Array.isArray(res.data) ? data.length : (res.data.total || 0))
+      setTotalPages(Array.isArray(res.data) ? 1 : (res.data.pages || 1))
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to load activities')
     } finally {
