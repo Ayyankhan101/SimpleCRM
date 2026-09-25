@@ -111,8 +111,9 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
-        seed_demo_data()
-        fix_bad_data()
+        if not os.environ.get('SKIP_SEED'):
+            seed_demo_data()
+            fix_bad_data()
 
     if os.environ.get('ENFORCE_HTTPS', '').lower() == 'true':
         from app.services.security import enforce_https

@@ -18,3 +18,5 @@ services:
       - key: FRONTEND_URL
         sync: false
         value: https://simple-crm-black.vercel.app
+      - key: SKIP_SEED
+        value: "true"
