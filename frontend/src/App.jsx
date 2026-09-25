@@ -77,6 +77,7 @@ function App() {
             <Route path="deals" element={<Deals />} />
             <Route path="pipeline" element={<Pipeline />} />
             <Route path="activities" element={<Activities />} />
+            <Route path="dashboard" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
